@@ -9,7 +9,7 @@ import chattore.entity.ChattORESpec
 import org.slf4j.Logger
 import java.util.*
 
-@CommandAlias("msg|message|vmsg|vmessage|whisper|tell")
+@CommandAlias("m|msg|message|vmsg|vmessage|whisper|tell")
 @CommandPermission("chattore.message")
 class Message(
     private val config: Config,
@@ -54,7 +54,8 @@ fun sendMessage(
         )))
         statement = statement.replace("&k", "")
     }
-    logger.info("${player.username} -> ${targetPlayer.username}: $statement")
+    logger.info("${player.username} (${player.uniqueId}) -> " +
+        "${targetPlayer.username} (${targetPlayer.uniqueId}): $statement")
     player.sendMessage(
         config[ChattORESpec.format.messageSent].render(
             mapOf(
