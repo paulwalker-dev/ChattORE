@@ -256,11 +256,17 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     }
 
     fun broadcastDiscordMessage(sender: String, message: String) {
+        val urlMarkdownRegex = """\[([^]]*)\]\(\s?(\S+)\s?\)""".toRegex()
+        val transformedMessage = message.replace(urlMarkdownRegex) { matchResult ->
+            val text = matchResult.groupValues[1].trim()
+            val url = matchResult.groupValues[2].trim()
+            "$text: $url"
+        }
         broadcast(
             config[ChattORESpec.format.discord].render(
                 mapOf(
                     "sender" to sender.toComponent(),
-                    "message" to message.prepareChatMessage(chatReplacements)
+                    "message" to transformedMessage.prepareChatMessage(chatReplacements)
                 )
             )
         )
