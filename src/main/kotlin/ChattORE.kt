@@ -63,8 +63,8 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     private val dataFolder = dataFolder.toFile()
     private val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
     private var chatReplacements: MutableList<TextReplacementConfig> = mutableListOf(
-        formatReplacement("\\*\\*", "b"),
-        formatReplacement("\\*", "i"),
+        formatReplacement("**", "b"),
+        formatReplacement("*", "i"),
         formatReplacement("__", "u"),
         formatReplacement("~~", "st")
     )

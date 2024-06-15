@@ -35,44 +35,50 @@ fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
 
 fun formatReplacement(key: String, tag: String): TextReplacementConfig =
     TextReplacementConfig.builder()
-        .match("${key}(.*?)${key}")
+        .match("""((\\?)(${Regex.escape(key)}(.*?)${Regex.escape(key)}))""")
         .replacement { result, _ ->
-            "<$tag>${result.group(1)}</$tag>".miniMessageDeserialize()
+            result.group(1)
+            if (result.group(2).contains("\\")) {
+                result.group(3).toComponent()
+            } else {
+                "<$tag>${result.group(4)}</$tag>".miniMessageDeserialize()
+            }
         }
         .build()
 
-fun urlReplacementConfig(fileTypeMap: Map<String, List<String>>): TextReplacementConfig = TextReplacementConfig.builder()
-    .match("""<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""")
-    .replacement{ result, _ ->
-        val link = URL(result.group(1))
-        var type = "link"
-        var name = link.host
-        if (link.file.isNotEmpty()) {
-            val last = link.path.split("/").last()
-            if (last.contains('.')) {
-                type = last.split('.').last()
-                name = if (last.length > 20) {
-                    last.substring(0, 20) + "…." + type
-                } else {
-                    last
+fun urlReplacementConfig(fileTypeMap: Map<String, List<String>>): TextReplacementConfig =
+    TextReplacementConfig.builder()
+        .match("""<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""")
+        .replacement{ result, _ ->
+            val link = URL(result.group(1))
+            var type = "link"
+            var name = link.host
+            if (link.file.isNotEmpty()) {
+                val last = link.path.split("/").last()
+                if (last.contains('.')) {
+                    type = last.split('.').last()
+                    name = if (last.length > 20) {
+                        last.substring(0, 20) + "…." + type
+                    } else {
+                        last
+                    }
                 }
             }
+            val contentType = fileTypeMap.entries.find { type in it.value }?.key
+            val symbol = when (contentType) {
+                "IMAGE" -> "\uD83D\uDDBC"
+                "AUDIO" -> "\uD83D\uDD0A"
+                "VIDEO" -> "\uD83C\uDFA5"
+                "TEXT" -> "\uD83D\uDCDD"
+                else -> "\uD83D\uDCCE"
+            }
+            ("<aqua><click:open_url:'$link'>" +
+            "<hover:show_text:'<aqua>$link'>" +
+            "[$symbol $name]" +
+            "</hover>" +
+            "</click><reset>").miniMessageDeserialize()
         }
-        val contentType = fileTypeMap.entries.find { type in it.value }?.key
-        val symbol = when (contentType) {
-            "IMAGE" -> "\uD83D\uDDBC"
-            "AUDIO" -> "\uD83D\uDD0A"
-            "VIDEO" -> "\uD83C\uDFA5"
-            "TEXT" -> "\uD83D\uDCDD"
-            else -> "\uD83D\uDCCE"
-        }
-        ("<aqua><click:open_url:'$link'>" +
-        "<hover:show_text:'<aqua>$link'>" +
-        "[$symbol $name]" +
-        "</hover>" +
-        "</click><reset>").miniMessageDeserialize()
-    }
-    .build()
+        .build()
 
 fun String.prepareChatMessage(replacements: List<TextReplacementConfig>): Component {
     var result: Component = this.legacyDeserialize()
