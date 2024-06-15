@@ -36,6 +36,7 @@ import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.entity.message.MessageBuilder
 import org.slf4j.Logger
 import java.io.File
+import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
@@ -58,6 +59,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     val onlinePlayers: MutableSet<UUID> = Collections.synchronizedSet(mutableSetOf())
     private val replyMap: MutableMap<UUID, UUID> = hashMapOf()
     private var discordMap: Map<String, DiscordApi> = hashMapOf()
+    private var fileTypeMap: Map<String, List<String>> = hashMapOf()
     private var emojis: Map<String, String> = hashMapOf()
     private var emojisToNames: Map<String, String> = hashMapOf()
     private val dataFolder = dataFolder.toFile()
@@ -85,10 +87,9 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         }
         this.javaClass.getResourceAsStream("/filetypes.json")?.let { inputStream ->
             val jsonElement = Json.parseToJsonElement(inputStream.reader().readText())
-            val fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
+            fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
                 value.jsonArray.map { it.jsonPrimitive.content }
             }
-            chatReplacements.add(urlReplacementConfig(fileTypeMap))
             fileTypeMap.forEach { (key, values) ->
                 logger.info("Loaded ${values.size} of type $key")
             }
@@ -216,19 +217,13 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         targetPlayer: Player,
         args: Array<String>
     ) {
-        var statement = args.joinToString(" ")
-        if (!player.hasPermission("chattore.chat.obfuscate") && statement.contains("&k")) {
-            player.sendMessage(config[ChattORESpec.format.error].render(mapOf(
-                "message" to "You do not have permission to obfuscate text!".toComponent()
-            )))
-            statement = statement.replace("&k", "")
-        }
+        val statement = args.joinToString(" ")
         logger.info("${player.username} (${player.uniqueId}) -> " +
             "${targetPlayer.username} (${targetPlayer.uniqueId}): $statement")
         player.sendMessage(
             config[ChattORESpec.format.messageSent].render(
                 mapOf(
-                    "message" to statement.prepareChatMessage(chatReplacements),
+                    "message" to prepareChatMessage(statement, player),
                     "recipient" to targetPlayer.username.toComponent()
                 )
             )
@@ -236,13 +231,61 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         targetPlayer.sendMessage(
             config[ChattORESpec.format.messageReceived].render(
                 mapOf(
-                    "message" to statement.prepareChatMessage(chatReplacements),
+                    "message" to prepareChatMessage(statement, player),
                     "sender" to player.username.toComponent()
                 )
             )
         )
         replyMap[targetPlayer.uniqueId] = player.uniqueId
         replyMap[player.uniqueId] = targetPlayer.uniqueId
+    }
+
+    private fun prepareChatMessage(message: String, player: Player?): Component {
+        fun String.replaceObfuscate(canObfuscate: Boolean): String =
+            if (canObfuscate) {
+                this
+            } else {
+                this.replace("&k", "")
+            }
+        val canObfuscate = player?.hasPermission("chattore.chat.obfuscate") ?: false
+        val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
+        val parts = urlRegex.split(message)
+        val matches = urlRegex.findAll(message).iterator()
+        val builder = Component.text()
+        parts.forEach { part ->
+            builder.append(part.replaceObfuscate(canObfuscate).legacyDeserialize())
+            if (matches.hasNext()) {
+                val nextMatch = matches.next()
+                val link = URL(nextMatch.groupValues[1])
+                var type = "link"
+                var name = link.host
+                if (link.file.isNotEmpty()) {
+                    val last = link.path.split("/").last()
+                    if (last.contains('.')) {
+                        type = last.split('.').last()
+                        name = if (last.length > 20) {
+                            last.substring(0, 20) + "…." + type
+                        } else {
+                            last
+                        }
+                    }
+                }
+                val contentType = fileTypeMap.entries.find { type in it.value }?.key
+                val symbol = when (contentType) {
+                    "IMAGE" -> "\uD83D\uDDBC"
+                    "AUDIO" -> "\uD83D\uDD0A"
+                    "VIDEO" -> "\uD83C\uDFA5"
+                    "TEXT" -> "\uD83D\uDCDD"
+                    else -> "\uD83D\uDCCE"
+                }
+                builder.append(("<aqua><click:open_url:'$link'>" +
+                    "<hover:show_text:'<aqua>$link'>" +
+                    "[$symbol $name]" +
+                    "</hover>" +
+                    "</click><reset>").miniMessageDeserialize())
+            }
+        }
+        return builder.build().performReplacements(chatReplacements)
     }
 
     fun broadcast(component: Component) {
@@ -269,7 +312,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         broadcast(
             config[ChattORESpec.format.global].render(
                 mapOf(
-                    "message" to message.prepareChatMessage(chatReplacements),
+                    "message" to prepareChatMessage(message, player),
                     "sender" to sender,
                     "prefix" to prefix.legacyDeserialize()
                 )
@@ -302,7 +345,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             config[ChattORESpec.format.discord].render(
                 mapOf(
                     "sender" to sender.toComponent(),
-                    "message" to transformedMessage.prepareChatMessage(chatReplacements)
+                    "message" to prepareChatMessage(transformedMessage, null)
                 )
             )
         )

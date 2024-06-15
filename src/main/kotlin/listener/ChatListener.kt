@@ -90,14 +90,7 @@ class ChatListener(
         val pp = event.player
         pp.currentServer.ifPresent { server ->
             chattORE.logger.info("${pp.username} (${pp.uniqueId}): ${event.message}")
-            var result = event.message
-            if (event.message.contains("&k") && !pp.hasPermission("chattore.chat.obfuscate")) {
-                pp.sendMessage(chattORE.config[ChattORESpec.format.error].render(mapOf(
-                    "message" to "You do not have permission to obfuscate text!".toComponent()
-                )))
-                result = event.message.replace("&k", "")
-            }
-            chattORE.broadcastChatMessage(server.serverInfo.name, pp.uniqueId, result)
+            chattORE.broadcastChatMessage(server.serverInfo.name, pp.uniqueId, event.message)
         }
     }
 

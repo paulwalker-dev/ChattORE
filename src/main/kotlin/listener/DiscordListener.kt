@@ -24,7 +24,7 @@ class DiscordListener(
     override fun onMessageCreate(event: MessageCreateEvent) {
         if (event.messageAuthor.isBotUser && event.messageAuthor.id != chattORE.config[ChattORESpec.discord.chadId]) return
         val attachments = event.messageAttachments.joinToString(" ", " ") { it.url.toString() }
-        val toSend = replaceEmojis(event.message.readableContent.replace("&k", "")) + attachments
+        val toSend = replaceEmojis(event.message.readableContent) + attachments
         chattORE.logger.info("[Discord] ${event.messageAuthor.displayName} (${event.messageAuthor.id}): $toSend")
         chattORE.broadcastDiscordMessage(event.messageAuthor.displayName, toSend)
     }
