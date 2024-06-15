@@ -209,6 +209,42 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         return loadedConfig
     }
 
+    fun sendMessage(
+        replyMap: MutableMap<UUID, UUID>,
+        config: Config,
+        player: Player,
+        targetPlayer: Player,
+        args: Array<String>
+    ) {
+        var statement = args.joinToString(" ")
+        if (!player.hasPermission("chattore.chat.obfuscate") && statement.contains("&k")) {
+            player.sendMessage(config[ChattORESpec.format.error].render(mapOf(
+                "message" to "You do not have permission to obfuscate text!".toComponent()
+            )))
+            statement = statement.replace("&k", "")
+        }
+        logger.info("${player.username} (${player.uniqueId}) -> " +
+            "${targetPlayer.username} (${targetPlayer.uniqueId}): $statement")
+        player.sendMessage(
+            config[ChattORESpec.format.messageSent].render(
+                mapOf(
+                    "message" to statement.prepareChatMessage(chatReplacements),
+                    "recipient" to targetPlayer.username.toComponent()
+                )
+            )
+        )
+        targetPlayer.sendMessage(
+            config[ChattORESpec.format.messageReceived].render(
+                mapOf(
+                    "message" to statement.prepareChatMessage(chatReplacements),
+                    "sender" to player.username.toComponent()
+                )
+            )
+        )
+        replyMap[targetPlayer.uniqueId] = player.uniqueId
+        replyMap[player.uniqueId] = targetPlayer.uniqueId
+    }
+
     fun broadcast(component: Component) {
         proxy.allPlayers.forEach { it.sendMessage(component) }
     }

@@ -26,15 +26,7 @@ class Reply(
                 "You have no one to reply to!"
             )
         ).ifPresentOrElse({ target ->
-            sendMessage(
-                chattORE.logger,
-                replyMap,
-                config,
-                player,
-                target,
-                args,
-                chattORE.config[ChattORESpec.format.error]
-            )
+            chattORE.sendMessage(replyMap, config, player, target, args)
         }, {
             throw ChattoreException(
                 "The person you are trying to reply to is no longer online!"
