@@ -248,7 +248,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 this.replace("&k", "")
             }
         val canObfuscate = player?.hasPermission("chattore.chat.obfuscate") ?: false
-        val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
+        val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s',.<>]+)?)>?""".toRegex()
         val parts = urlRegex.split(message)
         val matches = urlRegex.findAll(message).iterator()
         val builder = Component.text()
