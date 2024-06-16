@@ -1,6 +1,7 @@
 package chattore.listener
 
 import chattore.ChattORE
+import chattore.discordEscape
 import chattore.entity.ChattORESpec
 import chattore.render
 import chattore.toComponent
@@ -62,7 +63,7 @@ class ChatListener(
         chattORE.broadcastPlayerConnection(
             chattORE.config[ChattORESpec.format.joinDiscord].replace(
                 "<player>",
-                username
+                username.discordEscape()
             )
         )
     }
@@ -80,7 +81,7 @@ class ChatListener(
         chattORE.broadcastPlayerConnection(
             chattORE.config[ChattORESpec.format.leaveDiscord].replace(
                 "<player>",
-                username
+                username.discordEscape()
             )
         )
     }
