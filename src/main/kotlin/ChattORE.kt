@@ -248,7 +248,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 this.replace("&k", "")
             }
         val canObfuscate = player?.hasPermission("chattore.chat.obfuscate") ?: false
-        val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s',.<>]+)?)>?""".toRegex()
+        val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
         val parts = urlRegex.split(message)
         val matches = urlRegex.findAll(message).iterator()
         val builder = Component.text()
@@ -261,10 +261,10 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 var name = link.host
                 if (link.file.isNotEmpty()) {
                     val last = link.path.split("/").last()
-                    if (last.contains('.')) {
+                    if (last.contains('.') && !last.endsWith('.') && !last.startsWith('.')) {
                         type = last.split('.').last()
-                        name = if (last.length > 20) {
-                            last.substring(0, 20) + "…." + type
+                        name = if (last.length > 15) {
+                            last.substring(0, 15) + "…." + type
                         } else {
                             last
                         }
