@@ -340,7 +340,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             val text = matchResult.groupValues[1].trim()
             val url = matchResult.groupValues[2].trim()
             "$text: $url"
-        }
+        }.replace("""\s+""".toRegex(), " ")
         broadcast(
             config[ChattORESpec.format.discord].render(
                 mapOf(
