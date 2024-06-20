@@ -25,7 +25,7 @@ fun String.discordEscape() = this.replace("""_""", "\\_")
 
 fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
     TextReplacementConfig.builder()
-        .match(""":([A-Za-z0-9_]+):""")
+        .match(""":([A-Za-z0-9_\-+]+):""")
         .replacement { result, _ ->
             val match = result.group(1)
             val content = emojis[match] ?: ":$match:"
