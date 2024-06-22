@@ -2,7 +2,6 @@ package chattore.commands
 
 import chattore.ChattORE
 import chattore.ChattoreException
-import chattore.entity.ChattORESpec
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.CommandAlias
 import co.aikar.commands.annotation.CommandPermission
