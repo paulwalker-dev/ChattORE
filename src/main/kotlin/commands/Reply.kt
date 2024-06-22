@@ -2,7 +2,6 @@ package chattore.commands
 
 import chattore.ChattORE
 import chattore.ChattoreException
-import chattore.entity.ChattORESpec
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.CommandAlias
 import co.aikar.commands.annotation.CommandPermission
@@ -26,15 +25,7 @@ class Reply(
                 "You have no one to reply to!"
             )
         ).ifPresentOrElse({ target ->
-            sendMessage(
-                chattORE.logger,
-                replyMap,
-                config,
-                player,
-                target,
-                args,
-                chattORE.config[ChattORESpec.format.error]
-            )
+            chattORE.sendMessage(replyMap, config, player, target, args)
         }, {
             throw ChattoreException(
                 "The person you are trying to reply to is no longer online!"

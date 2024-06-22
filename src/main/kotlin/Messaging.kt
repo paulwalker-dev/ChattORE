@@ -5,7 +5,6 @@ import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
-import java.net.URL
 
 fun fixHexFormatting(str: String): String = str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
 
@@ -25,7 +24,7 @@ fun String.discordEscape() = this.replace("""_""", "\\_")
 
 fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
     TextReplacementConfig.builder()
-        .match(""":([A-Za-z0-9_]+):""")
+        .match(""":([A-Za-z0-9_\-+]+):""")
         .replacement { result, _ ->
             val match = result.group(1)
             val content = emojis[match] ?: ":$match:"
@@ -35,47 +34,19 @@ fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
 
 fun formatReplacement(key: String, tag: String): TextReplacementConfig =
     TextReplacementConfig.builder()
-        .match("${key}(.*?)${key}")
+        .match("""((\\?)(${Regex.escape(key)}(.*?)${Regex.escape(key)}))""")
         .replacement { result, _ ->
-            "<$tag>${result.group(1)}</$tag>".miniMessageDeserialize()
+            result.group(1)
+            if (result.group(2).contains("\\")) {
+                result.group(3).toComponent()
+            } else {
+                "<$tag>${result.group(4)}</$tag>".miniMessageDeserialize()
+            }
         }
         .build()
 
-fun urlReplacementConfig(fileTypeMap: Map<String, List<String>>): TextReplacementConfig = TextReplacementConfig.builder()
-    .match("""<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""")
-    .replacement{ result, _ ->
-        val link = URL(result.group(1))
-        var type = "link"
-        var name = link.host
-        if (link.file.isNotEmpty()) {
-            val last = link.path.split("/").last()
-            if (last.contains('.')) {
-                type = last.split('.').last()
-                name = if (last.length > 20) {
-                    last.substring(0, 20) + "…." + type
-                } else {
-                    last
-                }
-            }
-        }
-        val contentType = fileTypeMap.entries.find { type in it.value }?.key
-        val symbol = when (contentType) {
-            "IMAGE" -> "\uD83D\uDDBC"
-            "AUDIO" -> "\uD83D\uDD0A"
-            "VIDEO" -> "\uD83C\uDFA5"
-            "TEXT" -> "\uD83D\uDCDD"
-            else -> "\uD83D\uDCCE"
-        }
-        ("<aqua><click:open_url:'$link'>" +
-        "<hover:show_text:'<aqua>$link'>" +
-        "[$symbol $name]" +
-        "</hover>" +
-        "</click><reset>").miniMessageDeserialize()
-    }
-    .build()
-
-fun String.prepareChatMessage(replacements: List<TextReplacementConfig>): Component {
-    var result: Component = this.legacyDeserialize()
+fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component {
+    var result: Component = this
     replacements.forEach { replacement ->
         result = result.replaceText(replacement)
     }
