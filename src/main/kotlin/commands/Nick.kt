@@ -10,12 +10,10 @@ import com.velocitypowered.api.proxy.Player
 import java.util.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
-import net.kyori.adventure.text.event.ClickEvent
-import net.kyori.adventure.text.event.HoverEvent
 
 // TODO: 8/23/2023 Add to autocompletes?
 val hexColorMap = mapOf(
-    "O" to Pair("#000000", "black"),
+    "0" to Pair("#000000", "black"),
     "1" to Pair("#00AA00", "dark_blue"),
     "2" to Pair("#00AA00", "dark_green"),
     "3" to Pair("#00AAAA", "dark_aqua"),
@@ -55,11 +53,8 @@ fun String.validateColor() = if (this.startsWith("&")) {
 @CommandPermission("chattore.nick")
 class Nick(private val chattORE: ChattORE) : BaseCommand() {
 
-    // TODO: 8/23/2023 Add timeout map
-
     @Default
     fun set(player: Player, vararg colors: String) {
-        // Note: worth having a timeout to prevent people from changing too frequently.
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         val rendered = if (colors.size == 1) {
             val color = colors.first().validateColor();
@@ -81,7 +76,7 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
     @Subcommand("preset")
     @CommandPermission("chattore.nick.preset")
     @CommandCompletion("@nickPresets")
-    fun pride(player: Player, preset: String) {
+    fun preset(player: Player, preset: String) {
         val format = chattORE.config[ChattORESpec.nicknamePresets][preset]
             ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
         val rendered = format.render(mapOf("username" to Component.text(player.username)));
@@ -96,7 +91,7 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
     @CommandPermission("chattore.nick.preset")
     @CommandCompletion("@username")
     fun presets(player: Player, @Optional shownText: String?) {
-        var renderedPresets = ArrayList<Component>()
+        val renderedPresets = ArrayList<Component>()
         for ((presetName, preset) in chattORE.config[ChattORESpec.nicknamePresets]) {
             val applyPreset: (String) -> Component = {
                 preset.render(mapOf(
@@ -186,7 +181,7 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
     }
 
     private fun setNicknameGradient(uniqueId: UUID, vararg colors: String): String {
-        val codes = colors.map { it.validateColor() }.joinToString(":");
+        val codes = colors.joinToString(":") { it.validateColor() };
         val nickname = "<gradient:$codes><username></gradient>"
         chattORE.database.setNickname(uniqueId, nickname)
         return nickname
