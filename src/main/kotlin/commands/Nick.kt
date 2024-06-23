@@ -4,9 +4,14 @@ import chattore.*
 import chattore.entity.ChattORESpec
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
+import co.aikar.commands.annotation.Optional
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
 import java.util.*
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.JoinConfiguration
+import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
 
 // TODO: 8/23/2023 Add to autocompletes?
 val hexColorMap = mapOf(
@@ -57,16 +62,68 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
         // Note: worth having a timeout to prevent people from changing too frequently.
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         val rendered = if (colors.size == 1) {
-            val code = "<${colors.first().validateColor()}>"
-            val nickname = "${code}${player.username}<reset>"
+            val color = colors.first().validateColor();
+            val nickname = "<color:$color><username></color:$color>"
             chattORE.database.setNickname(player.uniqueId, nickname)
             nickname
         } else {
             if (colors.size > 3) throw ChattoreException("Too many colors!")
-            setNicknameGradient(player.uniqueId, player.username, *colors)
+            setNicknameGradient(player.uniqueId, *colors)
         }
         val response = chattORE.config[ChattORESpec.format.chattore].render(
-            "Your nickname has been set to $rendered".miniMessageDeserialize()
+            "Your nickname has been set to $rendered".render(mapOf(
+                "username" to Component.text(player.username)
+            ))
+        )
+        player.sendMessage(response)
+    }
+
+    @Subcommand("preset")
+    @CommandPermission("chattore.nick.preset")
+    @CommandCompletion("@nickPresets")
+    fun pride(player: Player, preset: String) {
+        val format = chattORE.config[ChattORESpec.nicknamePresets][preset]
+            ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
+        val rendered = format.render(mapOf("username" to Component.text(player.username)));
+        chattORE.database.setNickname(player.uniqueId, format);
+        val response = chattORE.config[ChattORESpec.format.chattore].render(
+            "Your nickname has been set to <message>".render(rendered)
+        )
+        player.sendMessage(response)
+    }
+
+    @Subcommand("presets")
+    @CommandPermission("chattore.nick.preset")
+    @CommandCompletion("@username")
+    fun presets(player: Player, @Optional shownText: String?) {
+        var renderedPresets = ArrayList<Component>()
+        for ((presetName, preset) in chattORE.config[ChattORESpec.nicknamePresets]) {
+            val applyPreset: (String) -> Component = {
+                preset.render(mapOf(
+                    "username" to Component.text(it)
+                ))
+            }
+            val rendered = if (shownText == null) {
+                // Primarily show the preset name, else a preview of the nickname.
+                "<hover:show_text:'Click to apply <username>'><preset></hover>"
+            } else {
+                // Primarily show the entered text, else the preset name.
+                // Also, we're suggesting the username as the autocompleted $shownText.
+                "<hover:show_text:'Click to apply <preset> preset'><custom></hover>"
+            }.render(mapOf(
+                "username" to applyPreset(player.username),
+                "preset" to applyPreset(presetName),
+                "custom" to applyPreset(shownText ?: "")
+            )).let {
+                "<click:run_command:'/nick preset $presetName'><message></click>".render(it)
+            }
+            renderedPresets.add(rendered)
+        }
+
+        val response = chattORE.config[ChattORESpec.format.chattore].render(
+            "Available presets: <message>".render(
+                Component.join(JoinConfiguration.commas(true), renderedPresets)
+            )
         )
         player.sendMessage(response)
     }
@@ -78,13 +135,12 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
         val targetUuid = chattORE.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         val nickname = if (nick.contains("&")) {
-            nick.legacyDeserialize()
+            nick.legacyDeserialize().miniMessageSerialize()
         } else {
-            nick.miniMessageDeserialize()
+            nick
         }
-        val rendered = nickname.miniMessageSerialize()
-        chattORE.database.setNickname(targetUuid, rendered)
-        sendPlayerNotifications(target, commandSource, targetUuid, rendered)
+        chattORE.database.setNickname(targetUuid, nickname)
+        sendPlayerNotifications(target, commandSource, targetUuid, nickname)
     }
 
     @Subcommand("remove")
@@ -113,22 +169,25 @@ class Nick(private val chattORE: ChattORE) : BaseCommand() {
 
     private fun sendPlayerNotifications(target: String, executor: CommandSource, targetUuid: UUID, rendered: String) {
         val response = chattORE.config[ChattORESpec.format.chattore].render(
-            "Set nickname for $target as $rendered.".miniMessageDeserialize()
+            "Set nickname for $target as $rendered.".render(mapOf(
+                "username" to Component.text(target)
+            ))
         )
         executor.sendMessage(response)
         chattORE.proxy.getPlayer(targetUuid).ifPresent {
             it.sendMessage(
                 chattORE.config[ChattORESpec.format.chattore].render(
-                    "Your nickname has been set to $rendered".miniMessageDeserialize()
+                    "Your nickname has been set to $rendered".render(mapOf(
+                        "username" to Component.text(target)
+                    ))
                 )
             )
         }
     }
 
-    private fun setNicknameGradient(uniqueId: UUID, username: String, vararg colors: String): String {
-        val codes = colors.map { it.validateColor() }
-        val tag = "<gradient:${codes.joinToString(':'.toString())}>"
-        val nickname = "$tag$username<reset>"
+    private fun setNicknameGradient(uniqueId: UUID, vararg colors: String): String {
+        val codes = colors.map { it.validateColor() }.joinToString(":");
+        val nickname = "<gradient:$codes><username></gradient>"
         chattORE.database.setNickname(uniqueId, nickname)
         return nickname
     }
