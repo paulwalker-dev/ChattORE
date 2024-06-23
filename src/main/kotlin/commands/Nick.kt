@@ -11,7 +11,6 @@ import java.util.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 
-// TODO: 8/23/2023 Add to autocompletes?
 val hexColorMap = mapOf(
     "0" to Pair("#000000", "black"),
     "1" to Pair("#00AA00", "dark_blue"),
@@ -53,7 +52,8 @@ fun String.validateColor() = if (this.startsWith("&")) {
 @CommandPermission("chattore.nick")
 class Nick(private val chattORE: ChattORE) : BaseCommand() {
 
-    @Default
+    @Subcommand("color")
+    @CommandCompletion("@colors")
     fun set(player: Player, vararg colors: String) {
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         val rendered = if (colors.size == 1) {

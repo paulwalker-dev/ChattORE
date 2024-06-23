@@ -25,8 +25,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
-import net.kyori.adventure.text.event.ClickEvent
-import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.LuckPermsProvider
@@ -120,6 +118,9 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Reply(config, this@ChattORE, replyMap))
             setDefaultExceptionHandler(::handleCommandException, false)
             commandCompletions.registerCompletion("bool") { listOf("true", "false")}
+            commandCompletions.registerCompletion("colors") { hexColorMap.flatMap { (key, value)  ->
+                listOf("&$key", value.first, value.second)
+            }}
             commandCompletions.registerCompletion("emojis") { emojis.keys }
             commandCompletions.registerCompletion("usernameCache") { database.uuidToUsernameCache.values }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
