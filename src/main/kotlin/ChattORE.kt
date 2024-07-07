@@ -118,9 +118,27 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Reply(config, this@ChattORE, replyMap))
             setDefaultExceptionHandler(::handleCommandException, false)
             commandCompletions.registerCompletion("bool") { listOf("true", "false")}
-            commandCompletions.registerCompletion("colors") { hexColorMap.flatMap { (key, value)  ->
-                listOf("&$key", value.first, value.second)
-            }}
+            commandCompletions.registerCompletion("colors") { ctx ->
+                (hexColorMap.values.map { it.second }
+                    + if (ctx.input.isEmpty()) {
+                    listOf("#", "&")
+                } else if (ctx.input.startsWith("#")) {
+                    (hexColorMap.values.map { it.first }
+                        + ctx.input.padEnd(7, '0').let {
+                        // do not duplicate if it's already in the list
+                        // do not suggest if it's not a valid hex color
+                        if (it.matches(Regex("^#[0-9A-Fa-f]{6}$")) && ctx.input.uppercase() !in hexColorMap.values.map { (hex, _) -> hex.substring(0, ctx.input.length) }) {
+                            listOf(it.uppercase())
+                        } else {
+                            listOf()
+                        }
+                    })
+                } else if (ctx.input.startsWith("&")) {
+                    hexColorMap.keys.map { "&$it" }
+                } else {
+                    listOf()
+                })
+            }
             commandCompletions.registerCompletion("emojis") { emojis.keys }
             commandCompletions.registerCompletion("usernameCache") { database.uuidToUsernameCache.values }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
