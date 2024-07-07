@@ -7,7 +7,7 @@ import com.uchuhimo.konf.Config
 import com.velocitypowered.api.proxy.Player
 import java.util.*
 
-@CommandAlias("m|msg|message|vmsg|vmessage|whisper|tell")
+@CommandAlias("m|pm|msg|message|vmsg|vmessage|whisper|tell")
 @CommandPermission("chattore.message")
 class Message(
     private val config: Config,
