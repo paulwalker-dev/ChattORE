@@ -20,8 +20,8 @@ Because we want to have a chat system that actually wOREks for us.
 | `/profile about <player>`             | `chattore.profile.about`        | Set your about                                           | `/playerprofile`                                   |
 | `/profile setabout <player> <about>`  | `chattore.profile.about.others` | Set another player's about                               | `/playerprofile`                                   |
 | `/nick color <color>+`                | `chattore.nick`                 | Set your nickname with at least one color (up to three)  | No aliases                                         |
-| `/nick presets`                       | `chattore.preset`               | View available presets                                   | No aliases                                         |
-| `/nick preset <preset>`               | `chattore.preset`               | Apply a nickname preset                                  | No aliases                                         |
+| `/nick presets`                       | `chattore.nick.preset`          | View available presets                                   | No aliases                                         |
+| `/nick preset <preset>`               | `chattore.nick.preset`          | Apply a nickname preset                                  | No aliases                                         |
 | `/nick nick <player> <nickname>`      | `chattore.nick.others`          | Set a player's nickname                                  | No aliases                                         |
 | `/nick remove <player>`               | `chattore.nick.remove`          | Remove a player's nickname                               | No aliases                                         |
 | `/nick setgradient <player> <color>+` | `chattore.nick.setgradient`     | Set a gradient for a user                                | No aliases                                         |
