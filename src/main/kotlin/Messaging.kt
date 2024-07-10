@@ -36,8 +36,7 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
     TextReplacementConfig.builder()
         .match("""((\\?)(${Regex.escape(key)}(.*?)${Regex.escape(key)}))""")
         .replacement { result, _ ->
-            result.group(1)
-            if (result.group(2).contains("\\")) {
+            if (result.group(2).contains("\\") || result.group(4).endsWith("\\")) {
                 result.group(3).toComponent()
             } else {
                 "<$tag>${result.group(4)}</$tag>".miniMessageDeserialize()
