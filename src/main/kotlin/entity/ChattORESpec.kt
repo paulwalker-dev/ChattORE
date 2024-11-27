@@ -44,6 +44,9 @@ object ChattORESpec : ConfigSpec("") {
         val leave by optional("<yellow><player> has left the network")
         val joinDiscord by optional("**<player> has joined the network**")
         val leaveDiscord by optional("**<player> has left the network**")
+        val waffle by optional("<yellow>Guess who likes waffles? <gold><sender></gold> does!")
+        val nou by optional("<gold><sender><b><red> nou'd")
+        val lag by optional("<gold><sender><orange> thought there was some <b><red>lag</b><orange>...")
     }
 
     val nicknamePresets by optional(pridePresets)
