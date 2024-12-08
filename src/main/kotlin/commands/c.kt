@@ -12,9 +12,9 @@ import chattore.entity.ChattORESpec
 import chattore.toComponent
 import com.uchuhimo.konf.Config
 
-@CommandAlias("nou")
-@CommandPermission("chattore.nou")
-class Nou(
+@CommandAlias("c")
+@CommandPermission("chattore.c")
+class c(
     private val config: Config,
     private val chattORE: ChattORE
 ) : BaseCommand() {
@@ -22,11 +22,13 @@ class Nou(
     @Default
     @Syntax("")
     fun default(player: Player) {
-        chattORE.logger.info("${player.username} nou'd")
-        chattORE.broadcast(
-            config[ChattORESpec.format.nou].render(
-                mapOf("sender" to player.username.toComponent())
-            )
+        // Log the command execution
+        chattORE.logger.info("${player.username} ran /c")
+
+        // Fetch the message from the config and render placeholders if any
+        val message = config[ChattORESpec.format.c].render(
+            mapOf("player" to player.username.toComponent())
         )
+        player.sendMessage(message)
     }
 }

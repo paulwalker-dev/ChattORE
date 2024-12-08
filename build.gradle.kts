@@ -42,6 +42,7 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.6.0")
     implementation(group = "org.javacord", name = "javacord", version = "3.8.0")
     implementation(group = "com.velocitypowered", name = "velocity-api", version = "3.2.0-SNAPSHOT")
+    implementation("com.google.code.gson:gson:2.10.1")
     kapt(group = "com.velocitypowered", name = "velocity-api", version = "3.2.0-SNAPSHOT")
 }
 
