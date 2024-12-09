@@ -159,7 +159,7 @@
       "command": "lag",
       "description": "got lag?",
       "globalChat": "<red><name> <gold>thought there was some <dark_red><bold>lag<gold>...",
-      "run": "kick That should fix it! :waffle:"
+      "run": "kick That should fix it! 🧇"
     }
   ]
   
