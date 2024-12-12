@@ -49,47 +49,59 @@ class FunCommands(
     }
 
     private fun createDynamicCommand(commandConfig: FunCommandConfig): SimpleCommand {
-        return SimpleCommand { invocation ->
-            val source = invocation.source()
-            val args = invocation.arguments()
+    return SimpleCommand { invocation ->
+        val source = invocation.source()
+        val args = invocation.arguments()
 
-            if (source !is Player) {
-                source.sendMessage(Component.text("This command can only be used by players!"))
-                return@SimpleCommand
-            }
+        if (source !is Player) {
+            source.sendMessage(Component.text("This command can only be used by players!"))
+            return@SimpleCommand
+        }
 
-            val player = source
-            val rawMessage = commandConfig.globalChat ?: commandConfig.localChat ?: ""
+        val player = source
+        val rawGlobalMessage = commandConfig.globalChat
+        val rawLocalMessage = commandConfig.localChat
 
-            val filledMessage = rawMessage
-                .replace("<name>", player.username)
-                .replace("<arg-all>", args.joinToString(" "))
-                .replace("$1", args.getOrNull(1) ?: "<missing>")
-                .replace("$2", args.getOrNull(2) ?: "<missing>")
+        val renderedGlobalMessage = rawGlobalMessage?.replace("<name>", player.username)
+            ?.replace("<arg-all>", args.joinToString(" "))
+            ?.replace("$1", args.getOrNull(1) ?: "<missing>")
+            ?.replace("$2", args.getOrNull(2) ?: "<missing>")
 
-            // Render the message using chattORE's render function
-            val renderedMessage = filledMessage.render(
-                mapOf(
-                    "message" to filledMessage.toComponent(),
-                    "sender" to player.username.toComponent()
+        val renderedLocalMessage = rawLocalMessage?.replace("<name>", player.username)
+            ?.replace("<arg-all>", args.joinToString(" "))
+            ?.replace("$1", args.getOrNull(1) ?: "<missing>")
+            ?.replace("$2", args.getOrNull(2) ?: "<missing>")
+
+        if (rawGlobalMessage != null) {
+            chattORE.broadcast(
+                renderedGlobalMessage!!.render(
+                    mapOf(
+                        "message" to renderedGlobalMessage.toComponent(),
+                        "sender" to player.username.toComponent()
+                    )
                 )
             )
-
-            if (commandConfig.globalChat != null) {
-                chattORE.broadcast(renderedMessage)
-            } else if (commandConfig.localChat != null) {
-                player.sendMessage(renderedMessage)
-            }
-
-            chattORE.logger.info(
-                "Executed command: /${commandConfig.command} by ${player.username} with arguments: ${
-                    args.joinToString(" ")
-                }"
-            )
-
-            commandConfig.run?.let { executeAction(it, player) }
         }
+        if (rawLocalMessage != null) {
+            player.sendMessage(
+                renderedLocalMessage!!.render(
+                    mapOf(
+                        "message" to renderedLocalMessage.toComponent(),
+                        "sender" to player.username.toComponent()
+                    )
+                )
+            )
+        }
+
+        chattORE.logger.info(
+            "Executed command: /${commandConfig.command} by ${player.username} with arguments: ${
+                args.joinToString(" ")
+            }"
+        )
+
+        commandConfig.run?.let { executeAction(it, player) }
     }
+}
 
 
 
@@ -104,6 +116,5 @@ class FunCommands(
             action.startsWith("kill") -> {
                 proxy.commandManager.executeAsync(player, "suicide")
             }
-        }
+         }
     }
-}
