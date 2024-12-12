@@ -38,7 +38,7 @@ import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
-private const val VERSION = "0.1.0-SNAPSHOT"
+const val VERSION = "0.1.1-SNAPSHOT"
 
 @Plugin(
     id = "chattore",
@@ -46,7 +46,7 @@ private const val VERSION = "0.1.0-SNAPSHOT"
     version = VERSION,
     url = "https://openredstone.org",
     description = "Because we want to have a chat system that actually wOREks for us.",
-    authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo"],
+    authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo", "Waffle [Wueffi]"],
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
@@ -106,6 +106,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             }
         }
         this.database.updateLocalUsernameCache()
+
         VelocityCommandManager(proxy, this).apply {
             registerCommand(Chattore(this@ChattORE))
             registerCommand(Emoji(this@ChattORE, emojis))
@@ -148,6 +149,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         proxy.eventManager.register(this, ChatListener(this))
+        FunCommands(proxy, logger, this@ChattORE).loadFunCommands()
     }
 
     fun parsePlayerProfile(user: User, ign: String): Component {

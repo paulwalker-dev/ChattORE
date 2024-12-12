@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "8.3.0"
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.kotlin.kapt") version "1.9.22"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
@@ -42,11 +42,12 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.6.0")
     implementation(group = "org.javacord", name = "javacord", version = "3.8.0")
     implementation(group = "com.velocitypowered", name = "velocity-api", version = "3.2.0-SNAPSHOT")
+    implementation("com.google.code.gson:gson:2.10.1")
     kapt(group = "com.velocitypowered", name = "velocity-api", version = "3.2.0-SNAPSHOT")
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = "21"
     kotlinOptions.javaParameters = true
 }
 
