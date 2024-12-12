@@ -38,7 +38,7 @@ import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
-const val VERSION = "0.1.1-SNAPSHOT"
+const val VERSION = "1.1"
 
 @Plugin(
     id = "chattore",
