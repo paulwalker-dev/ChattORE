@@ -86,11 +86,6 @@
     "globalChat": "<green><name> <dark_green><bold>hates <green><arg-all>"
   },
   {
-    "command": "massage",
-    "description": "mmmm...",
-    "globalChat": "<light_purple><name> <dark_red>massaged <light_purple>$0's $1"
-  },
-  {
     "command": "mistake",
     "description": "odder",
     "globalChat": "<dark_red>Ohder <gold><bold><name> <dark_purple>made a mistake"
@@ -103,8 +98,8 @@
   {
     "command": "c",
     "description": "View format codes",
-    "localChat": "Formatting: <bold>l</bold> <underlined>n</underlined> <strikethrough>&m</strikethrough> <italic>n</italic> \nColor: <dark_blue>1</dark_blue> <dark_green>2</dark_green> <dark_aqua>3</dark_aqua> <dark_red>4</dark_red> <dark_purple>5</dark_purple> <gold>6</gold> <gray>7</gray> <dark_gray>8</dark_gray> <blue>9</blue> <black>0</black> <green>a</green> <aqua>b</aqua> <red>c</red> <light_purple>d</light_purple> <yellow>e</yellow> <white>f</white>"
-  }
+    "localChat": "Formatting: <bold>l</bold> <underlined>n</underlined> <strikethrough>m</strikethrough> <italic>n</italic> \nColor: <dark_blue>1</dark_blue> <dark_green>2</dark_green> <dark_aqua>3</dark_aqua> <dark_red>4</dark_red> <dark_purple>5</dark_purple> <gold>6</gold> <gray>7</gray> <dark_gray>8</dark_gray> <blue>9</blue> <black>0</black> <green>a</green> <aqua>b</aqua> <red>c</red> <light_purple>d</light_purple> <yellow>e</yellow> <white>f</white>"
+  },
   {
     "command": "oink",
     "description": "Oink like a pig",
@@ -134,21 +129,6 @@
     "command": "hug",
     "description": "for someone you love",
     "globalChat": "<light_purple><name> <dark_red><bold>hugged <light_purple><arg-all>"
-  },
-  {
-    "command": "join",
-    "description": "Fake someone joining the game",
-    "globalChat": "<yellow><arg-all> joined the game"
-  },
-  {
-    "command": "leave",
-    "description": "Fake someone leaving the game",
-    "globalChat": "<yellow><arg-all> left the game"
-  },
-  {
-    "command": "join-rename",
-    "description": "Fake someone joining the game as a different name",
-    "globalChat": "<yellow>$0 (formerly known as $1) joined the game"
   },
   {
     "command": "keol",
@@ -184,6 +164,6 @@
   {
     "command": "funcommands",
     "description": "fun!",
-    "localChat": "<gold>FunCommands: <yellow>waffle, <gold>lag, <yellow>love, baa, huzza, op-me, nope, forgive, lol, moo, lemur, snuggle, brains, sss, confuse, bark, hap, nou, hate, message, mistake, art, oink, c, facepalm, cp, cluck, hate, rage, join, leave, join-rename, hug, keol, rip, shrug, redcmd"
+    "localChat": "<gold>FunCommands: <yellow>art, baa, bark, brains, c, cluck, confuse, cp, facepalm, forgive, hap, hate, hate, hug, huzza, keol, lag, lemur, lol, love, mistake, moo, nope, nou, oink, op-me, rage, redcmd, rip, shrug, snuggle, sss, waffle"
   }
 ]
