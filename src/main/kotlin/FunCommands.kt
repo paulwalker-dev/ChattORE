@@ -16,7 +16,8 @@ import java.nio.file.Paths
 data class FunCommandConfig(
     val command: String,
     val description: String,
-    val globalChat: String,
+    val localChat: String? = null, // Add localChat as optional
+    val globalChat: String? = null, // Keep globalChat as optional
     val run: String? = null // Optional execution logic
 )
 
@@ -58,35 +59,40 @@ class FunCommands(
             }
 
             val player = source
-            val message = commandConfig.globalChat
+            val rawMessage = commandConfig.globalChat ?: commandConfig.localChat ?: ""
+
+            val filledMessage = rawMessage
                 .replace("<name>", player.username)
                 .replace("<arg-all>", args.joinToString(" "))
                 .replace("$1", args.getOrNull(1) ?: "<missing>")
                 .replace("$2", args.getOrNull(2) ?: "<missing>")
 
-
-            chattORE.broadcast(
-                message.render(
-                    mapOf(
-                        "message" to message.toComponent(),
-                        "sender" to player.username.toComponent()
-                    )
+            // Render the message using chattORE's render function
+            val renderedMessage = filledMessage.render(
+                mapOf(
+                    "message" to filledMessage.toComponent(),
+                    "sender" to player.username.toComponent()
                 )
             )
 
-
+            if (commandConfig.globalChat != null) {
+                chattORE.broadcast(renderedMessage)
+            } else if (commandConfig.localChat != null) {
+                player.sendMessage(renderedMessage)
+            }
 
             chattORE.logger.info(
-                "Executed command: /${commandConfig.command} by ${player.username} with args: ${
-                    args.joinToString(
-                        " "
-                    )
+                "Executed command: /${commandConfig.command} by ${player.username} with arguments: ${
+                    args.joinToString(" ")
                 }"
             )
 
             commandConfig.run?.let { executeAction(it, player) }
         }
     }
+
+
+
 
     private fun executeAction(action: String, player: Player) {
         when {

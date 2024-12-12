@@ -1,165 +1,189 @@
 [
-    {
-      "command": "love",
-      "description": "D'awww",
-      "globalChat": "<light_purple><name> <red><bold><3 <light_purple><arg-all>"
-    },
-    {
-      "command": "baa",
-      "description": "Baa like a sheep",
-      "globalChat": "<yellow><name><white> Baas like a sheep"
-    },
-    {
-      "command": "huzza",
-      "description": "HUZZZAH",
-      "globalChat": "<gold><name><dark_purple> yells HUZZA",
-      "run": "suicide"
-    },
-    {
-      "command": "forgive",
-      "description": "I'm sorry",
-      "globalChat": "<gold><name><dark_purple> forgives <gold><arg-all>"
-    },
-    {
-      "command": "lol",
-      "description": "haha",
-      "globalChat": "<yellow><name><gold> lol'd"
-    },
-    {
-      "command": "moo",
-      "description": "Moo like a cow",
-      "globalChat": "<yellow><name><white> Moos like a cow"
-    },
-    {
-      "command": "lemur",
-      "description": "Bark like a lemur",
-      "globalChat": "<yellow><name><white> Barks and screeches like a lemur"
-    },
-    {
-      "command": "snuggle",
-      "description": "for someone you love",
-      "globalChat": "<light_purple><name> <dark_red><bold>snuggled with <light_purple><arg-all>"
-    },
-    {
-      "command": "brains",
-      "description": "Brraaiinnss",
-      "globalChat": "<yellow><name><white> Brains like a zombie"
-    },
-    {
-      "command": "sss",
-      "description": "Sss like a creeper",
-      "globalChat": "<yellow><name><white> Sses like a creeper"
-    },
-    {
-      "command": "confuse",
-      "description": "errrrrm",
-      "globalChat": "<yellow><name><white> has ALL the confusion"
-    },
-    {
-      "command": "waffle",
-      "description": "tasty...",
-      "globalChat": "<yellow>Guess who likes waffles. <name> does!"
-    },
-    {
-      "command": "bark",
-      "description": "Bark like a dog",
-      "globalChat": "<yellow><name><white> Barks like a dog"
-    },
-    {
-      "command": "hap",
-      "description": "haphap",
-      "globalChat": "<light_purple><name> <dark_purple>haphaphap'd"
-    },
-    {
-      "command": "nou",
-      "description": "nou people",
-      "globalChat": "<light_purple><name> <dark_red><bold>nou'd <light_purple><arg-all>"
-    },
-    {
-      "command": "hate",
-      "description": "-",
-      "globalChat": "<green><name> <dark_green><bold>hates <green><arg-all>"
-    },
-    {
-      "command": "massage",
-      "description": "mmmm...",
-      "globalChat": "<light_purple><name> <dark_red>massaged <light_purple>$0's $1"
-    },
-    {
-      "command": "mistake",
-      "description": "odder",
-      "globalChat": "<dark_red>Ohder <gold><bold><name> <dark_purple>made a mistake"
-    },
-    {
-      "command": "art",
-      "description": "Dat colour",
-      "globalChat": "<green>Green is <dark_green><bold>NOT <green>a creative colour, <name>..."
-    },
-    {
-      "command": "oink",
-      "description": "Oink like a pig",
-      "globalChat": "<yellow><name><white> Oinks like a pig"
-    },
-    {
-      "command": "facepalm",
-      "description": "..No",
-      "globalChat": "<dark_aqua><name> <blue>facepalms"
-    },
-    {
-      "command": "cluck",
-      "description": "Cluck like a chicken",
-      "globalChat": "<yellow><name><white> Clucks like a chicken"
-    },
-    {
-      "command": "rage",
-      "description": "grrrr",
-      "globalChat": "<red><bold><name> <red><bold>rages"
-    },
-    {
-      "command": "hug",
-      "description": "for someone you love",
-      "globalChat": "<light_purple><name> <dark_red><bold>hugged <light_purple><arg-all>"
-    },
-    {
-      "command": "join",
-      "description": "Fake someone joining the game",
-      "globalChat": "<yellow><arg-all> joined the game"
-    },
-    {
-      "command": "leave",
-      "description": "Fake someone joining the game",
-      "globalChat": "<yellow><arg-all> left the game"
-    },
-    {
-      "command": "join-rename",
-      "description": "Fake someone joining the game as a different name",
-      "globalChat": "<yellow>$0 (formerly known as $1) joined the game"
-    },
-    {
-      "command": "keol",
-      "description": "keol",
-      "globalChat": "<yellow><name><gold> KEOLkeolKEOL'd"
-    },
-    {
-      "command": "rip",
-      "description": "rip",
-      "globalChat": "<red><bold>RIP <name>!"
-    },
-    {
-      "command": "shrug",
-      "description": "lol idk",
-      "globalChat": "<red><name> <yellow><arg-all> <gold>¯\\_(ツ)_/¯"
-    },
-    {
-      "command": "redcmd",
-      "description": "intal gento",
-      "globalChat": "<red>Hello allo"
-    },
-    {
-      "command": "lag",
-      "description": "got lag?",
-      "globalChat": "<red><name> <gold>thought there was some <dark_red><bold>lag<gold>...",
-      "run": "kick That should fix it! :waffle:"
-    }
-  ]
-  
+  {
+    "command": "love",
+    "description": "D'awww",
+    "globalChat": "<light_purple><name> <red><bold><3 <light_purple><arg-all>"
+  },
+  {
+    "command": "baa",
+    "description": "Baa like a sheep",
+    "globalChat": "<yellow><name><white> Baas like a sheep"
+  },
+  {
+    "command": "huzza",
+    "description": "HUZZZAH",
+    "globalChat": "<gold><name><dark_purple> yells HUZZA",
+    "run": "suicide"
+  },
+  {
+    "command": "nope",
+    "description": "Nope.avi",
+    "localChat": "Chuck testa"
+  },
+  {
+    "command": "forgive",
+    "description": "I'm sorry",
+    "globalChat": "<gold><name><dark_purple> forgives <gold><arg-all>"
+  },
+  {
+    "command": "lol",
+    "description": "haha",
+    "globalChat": "<yellow><name><gold> lol'd"
+  },
+  {
+    "command": "moo",
+    "description": "Moo like a cow",
+    "globalChat": "<yellow><name><white> Moos like a cow"
+  },
+  {
+    "command": "lemur",
+    "description": "Bark like a lemur",
+    "globalChat": "<yellow><name><white> Barks and screeches like a lemur"
+  },
+  {
+    "command": "snuggle",
+    "description": "for someone you love",
+    "globalChat": "<light_purple><name> <dark_red><bold>snuggled with <light_purple><arg-all>"
+  },
+  {
+    "command": "brains",
+    "description": "Brraaiinnss",
+    "globalChat": "<yellow><name><white> Brains like a zombie"
+  },
+  {
+    "command": "sss",
+    "description": "Sss like a creeper",
+    "globalChat": "<yellow><name><white> Sses like a creeper"
+  },
+  {
+    "command": "confuse",
+    "description": "errrrrm",
+    "globalChat": "<yellow><name><white> has ALL the confusion"
+  },
+  {
+    "command": "waffle",
+    "description": "tasty...",
+    "globalChat": "<yellow>Guess who likes waffles. <gold><name> <yellow>does!"
+  },
+  {
+    "command": "bark",
+    "description": "Bark like a dog",
+    "globalChat": "<yellow><name><white> Barks like a dog"
+  },
+  {
+    "command": "hap",
+    "description": "haphap",
+    "globalChat": "<light_purple><name> <dark_purple>haphaphap'd"
+  },
+  {
+    "command": "nou",
+    "description": "nou people",
+    "globalChat": "<light_purple><name> <dark_red><bold>nou'd <light_purple><arg-all>"
+  },
+  {
+    "command": "hate",
+    "description": "-",
+    "globalChat": "<green><name> <dark_green><bold>hates <green><arg-all>"
+  },
+  {
+    "command": "massage",
+    "description": "mmmm...",
+    "globalChat": "<light_purple><name> <dark_red>massaged <light_purple>$0's $1"
+  },
+  {
+    "command": "mistake",
+    "description": "odder",
+    "globalChat": "<dark_red>Ohder <gold><bold><name> <dark_purple>made a mistake"
+  },
+  {
+    "command": "art",
+    "description": "Dat colour",
+    "globalChat": "<green>Green is <dark_green><bold>NOT <green>a creative colour, <name>..."
+  },
+  {
+    "command": "c",
+    "description": "View format codes",
+    "localChat": "Formatting: <bold>l</bold> <underlined>l</underlined> <strikethrough>&m</strikethrough> <italic>n</italic> \nColor: <dark_blue>1</dark_blue> <dark_green>2</dark_green> <dark_aqua>3</dark_aqua> <dark_red>4</dark_red> <dark_purple>5</dark_purple> <gold>6</gold> <gray>7</gray> <dark_gray>8</dark_gray> <blue>9</blue> <black>0</black> <green>a</green> <aqua>b</aqua> <red>c</red> <light_purple>d</light_purple> <yellow>e</yellow> <white>f</white>"
+  },
+  {
+    "command": "oink",
+    "description": "Oink like a pig",
+    "globalChat": "<yellow><name><white> Oinks like a pig"
+  },
+  {
+    "command": "facepalm",
+    "description": "..No",
+    "globalChat": "<dark_aqua><name> <blue>facepalms"
+  },
+  {
+    "command": "cp",
+    "description": "Such lag",
+    "localChat": "OMG, lagggg"
+  },
+  {
+    "command": "cluck",
+    "description": "Cluck like a chicken",
+    "globalChat": "<yellow><name><white> Clucks like a chicken"
+  },
+  {
+    "command": "rage",
+    "description": "grrrr",
+    "globalChat": "<red><bold><name> <red><bold>rages"
+  },
+  {
+    "command": "hug",
+    "description": "for someone you love",
+    "globalChat": "<light_purple><name> <dark_red><bold>hugged <light_purple><arg-all>"
+  },
+  {
+    "command": "join",
+    "description": "Fake someone joining the game",
+    "globalChat": "<yellow><arg-all> joined the game"
+  },
+  {
+    "command": "leave",
+    "description": "Fake someone leaving the game",
+    "globalChat": "<yellow><arg-all> left the game"
+  },
+  {
+    "command": "join-rename",
+    "description": "Fake someone joining the game as a different name",
+    "globalChat": "<yellow>$0 (formerly known as $1) joined the game"
+  },
+  {
+    "command": "keol",
+    "description": "keol",
+    "globalChat": "<yellow><name><gold> KEOLkeolKEOL'd"
+  },
+  {
+    "command": "rip",
+    "description": "rip",
+    "globalChat": "<red><bold>RIP <name>!"
+  },
+  {
+    "command": "shrug",
+    "description": "lol idk",
+    "globalChat": "<red><name> <yellow><arg-all> <gold>¯\\_(ツ)_/¯"
+  },
+  {
+    "command": "redcmd",
+    "description": "intal gento",
+    "globalChat": "<red>Hello allo"
+  },
+  {
+    "command": "lag",
+    "description": "got lag?",
+    "globalChat": "<red><name> <gold>thought there was some <dark_red><bold>lag<gold>...",
+    "run": "kick That should fix it! 🧇"
+  },
+  {
+    "command": "op-me",
+    "description": "want some OP?",
+    "localChat": "<gray>[<dark_red><bold>!</bold><gray>] Made <name> a Server Operator."
+  },
+  {
+    "command": "funcommands",
+    "description": "fun!",
+    "localChat": "<gold>FunCommands: <yellow>waffle, <gold>lag, <yellow>love, baa, huzza, op-me, nope, forgive, lol, moo, lemur, snuggle, brains, sss, confuse, bark, hap, nou, hate, message, mistake, art, oink, c, facepalm, cp, cluck, hate, rage, join, leave, join-rename, hug, keol, rip, shrug, redcmd"
+  }
+]

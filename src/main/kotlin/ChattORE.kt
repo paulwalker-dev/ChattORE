@@ -38,7 +38,7 @@ import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
-const val VERSION = "0.1.0-SNAPSHOT"
+const val VERSION = "0.1.1-SNAPSHOT"
 
 @Plugin(
     id = "chattore",
@@ -46,7 +46,7 @@ const val VERSION = "0.1.0-SNAPSHOT"
     version = VERSION,
     url = "https://openredstone.org",
     description = "Because we want to have a chat system that actually wOREks for us.",
-    authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo"],
+    authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo", "Waffle [Wueffi]"],
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
@@ -117,7 +117,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Nick(this@ChattORE))
             registerCommand(Profile(this@ChattORE))
             registerCommand(Reply(config, this@ChattORE, replyMap))
-            registerCommand(c(config, this@ChattORE))
             setDefaultExceptionHandler(::handleCommandException, false)
             commandCompletions.registerCompletion("bool") { listOf("true", "false")}
             commandCompletions.registerCompletion("colors") { ctx ->
