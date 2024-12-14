@@ -34,30 +34,25 @@ object UsernameCache : Table("username_cache") {
     override val primaryKey = PrimaryKey(uuid)
 }
 
-object SettingTable : Table("setting") {
+object BoolSetting : Table("setting_bool") {
     val uuid = varchar("setting_uuid", 36).index()
     val key = varchar("setting_key", 32).index()
-    val type = char("setting_type", 1)  // B bool, S string, I int
-    val reference = integer("setting_reference")
-    val uuidKeyIndex = index("setting_uuid_key_index", true, uuid, key)
-}
-
-object BoolSetting : Table("setting_bool") {
-    val id = integer("setting_id").autoIncrement()
     val value = bool("setting_value")
-    override val primaryKey = PrimaryKey(id)
+    val uuidKeyIndex = index("setting_bool_uuid_key_index", true, uuid, key)
 }
 
 object StringSetting : Table("setting_string") {
-    val id = integer("setting_id").autoIncrement()
+    val uuid = varchar("setting_uuid", 36).index()
+    val key = varchar("setting_key", 32).index()
     val value = varchar("setting_value", 512)
-    override val primaryKey = PrimaryKey(id)
+    val uuidKeyIndex = index("setting_string_uuid_key_index", true, BoolSetting.uuid, BoolSetting.key)
 }
 
 object IntSetting : Table("setting_int") {
-    val id = integer("setting_id").autoIncrement()
+    val uuid = varchar("setting_uuid", 36).index()
+    val key = varchar("setting_key", 32).index()
     val value = integer("setting_value")
-    override val primaryKey = PrimaryKey(id)
+    val uuidKeyIndex = index("setting_int_uuid_key_index", true, BoolSetting.uuid, BoolSetting.key)
 }
 
 open class Setting<T>(val key: String)
@@ -78,7 +73,7 @@ class Storage(
     private fun initTables() = transaction(database) {
         SchemaUtils.create(
             About, Mail, Nick, UsernameCache,
-            SettingTable, BoolSetting, StringSetting, IntSetting)
+            BoolSetting, StringSetting, IntSetting)
     }
 
     fun setAbout(uuid: UUID, about: String) = transaction(database) {
@@ -160,82 +155,47 @@ class Storage(
     }
 
     inline fun <reified T> setSetting(setting: Setting<T>, uuid: UUID, value: T) = transaction(database) {
-        val settingType = when (T::class) {
-            Boolean::class -> "B"
-            String::class -> "S"
-            Int::class -> "I"
+        when (T::class) {
+            Boolean::class -> BoolSetting.upsert {
+                it[BoolSetting.uuid] = uuid.toString()
+                it[BoolSetting.key] = setting.key
+                it[BoolSetting.value] = value as Boolean
+            }
+            String::class -> StringSetting.upsert {
+                it[StringSetting.uuid] = uuid.toString()
+                it[StringSetting.key] = setting.key
+                it[StringSetting.value] = value as String
+            }
+            Int::class -> IntSetting.upsert {
+                it[IntSetting.uuid] = uuid.toString()
+                it[IntSetting.key] = setting.key
+                it[IntSetting.value] = value as Int
+            }
             else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
-        }
-
-        val existingSetting = SettingTable
-            .selectAll().where { (SettingTable.uuid eq uuid.toString()) and (SettingTable.key eq setting.key) }
-            .singleOrNull()
-
-        if (existingSetting == null) {
-            val referenceId = when (T::class) {
-                Boolean::class -> BoolSetting.insert {
-                    it[BoolSetting.value] = value as Boolean
-                }[BoolSetting.id]
-                String::class -> StringSetting.insert {
-                    it[StringSetting.value] = value as String
-                }[StringSetting.id]
-                Int::class -> IntSetting.insert {
-                    it[IntSetting.value] = value as Int
-                }[IntSetting.id]
-                else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
-            }
-
-            SettingTable.insert {
-                it[SettingTable.uuid] = uuid.toString()
-                it[SettingTable.key] = setting.key
-                it[SettingTable.type] = settingType  // First character of "B", "S", or "I"
-                it[SettingTable.reference] = referenceId
-            }
-        } else {
-            val referenceId = existingSetting[SettingTable.reference]
-            when (T::class) {
-                Boolean::class -> BoolSetting.update({ BoolSetting.id eq referenceId }) {
-                    it[BoolSetting.value] = value as Boolean
-                }
-                String::class -> StringSetting.update({ StringSetting.id eq referenceId }) {
-                    it[StringSetting.value] = value as String
-                }
-                Int::class -> IntSetting.update({ IntSetting.id eq referenceId }) {
-                    it[IntSetting.value] = value as Int
-                }
-                else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
-            }
         }
     }
 
     inline fun <reified T> getSetting(setting: Setting<T>, uuid: UUID): T? = transaction {
-        val settingRow = SettingTable
-            .selectAll().where { (SettingTable.uuid eq uuid.toString()) and (SettingTable.key eq setting.key) }
-            .singleOrNull() ?: return@transaction null
-
-        val settingType = settingRow[SettingTable.type]
-        val referenceId = settingRow[SettingTable.reference]
-
-        return@transaction when (settingType) {
-            "B" -> {
-                val result = BoolSetting
-                    .selectAll().where { BoolSetting.id eq referenceId }
-                    .singleOrNull() ?: return@transaction null
+        return@transaction when (T::class) {
+            Boolean::class -> {
+                val result = BoolSetting.selectAll().where {
+                    (BoolSetting.uuid eq uuid.toString()) and (BoolSetting.key eq setting.key)
+                }.singleOrNull() ?: return@transaction null
                 result[BoolSetting.value] as? T
             }
-            "S" -> {
-                val result = StringSetting
-                    .selectAll().where { StringSetting.id eq referenceId }
-                    .singleOrNull() ?: return@transaction null
+            String::class -> {
+                val result = StringSetting.selectAll().where {
+                    (StringSetting.uuid eq uuid.toString()) and (StringSetting.key eq setting.key)
+                }.singleOrNull() ?: return@transaction null
                 result[StringSetting.value] as? T
             }
-            "I" -> {
-                val result = IntSetting
-                    .selectAll().where { IntSetting.id eq referenceId }
-                    .singleOrNull() ?: return@transaction null
+            Int::class -> {
+                val result = IntSetting.selectAll().where {
+                    (IntSetting.uuid eq uuid.toString()) and (IntSetting.key eq setting.key)
+                }.singleOrNull() ?: return@transaction null
                 result[IntSetting.value] as? T
             }
-            else -> throw IllegalArgumentException("Unsupported type for setting: $settingType")
+            else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
         }
     }
 }
