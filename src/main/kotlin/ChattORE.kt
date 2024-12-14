@@ -333,7 +333,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             "username" to player.username.toComponent()
         )).let {
             "<click:run_command:'/playerprofile info ${player.username}'><message></click>".render(it)
-        };
+        }
 
         val prefix = luckUser.cachedData.metaData.prefix
             ?: luckUser.primaryGroup.replaceFirstChar(Char::uppercaseChar)

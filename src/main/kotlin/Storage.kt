@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 object About : Table("about") {
-    val uuid = varchar("about_uuid", 36).index()
+    val uuid = varchar("about_uuid", 36).uniqueIndex()
     val about = varchar("about_about", 512)
     override val primaryKey = PrimaryKey(uuid)
 }
@@ -23,17 +23,18 @@ object Mail : Table("mail") {
 }
 
 object Nick : Table("nick") {
-    val uuid = varchar("nick_uuid", 36).index()
+    val uuid = varchar("nick_uuid", 36).uniqueIndex()
     val nick = varchar("nick_nick", 2048)
     override val primaryKey = PrimaryKey(uuid)
 }
 
 object UsernameCache : Table("username_cache") {
-    val uuid = varchar("cache_user", 36).index()
+    val uuid = varchar("cache_user", 36).uniqueIndex()
     val username = varchar("cache_username", 16).index()
     override val primaryKey = PrimaryKey(uuid)
 }
 
+// todo add int, bool, and string settings tables
 class Storage(
     dbFile: String
 ) {
@@ -50,20 +51,14 @@ class Storage(
     }
 
     fun setAbout(uuid: UUID, about: String) = transaction(database) {
-        if (About.select { About.uuid eq uuid.toString() }.count() == 0L) {
-            About.insert {
-                it[this.uuid] = uuid.toString()
-                it[this.about] = about
-            }
-        } else {
-            About.update({ About.uuid eq uuid.toString() }) {
-                it[this.about] = about
-            }
+        About.upsert {
+            it[this.uuid] = uuid.toString()
+            it[this.about] = about
         }
     }
 
     fun getAbout(uuid: UUID) : String? = transaction(database) {
-        About.select { About.uuid eq uuid.toString() }.firstOrNull()?.let { it[About.about] }
+        About.selectAll().where { About.uuid eq uuid.toString() }.firstOrNull()?.let { it[About.about] }
     }
 
     fun removeNickname(target: UUID) = transaction(database) {
@@ -71,32 +66,20 @@ class Storage(
     }
 
     fun getNickname(target: UUID): String? = transaction(database) {
-        Nick.select { Nick.uuid eq target.toString() }.firstOrNull()?.let { it[Nick.nick] }
+        Nick.selectAll().where { Nick.uuid eq target.toString() }.firstOrNull()?.let { it[Nick.nick] }
     }
 
     fun setNickname(target: UUID, nickname: String) = transaction(database) {
-        if (Nick.select { Nick.uuid eq target.toString() }.count() == 0L) {
-            Nick.insert {
-                it[this.uuid] = target.toString()
-                it[this.nick] = nickname
-            }
-        } else {
-            Nick.update({ Nick.uuid eq target.toString() }) {
-                it[this.nick] = nickname
-            }
+        Nick.upsert {
+            it[this.uuid] = target.toString()
+            it[this.nick] = nickname
         }
     }
 
     fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
-        if (UsernameCache.select { UsernameCache.uuid eq user.toString() }.count() == 0L) {
-            UsernameCache.insert {
-                it[this.uuid] = user.toString()
-                it[this.username] = username
-            }
-        } else {
-            UsernameCache.update({ UsernameCache.uuid eq user.toString() }) {
-                it[this.username] = username
-            }
+        UsernameCache.upsert {
+            it[this.uuid] = user.toString()
+            it[this.username] = username
         }
         updateLocalUsernameCache()
     }
@@ -120,16 +103,15 @@ class Storage(
     }
 
     fun readMessage(recipient: UUID, id: Int): Pair<UUID, String>? = transaction(database) {
-        Mail.select {
-            (Mail.id eq id) and (Mail.recipient eq recipient.toString())
-        }.firstOrNull()?.let { toReturn ->
-            markRead(id, true)
-            UUID.fromString(toReturn[Mail.sender]) to toReturn[Mail.message]
-        }
+        Mail.selectAll().where { (Mail.id eq id) and (Mail.recipient eq recipient.toString()) }
+            .firstOrNull()?.let { toReturn ->
+                markRead(id, true)
+                UUID.fromString(toReturn[Mail.sender]) to toReturn[Mail.message]
+            }
     }
 
     fun getMessages(recipient: UUID): List<MailboxItem> = transaction(database) {
-        Mail.select { Mail.recipient eq recipient.toString() }
+        Mail.selectAll().where { Mail.recipient eq recipient.toString() }
             .orderBy(Mail.timestamp to SortOrder.DESC) .map {
             MailboxItem(
                 it[Mail.id],
