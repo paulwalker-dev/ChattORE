@@ -1,6 +1,7 @@
 package chattore.commands
 
 import chattore.ChattORE
+import chattore.SpyEnabled
 import chattore.render
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
@@ -28,6 +29,22 @@ class Chattore(private val chattORE: ChattORE) : BaseCommand() {
         player.sendMessage(
             chattORE.config[ChattORESpec.format.chattore].render(
                 "Reloaded ChattORE"
+            )
+        )
+    }
+
+    @Subcommand("spy")
+    fun spy(player: Player) {
+        val setting = chattORE.database.getSetting(SpyEnabled, player.uniqueId)
+        val newSetting = !(setting ?: false)
+        chattORE.database.setSetting(SpyEnabled, player.uniqueId, newSetting)
+        player.sendMessage(
+            chattORE.config[ChattORESpec.format.chattore].render(
+                if (newSetting) {
+                    "You are now spying on commands."
+                } else {
+                    "You are no longer spying on commands."
+                }
             )
         )
     }
