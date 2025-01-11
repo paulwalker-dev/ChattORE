@@ -1,6 +1,8 @@
 package chattore
 
 import chattore.commands.MailboxItem
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -34,25 +36,11 @@ object UsernameCache : Table("username_cache") {
     override val primaryKey = PrimaryKey(uuid)
 }
 
-object BoolSetting : Table("setting_bool") {
+object StringSetting : Table("setting") {
     val uuid = varchar("setting_uuid", 36).index()
     val key = varchar("setting_key", 32).index()
-    val value = bool("setting_value")
-    val uuidKeyIndex = index("setting_bool_uuid_key_index", true, uuid, key)
-}
-
-object StringSetting : Table("setting_string") {
-    val uuid = varchar("setting_uuid", 36).index()
-    val key = varchar("setting_key", 32).index()
-    val value = varchar("setting_value", 512)
-    val uuidKeyIndex = index("setting_string_uuid_key_index", true, BoolSetting.uuid, BoolSetting.key)
-}
-
-object IntSetting : Table("setting_int") {
-    val uuid = varchar("setting_uuid", 36).index()
-    val key = varchar("setting_key", 32).index()
-    val value = integer("setting_value")
-    val uuidKeyIndex = index("setting_int_uuid_key_index", true, BoolSetting.uuid, BoolSetting.key)
+    val value = text("setting_value")
+    val uuidKeyIndex = index("setting_uuid_key_index", true, uuid, key)
 }
 
 open class Setting<T>(val key: String)
@@ -72,8 +60,7 @@ class Storage(
 
     private fun initTables() = transaction(database) {
         SchemaUtils.create(
-            About, Mail, Nick, UsernameCache,
-            BoolSetting, StringSetting, IntSetting)
+            About, Mail, Nick, UsernameCache, StringSetting)
     }
 
     fun setAbout(uuid: UUID, about: String) = transaction(database) {
@@ -155,47 +142,18 @@ class Storage(
     }
 
     inline fun <reified T> setSetting(setting: Setting<T>, uuid: UUID, value: T) = transaction(database) {
-        when (T::class) {
-            Boolean::class -> BoolSetting.upsert {
-                it[BoolSetting.uuid] = uuid.toString()
-                it[BoolSetting.key] = setting.key
-                it[BoolSetting.value] = value as Boolean
-            }
-            String::class -> StringSetting.upsert {
-                it[StringSetting.uuid] = uuid.toString()
-                it[StringSetting.key] = setting.key
-                it[StringSetting.value] = value as String
-            }
-            Int::class -> IntSetting.upsert {
-                it[IntSetting.uuid] = uuid.toString()
-                it[IntSetting.key] = setting.key
-                it[IntSetting.value] = value as Int
-            }
-            else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
+        StringSetting.upsert {
+            it[StringSetting.uuid] = uuid.toString()
+            it[key] = setting.key
+            it[StringSetting.value] = Json.encodeToString(value)
         }
     }
 
     inline fun <reified T> getSetting(setting: Setting<T>, uuid: UUID): T? = transaction {
-        return@transaction when (T::class) {
-            Boolean::class -> {
-                val result = BoolSetting.selectAll().where {
-                    (BoolSetting.uuid eq uuid.toString()) and (BoolSetting.key eq setting.key)
-                }.singleOrNull() ?: return@transaction null
-                result[BoolSetting.value] as? T
-            }
-            String::class -> {
-                val result = StringSetting.selectAll().where {
-                    (StringSetting.uuid eq uuid.toString()) and (StringSetting.key eq setting.key)
-                }.singleOrNull() ?: return@transaction null
-                result[StringSetting.value] as? T
-            }
-            Int::class -> {
-                val result = IntSetting.selectAll().where {
-                    (IntSetting.uuid eq uuid.toString()) and (IntSetting.key eq setting.key)
-                }.singleOrNull() ?: return@transaction null
-                result[IntSetting.value] as? T
-            }
-            else -> throw IllegalArgumentException("Unsupported type for setting: ${T::class.simpleName}")
-        }
+        val result = StringSetting.selectAll().where {
+            (StringSetting.uuid eq uuid.toString()) and (StringSetting.key eq setting.key)
+        }.singleOrNull() ?: return@transaction null
+        val jsonString = result[StringSetting.value]
+        Json.decodeFromString<T>(jsonString)
     }
 }
