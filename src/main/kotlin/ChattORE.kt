@@ -91,6 +91,16 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 logger.info("Loaded ${values.size} of type $key")
             }
         }
+        val resourcePath = "commands.json"
+        val resourceStream = javaClass.classLoader.getResourceAsStream(resourcePath)
+        if (resourceStream == null) {
+            logger.warn("$resourcePath not found. Skipping fun command loading.")
+            return
+        }
+        val commandsJson = resourceStream.bufferedReader().use { it.readText() }
+        val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
+        logger.info("Parsed ${commands.size} commands from JSON.")
+
         if (config[ChattORESpec.discord.enable]) {
             discordNetwork = DiscordApiBuilder()
                 .setToken(config[ChattORESpec.discord.networkToken])
@@ -117,6 +127,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Nick(this@ChattORE))
             registerCommand(Profile(this@ChattORE))
             registerCommand(Reply(config, this@ChattORE, replyMap))
+            registerCommand(Funcommands(config, this@ChattORE, commands))
             setDefaultExceptionHandler(::handleCommandException, false)
             commandCompletions.registerCompletion("bool") { listOf("true", "false")}
             commandCompletions.registerCompletion("colors") { ctx ->
@@ -149,7 +160,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         proxy.eventManager.register(this, ChatListener(this))
-        FunCommands(proxy, logger, this@ChattORE).loadFunCommands()
+        FunCommands(proxy, logger, this@ChattORE, config).loadFunCommands()
     }
 
     fun parsePlayerProfile(user: User, ign: String): Component {

@@ -14,6 +14,9 @@ Because we want to have a chat system that actually wOREks for us.
 | `/mail send <player> <message>`       | `chattore.mail`                 | Send a mail message                                      | No aliases                                         |
 | `/mail read <mail ID>`                | `chattore.mail`                 | Read a mail message (Designed for usage with `/mailbox`) | No aliases                                         |
 | `/me <message>`                       | `chattore.me`                   | Have a thought in chat                                   | No aliases                                         |
+| `/funcommands`                        | `chattore.funcommands`          | Display current Funcommands version                      | `fc`                                               |
+| `/funcommands list`                   | `chattore.funcommands`          | Display list of all Funcommands                          | `fc`                                               |
+| `/funcommands info <command>`         | `chattore.funcommands`          | Display description of <command>                         | `fc`                                               |
 | `/c`                             | `chattore.c`               | Color List                                     | No aliases                                         |                                 |
 | `/message <player> <message>`         | `chattore.message`              | Send a message to a player                               | `/m\|/pm\|/msg\|/vmsg\|/vmessage\|/whisper\|/tell` |
 | `/reply <message>`                    | `chattore.message`              | Reply to a message                                       | `/playerprofile`                                   |

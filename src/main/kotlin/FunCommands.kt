@@ -1,7 +1,6 @@
 package chattore
 
-import chattore.entity.ChattORESpec
-import com.velocitypowered.api.command.CommandSource
+import com.uchuhimo.konf.Config
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
@@ -9,37 +8,25 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import org.slf4j.Logger
-import java.nio.file.Files
-import java.nio.file.Paths
 
 @Serializable
 data class FunCommandConfig(
     val command: String,
     val description: String,
-    val localChat: String? = null, // Add localChat as optional
-    val globalChat: String? = null, // Keep globalChat as optional
-    val run: String? = null // Optional execution logic
+    val localChat: String? = null, // Optional: message to sender only
+    val globalChat: String? = null, // Optional: broadcast to all
+    val othersChat: String? = null, // Optional: send to everyone except the sender
+    val run: String? = null // Optional: action execution
 )
 
 class FunCommands(
     private val proxy: ProxyServer,
     private val logger: Logger,
-    private val chattORE: ChattORE
+    private val chattORE: ChattORE,
+    private val commands: List<FunCommandConfig>
 ) {
 
     fun loadFunCommands() {
-        val resourcePath = "commands.json"
-        val resourceStream = javaClass.classLoader.getResourceAsStream(resourcePath)
-
-        if (resourceStream == null) {
-            logger.warn("$resourcePath not found. Skipping fun command loading.")
-            return
-        }
-
-        val commandsJson = resourceStream.bufferedReader().use { it.readText() }
-        val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
-        logger.info("Parsed ${commands.size} commands from JSON.")
-
         commands.forEach { commandConfig ->
             val meta = proxy.commandManager.metaBuilder(commandConfig.command).build()
             proxy.commandManager.register(meta, createDynamicCommand(commandConfig))
@@ -61,6 +48,7 @@ class FunCommands(
             val player = source
             val rawGlobalMessage = commandConfig.globalChat
             val rawLocalMessage = commandConfig.localChat
+            val rawOthersMessage = commandConfig.othersChat
 
             val renderedGlobalMessage = rawGlobalMessage?.replace("<name>", player.username)
                 ?.replace("<arg-all>", args.joinToString(" "))
@@ -72,6 +60,12 @@ class FunCommands(
                 ?.replace("$1", args.getOrNull(1) ?: "<missing>")
                 ?.replace("$2", args.getOrNull(2) ?: "<missing>")
 
+            val renderedOthersMessage = rawOthersMessage?.replace("<name>", player.username)
+                ?.replace("<arg-all>", args.joinToString(" "))
+                ?.replace("$1", args.getOrNull(1) ?: "<missing>")
+                ?.replace("$2", args.getOrNull(2) ?: "<missing>")
+
+            // Handle global chat
             if (rawGlobalMessage != null) {
                 chattORE.broadcast(
                     renderedGlobalMessage!!.render(
@@ -82,6 +76,8 @@ class FunCommands(
                     )
                 )
             }
+
+            // Handle local chat
             if (rawLocalMessage != null) {
                 player.sendMessage(
                     renderedLocalMessage!!.render(
@@ -93,6 +89,21 @@ class FunCommands(
                 )
             }
 
+            // Handle othersChat
+            if (rawOthersMessage != null) {
+                proxy.allPlayers.filter { it != player }.forEach { targetPlayer ->
+                    targetPlayer.sendMessage(
+                        renderedOthersMessage!!.render(
+                            mapOf(
+                                "message" to renderedOthersMessage.toComponent(),
+                                "sender" to player.username.toComponent()
+                            )
+                        )
+                    )
+                }
+            }
+
+            // Log and execute additional actions
             chattORE.logger.info(
                 "Executed command: /${commandConfig.command} by ${player.username} with arguments: ${
                     args.joinToString(" ")
@@ -102,7 +113,6 @@ class FunCommands(
             commandConfig.run?.let { executeAction(it, player) }
         }
     }
-
 
     private fun executeAction(action: String, player: Player) {
         when {

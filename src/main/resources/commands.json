@@ -10,6 +10,11 @@
     "globalChat": "<yellow><name><white> Baas like a sheep"
   },
   {
+    "command": "meow",
+    "description": "Meow like a cat",
+    "globalChat": "<yellow><name><white> Meows like a cat"
+  },
+  {
     "command": "huzza",
     "description": "HUZZZAH",
     "globalChat": "<gold><name><dark_purple> yells HUZZA",
@@ -159,11 +164,29 @@
   {
     "command": "op-me",
     "description": "want some OP?",
-    "localChat": "<gray>[<dark_red><bold>!</bold><gray>] Made <name> a Server Operator."
+    "localChat": "<gray>[<dark_red><bold>!</bold><gray>] Made <name> a Server Operator.",
+    "othersChat": "<gold><name> <yellow>tried to hack OP!"
   },
   {
-    "command": "funcommands",
-    "description": "fun!",
-    "localChat": "<gold>FunCommands: <yellow>art, baa, bark, brains, c, cluck, confuse, cp, facepalm, forgive, hap, hate, hate, hug, huzza, keol, lag, lemur, lol, love, mistake, moo, nope, nou, oink, op-me, rage, redcmd, rip, shrug, snuggle, sss, waffle"
+    "command": "bam",
+    "description": "somebody add bam!",
+    "localChat": "<yellow><name> left the Network.",
+    "othersChat": "<red><name> <gray>was bammed!"
+  },
+  {
+    "command": "ban-capo",
+    "description": "Capo? Banned!",
+    "globalChat": "<red>LordDecapo <gray>was banned!",
+    "localChat": "<gold>You thought that works huh?"
+  },
+  {
+    "command": "sus",
+    "description": "Who vented smh",
+    "globalChat": "<yellow><name> <gold>is the <red><bold>IMPOSTOR"
+  },
+  {
+    "command": "certain",
+    "description": "No I am.",
+    "globalChat": "<yellow><name> <white>has ALL the certainity"
   }
 ]
