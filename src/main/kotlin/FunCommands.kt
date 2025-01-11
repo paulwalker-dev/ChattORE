@@ -1,10 +1,6 @@
 package chattore
 
-import chattore.commands.Funcommands
-import chattore.entity.ChattORESpec
-import co.aikar.commands.VelocityCommandManager
 import com.uchuhimo.konf.Config
-import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
@@ -12,8 +8,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import org.slf4j.Logger
-import java.nio.file.Files
-import java.nio.file.Paths
 
 @Serializable
 data class FunCommandConfig(
@@ -29,26 +23,10 @@ class FunCommands(
     private val proxy: ProxyServer,
     private val logger: Logger,
     private val chattORE: ChattORE,
-    private val config: Config
+    private val commands: List<FunCommandConfig>
 ) {
 
     fun loadFunCommands() {
-        val resourcePath = "commands.json"
-        val resourceStream = javaClass.classLoader.getResourceAsStream(resourcePath)
-
-        if (resourceStream == null) {
-            logger.warn("$resourcePath not found. Skipping fun command loading.")
-            return
-        }
-
-        val commandsJson = resourceStream.bufferedReader().use { it.readText() }
-        val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
-        logger.info("Parsed ${commands.size} commands from JSON.")
-
-        VelocityCommandManager(proxy, chattORE).apply {
-            registerCommand(Funcommands(config, chattORE, commands))
-        }
-
         commands.forEach { commandConfig ->
             val meta = proxy.commandManager.metaBuilder(commandConfig.command).build()
             proxy.commandManager.register(meta, createDynamicCommand(commandConfig))

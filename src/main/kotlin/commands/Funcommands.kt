@@ -35,7 +35,7 @@ class Funcommands(
     }
 
     @Subcommand("list")
-    @Description("Lists all available fun commands in reverse alphabetical order")
+    @Description("Lists all available fun commands in alphabetical order")
     fun onList(player: Player) {
         if (commands.isEmpty()) {
             val noCommandsMessage = config[ChattORESpec.format.funcommandsNoCommands].render(
@@ -55,7 +55,7 @@ class Funcommands(
         player.sendMessage(headerMessage)
 
         val commandsMessage = Component.text()
-        commands.sortedByDescending { it.command }.forEach { cmd ->
+        commands.sortedBy{ it.command }.forEach { cmd ->
             val clickableCommand = Component.text("/${cmd.command} ")
                 .hoverEvent(
                     HoverEvent.showText(
@@ -63,7 +63,7 @@ class Funcommands(
                     )
                 )
                 .clickEvent(
-                    ClickEvent.runCommand("/${cmd.command}")
+                    ClickEvent.suggestCommand("/${cmd.command}")
                 )
 
             commandsMessage.append(clickableCommand)
