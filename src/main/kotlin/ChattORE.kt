@@ -149,7 +149,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         proxy.eventManager.register(this, ChatListener(this))
-        FunCommands(proxy, logger, this@ChattORE).loadFunCommands()
+        FunCommands(proxy, logger, this@ChattORE, config).loadFunCommands()
     }
 
     fun parsePlayerProfile(user: User, ign: String): Component {
