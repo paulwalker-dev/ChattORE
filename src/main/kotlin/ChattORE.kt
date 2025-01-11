@@ -381,15 +381,19 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         )
     }
 
-    fun sendPrivileged(component: Component, exclude: UUID = UUID.randomUUID()) {
+    fun sendPrivileged(component: Component, exclude: UUID? = null, ignorable: Boolean = true) {
         val privileged = proxy.allPlayers.filter {
             it.hasPermission("chattore.privileged")
                     && (it.uniqueId != exclude)
         }
         for (user in privileged) {
-            val setting = database.getSetting(SpyEnabled, user.uniqueId)
-            val spying = setting ?: false
-            if (spying) {
+            if (ignorable) {
+                val setting = database.getSetting(SpyEnabled, user.uniqueId)
+                val spying = setting ?: false
+                if (spying) {
+                    user.sendMessage(component)
+                }
+            } else {
                 user.sendMessage(component)
             }
         }
