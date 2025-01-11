@@ -127,7 +127,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Nick(this@ChattORE))
             registerCommand(Profile(this@ChattORE))
             registerCommand(Reply(config, this@ChattORE, replyMap))
-            registerCommand(Funcommands(config, this@ChattORE, commands))
+            registerCommand(Funcommands(config, commands))
             setDefaultExceptionHandler(::handleCommandException, false)
             commandCompletions.registerCompletion("bool") { listOf("true", "false")}
             commandCompletions.registerCompletion("colors") { ctx ->
@@ -160,7 +160,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         proxy.eventManager.register(this, ChatListener(this))
-        FunCommands(proxy, logger, this@ChattORE, config).loadFunCommands()
+        FunCommands(proxy, logger, this@ChattORE, commands).loadFunCommands()
     }
 
     fun parsePlayerProfile(user: User, ign: String): Component {

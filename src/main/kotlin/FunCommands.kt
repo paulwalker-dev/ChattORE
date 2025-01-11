@@ -1,5 +1,6 @@
 package chattore
 
+
 import com.uchuhimo.konf.Config
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player

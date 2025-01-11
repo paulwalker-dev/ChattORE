@@ -18,7 +18,6 @@ import net.kyori.adventure.text.event.HoverEvent
 @CommandPermission("chattore.funcommands")
 class Funcommands(
     private val config: Config,
-    private val chattORE: ChattORE,
     private val commands: List<FunCommandConfig>
 ) : BaseCommand() {
 
