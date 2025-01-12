@@ -1,12 +1,10 @@
 package chattore
 
 
-import com.uchuhimo.konf.Config
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import org.slf4j.Logger
 
@@ -46,72 +44,59 @@ class FunCommands(
                 return@SimpleCommand
             }
 
-            val player = source
             val rawGlobalMessage = commandConfig.globalChat
             val rawLocalMessage = commandConfig.localChat
             val rawOthersMessage = commandConfig.othersChat
 
-            val renderedGlobalMessage = rawGlobalMessage?.replace("<name>", player.username)
+            val renderedGlobalMessage = rawGlobalMessage?.replace("<name>", source.username)
                 ?.replace("<arg-all>", args.joinToString(" "))
                 ?.replace("$1", args.getOrNull(1) ?: "<missing>")
                 ?.replace("$2", args.getOrNull(2) ?: "<missing>")
 
-            val renderedLocalMessage = rawLocalMessage?.replace("<name>", player.username)
+            val renderedLocalMessage = rawLocalMessage?.replace("<name>", source.username)
                 ?.replace("<arg-all>", args.joinToString(" "))
                 ?.replace("$1", args.getOrNull(1) ?: "<missing>")
                 ?.replace("$2", args.getOrNull(2) ?: "<missing>")
 
-            val renderedOthersMessage = rawOthersMessage?.replace("<name>", player.username)
+            val renderedOthersMessage = rawOthersMessage?.replace("<name>", source.username)
                 ?.replace("<arg-all>", args.joinToString(" "))
                 ?.replace("$1", args.getOrNull(1) ?: "<missing>")
                 ?.replace("$2", args.getOrNull(2) ?: "<missing>")
 
             // Handle global chat
-            if (rawGlobalMessage != null) {
-                chattORE.broadcast(
-                    renderedGlobalMessage!!.render(
-                        mapOf(
-                            "message" to renderedGlobalMessage.toComponent(),
-                            "sender" to player.username.toComponent()
-                        )
-                    )
-                )
+            renderedGlobalMessage?.let {
+                chattORE.broadcast(it.render(mapOf(
+                    "message" to renderedGlobalMessage.toComponent(),
+                    "sender" to source.username.toComponent()
+                )))
             }
 
             // Handle local chat
-            if (rawLocalMessage != null) {
-                player.sendMessage(
-                    renderedLocalMessage!!.render(
-                        mapOf(
-                            "message" to renderedLocalMessage.toComponent(),
-                            "sender" to player.username.toComponent()
-                        )
-                    )
-                )
+            renderedLocalMessage?.let {
+                source.sendMessage(it.render(mapOf(
+                    "message" to renderedLocalMessage.toComponent(),
+                    "sender" to source.username.toComponent()
+                )))
             }
 
             // Handle othersChat
-            if (rawOthersMessage != null) {
-                proxy.allPlayers.filter { it != player }.forEach { targetPlayer ->
-                    targetPlayer.sendMessage(
-                        renderedOthersMessage!!.render(
-                            mapOf(
-                                "message" to renderedOthersMessage.toComponent(),
-                                "sender" to player.username.toComponent()
-                            )
-                        )
-                    )
+            renderedOthersMessage?.let {
+                proxy.allPlayers.filter { it != source }.forEach { targetPlayer ->
+                    targetPlayer.sendMessage(it.render(mapOf(
+                        "message" to renderedOthersMessage.toComponent(),
+                        "sender" to source.username.toComponent()
+                    )))
                 }
             }
 
             // Log and execute additional actions
             chattORE.logger.info(
-                "Executed command: /${commandConfig.command} by ${player.username} with arguments: ${
+                "Executed command: /${commandConfig.command} by ${source.username} with arguments: ${
                     args.joinToString(" ")
                 }"
             )
 
-            commandConfig.run?.let { executeAction(it, player) }
+            commandConfig.run?.let { executeAction(it, source) }
         }
     }
 
