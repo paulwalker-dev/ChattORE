@@ -33,7 +33,8 @@ class HelpOp(
         player.sendMessage(message)
         chattORE.sendPrivileged(
             message,
-            exclude = player.uniqueId
+            exclude = player.uniqueId,
+            ignorable = false
         )
     }
 }
