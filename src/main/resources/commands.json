@@ -192,17 +192,17 @@
   {
     "command": "fan",
     "description": "*whoosh*",
-    "globalChat": "<gold><name> <white> is ORE's second biggest fan!",
-    "localChat": "<white> fandit is the first."
+    "globalChat": "<gold><name><white> is ORE's second biggest fan!",
+    "localChat": "<white>fandit is the first."
   },
   {
     "command": "donate",
     "description": "Feel like helping out?",
-    "localChat": "Thank you! https://openredstone.org/donate"
+    "localChat": "Thank you! <aqua><click:open_url:'https://openredstone.org/donate'><hover:show_text:'Go to URL'>https://openredstone.org/donate</hover></click></aqua>"
   },
   {
     "command": "owner",
     "description": "Who is it? 👀",
-    "localChat": "Follow this link to find the current owner: https://openredstone.org/owner"
+    "localChat": "Follow this link to find information about the current owner: <aqua><click:open_url:'https://openredstone.org/owner'><hover:show_text:'Go to URL'>https://openredstone.org/owner</hover></click></aqua>"
   }
 ]
