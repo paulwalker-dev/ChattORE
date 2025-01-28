@@ -23,7 +23,7 @@ class Me(
     @Default
     @Syntax("[message]")
     fun default(player: Player, args: Array<String>) {
-        if (args.isEmpty()) throw ChattoreException("You have to &ohave&c a thonk first!")
+        if (args.isEmpty()) throw ChattoreException("You have to have a thonk first!")
         val statement = args.joinToString(" ")
         chattORE.logger.info("* ${player.username} $statement")
         chattORE.broadcast(
