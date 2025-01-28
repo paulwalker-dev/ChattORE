@@ -68,7 +68,7 @@
   {
     "command": "waffle",
     "description": "tasty...",
-    "globalChat": "<yellow>Guess who likes waffles. <gold><name> <yellow>does!"
+    "globalChat": "<yellow>Guess who likes 🧇s. <gold><name> <yellow>does!"
   },
   {
     "command": "bark",
@@ -159,7 +159,7 @@
     "command": "lag",
     "description": "got lag?",
     "globalChat": "<red><name> <gold>thought there was some <dark_red><bold>lag<gold>...",
-    "run": "kick That should fix it! 🧇"
+    "run": "kick That should fix it!"
   },
   {
     "command": "op-me",
@@ -188,5 +188,21 @@
     "command": "certain",
     "description": "No I am.",
     "globalChat": "<yellow><name> <white>has ALL the certainity"
+  },
+  {
+    "command": "fan",
+    "description": "*whoosh*",
+    "globalChat": "<gold><name> <white> is ORE's second biggest fan!",
+    "localChat": "<white> fandit is the first."
+  },
+  {
+    "command": "donate",
+    "description": "Feel like helping out?",
+    "localChat": "Thank you! https://openredstone.org/donate"
+  },
+  {
+    "command": "owner",
+    "description": "Who is it? 👀",
+    "localChat": "Follow this link to find the current owner: https://openredstone.org/owner"
   }
 ]
