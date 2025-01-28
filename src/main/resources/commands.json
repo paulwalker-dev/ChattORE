@@ -7,12 +7,12 @@
   {
     "command": "baa",
     "description": "Baa like a sheep",
-    "globalChat": "<yellow><name><white> Baas like a sheep"
+    "globalChat": "<yellow><name><white> baas like a sheep"
   },
   {
     "command": "meow",
     "description": "Meow like a cat",
-    "globalChat": "<yellow><name><white> Meows like a cat"
+    "globalChat": "<yellow><name><white> meows like a cat"
   },
   {
     "command": "huzza",
@@ -38,12 +38,12 @@
   {
     "command": "moo",
     "description": "Moo like a cow",
-    "globalChat": "<yellow><name><white> Moos like a cow"
+    "globalChat": "<yellow><name><white> moos like a cow"
   },
   {
     "command": "lemur",
     "description": "Bark like a lemur",
-    "globalChat": "<yellow><name><white> Barks and screeches like a lemur"
+    "globalChat": "<yellow><name><white> barks and screeches like a lemur"
   },
   {
     "command": "snuggle",
@@ -53,12 +53,12 @@
   {
     "command": "brains",
     "description": "Brraaiinnss",
-    "globalChat": "<yellow><name><white> Brains like a zombie"
+    "globalChat": "<yellow><name><white> brains like a zombie"
   },
   {
     "command": "sss",
     "description": "Sss like a creeper",
-    "globalChat": "<yellow><name><white> Sses like a creeper"
+    "globalChat": "<yellow><name><white> sses like a creeper"
   },
   {
     "command": "confuse",
@@ -73,7 +73,7 @@
   {
     "command": "bark",
     "description": "Bark like a dog",
-    "globalChat": "<yellow><name><white> Barks like a dog"
+    "globalChat": "<yellow><name><white> barks like a dog"
   },
   {
     "command": "hap",
@@ -108,7 +108,7 @@
   {
     "command": "oink",
     "description": "Oink like a pig",
-    "globalChat": "<yellow><name><white> Oinks like a pig"
+    "globalChat": "<yellow><name><white> oinks like a pig"
   },
   {
     "command": "facepalm",
@@ -123,7 +123,7 @@
   {
     "command": "cluck",
     "description": "Cluck like a chicken",
-    "globalChat": "<yellow><name><white> Clucks like a chicken"
+    "globalChat": "<yellow><name><white> clucks like a chicken"
   },
   {
     "command": "rage",
