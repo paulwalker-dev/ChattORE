@@ -69,7 +69,7 @@
     "command": "waffle",
     "description": "tasty...",
     "globalChat": "<yellow>Guess who likes waffles. <gold><name> <yellow>does!",
-    "localChat": "<gold>Wueffi <yellow> does too!"
+    "localChat": "<gold>Wueffi<yellow> does too!"
   },
   {
     "command": "bark",
