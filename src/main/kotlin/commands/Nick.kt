@@ -59,7 +59,7 @@ class Nick(
     fun set(player: Player, vararg colors: String) {
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         val rendered = if (colors.size == 1) {
-            val color = colors.first().validateColor();
+            val color = colors.first().validateColor()
             val nickname = "<color:$color><username></color:$color>"
             chattORE.database.setNickname(player.uniqueId, nickname)
             nickname
@@ -81,8 +81,8 @@ class Nick(
     fun preset(player: Player, preset: String) {
         val format = chattORE.config[ChattORESpec.nicknamePresets][preset]
             ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
-        val rendered = format.render(mapOf("username" to Component.text(player.username)));
-        chattORE.database.setNickname(player.uniqueId, format);
+        val rendered = format.render(mapOf("username" to Component.text(player.username)))
+        chattORE.database.setNickname(player.uniqueId, format)
         val response = chattORE.config[ChattORESpec.format.chattore].render(
             "Your nickname has been set to <message>".render(rendered)
         )
@@ -183,7 +183,7 @@ class Nick(
     }
 
     private fun setNicknameGradient(uniqueId: UUID, vararg colors: String): String {
-        val codes = colors.joinToString(":") { it.validateColor() };
+        val codes = colors.joinToString(":") { it.validateColor() }
         val nickname = "<gradient:$codes><username></gradient>"
         chattORE.database.setNickname(uniqueId, nickname)
         return nickname
