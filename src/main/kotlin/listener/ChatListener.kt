@@ -1,16 +1,12 @@
 package chattore.listener
 
-import chattore.ChattORE
-import chattore.discordEscape
+import chattore.*
 import chattore.entity.ChattORESpec
-import chattore.render
-import chattore.toComponent
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.command.CommandExecuteEvent
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.player.PlayerChatEvent
-import com.velocitypowered.api.event.player.ServerPostConnectEvent
 import com.velocitypowered.api.event.player.ServerPreConnectEvent
 import com.velocitypowered.api.event.player.TabCompleteEvent
 import com.velocitypowered.api.proxy.Player
@@ -21,7 +17,6 @@ class ChatListener(
 ) {
     @Subscribe
     fun onTabComplete(event: TabCompleteEvent) {
-        // TODO: Autocomplete player names and stuff idk
         event.suggestions.clear()
     }
 
@@ -88,9 +83,25 @@ class ChatListener(
     @Subscribe
     fun onChatEvent(event: PlayerChatEvent) {
         val pp = event.player
+        val message = event.message
+        val matches = chattORE.chatConfirmRegexes.filter { it.containsMatchIn(message) }
+        if (matches.isNotEmpty()) {
+            chattORE.chatConfirmMap[pp.uniqueId] = message
+            var replaced = message
+            matches.forEach {
+                replaced = it.replace(replaced) { match ->
+                    "<red>${match.value}</red>"
+                }
+            }
+            chattORE.logger.info("${pp.username} (${pp.uniqueId}) Attempting to send flagged message: $message")
+            pp.sendMessage(chattORE.config[ChattORESpec.format.chatConfirmPrompt].render(
+                mapOf("message" to replaced.miniMessageDeserialize())
+            ))
+            return
+        }
         pp.currentServer.ifPresent { server ->
-            chattORE.logger.info("${pp.username} (${pp.uniqueId}): ${event.message}")
-            chattORE.broadcastChatMessage(server.serverInfo.name, pp.uniqueId, event.message)
+            chattORE.logger.info("${pp.username} (${pp.uniqueId}): $message")
+            chattORE.broadcastChatMessage(server.serverInfo.name, pp.uniqueId, message)
         }
     }
 

@@ -53,7 +53,9 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     lateinit var luckPerms: LuckPerms
     lateinit var config: Config
     lateinit var database: Storage
+    lateinit var chatConfirmRegexes: List<Regex>
     var discordNetwork: DiscordApi? = null
+    val chatConfirmMap: MutableMap<UUID, String> = hashMapOf()
     private val replyMap: MutableMap<UUID, UUID> = hashMapOf()
     private var discordMap: Map<String, DiscordApi> = hashMapOf()
     private var fileTypeMap: Map<String, List<String>> = hashMapOf()
@@ -100,6 +102,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         val commandsJson = resourceStream.bufferedReader().use { it.readText() }
         val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
         logger.info("Parsed ${commands.size} commands from JSON.")
+        chatConfirmRegexes = config[ChattORESpec.regexes].map { Regex(it, RegexOption.IGNORE_CASE) }
 
         if (config[ChattORESpec.discord.enable]) {
             discordNetwork = DiscordApiBuilder()
@@ -119,6 +122,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
 
         VelocityCommandManager(proxy, this).apply {
             registerCommand(Chattore(this@ChattORE))
+            registerCommand(ConfirmMessage(this@ChattORE))
             registerCommand(Emoji(this@ChattORE, emojis))
             registerCommand(HelpOp(this@ChattORE))
             registerCommand(Mail(this@ChattORE))
