@@ -10,6 +10,11 @@
     "globalChat": "<yellow><name><white> baas like a sheep"
   },
   {
+    "command": "me",
+    "description": "Have a thought? Share!",
+    "globalChat": "<i>* <blue><name> <arg-all></blue> *</i>"
+  },
+  {
     "command": "meow",
     "description": "Meow like a cat",
     "globalChat": "<yellow><name><white> meows like a cat"

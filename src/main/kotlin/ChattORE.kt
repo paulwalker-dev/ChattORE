@@ -126,7 +126,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             registerCommand(Emoji(this@ChattORE, emojis))
             registerCommand(HelpOp(this@ChattORE))
             registerCommand(Mail(this@ChattORE))
-            registerCommand(Me(config, this@ChattORE))
             registerCommand(Message(config, this@ChattORE, replyMap))
             registerCommand(Nick(this@ChattORE))
             registerCommand(Profile(this@ChattORE))
