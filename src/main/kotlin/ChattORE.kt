@@ -123,7 +123,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         VelocityCommandManager(proxy, this).apply {
             registerCommand(Chattore(this@ChattORE))
             registerCommand(ConfirmMessage(this@ChattORE))
-            registerCommand(Emoji(this@ChattORE, emojis))
+            registerCommand(Emoji(config, emojis))
             registerCommand(HelpOp(this@ChattORE))
             registerCommand(Mail(this@ChattORE))
             registerCommand(Message(config, this@ChattORE, replyMap))

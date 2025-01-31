@@ -1,6 +1,5 @@
 package chattore.commands
 
-import chattore.ChattORE
 import chattore.FunCommandConfig
 import chattore.ChattoreException
 import com.uchuhimo.konf.Config

@@ -50,7 +50,9 @@ fun String.validateColor() = if (this.startsWith("&")) {
 @CommandAlias("nick")
 @Description("Manage nicknames")
 @CommandPermission("chattore.nick")
-class Nick(private val chattORE: ChattORE) : BaseCommand() {
+class Nick(
+    private val chattORE: ChattORE
+) : BaseCommand() {
 
     @Subcommand("color")
     @CommandCompletion("@colors")
