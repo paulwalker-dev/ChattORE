@@ -43,7 +43,7 @@ class ChatListener(
         if (!chattORE.config[ChattORESpec.clearNicknameOnChange]) return
         val existingName = chattORE.database.uuidToUsernameCache[event.player.uniqueId] ?: return
         if (existingName == event.player.username) return
-        val nickname = chattORE.database.getNickname(event.player.uniqueId);
+        val nickname = chattORE.database.getNickname(event.player.uniqueId)
         if (nickname?.contains("<username>") ?: false) return
         chattORE.database.removeNickname(event.player.uniqueId)
     }
@@ -99,6 +99,7 @@ class ChatListener(
             ))
             return
         }
+        chattORE.chatConfirmMap.remove(pp.uniqueId)
         pp.currentServer.ifPresent { server ->
             chattORE.logger.info("${pp.username} (${pp.uniqueId}): $message")
             chattORE.broadcastChatMessage(server.serverInfo.name, pp.uniqueId, message)
