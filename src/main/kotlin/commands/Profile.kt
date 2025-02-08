@@ -15,6 +15,7 @@ import com.velocitypowered.api.proxy.Player
 class Profile(
     private val chattORE: ChattORE
 ) : BaseCommand() {
+
     @Subcommand("info")
     @CommandCompletion("@uuidAndUsernameCache")
     fun profile(player: Player, @Single target: String) {

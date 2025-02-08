@@ -77,7 +77,9 @@ class MailContainer(private val uuidMapping: Map<UUID, String>, private val mess
 @CommandAlias("mail")
 @Description("Send a message to an offline player")
 @CommandPermission("chattore.mail")
-class Mail(private val chattORE: ChattORE) : BaseCommand() {
+class Mail(
+    private val chattORE: ChattORE
+) : BaseCommand() {
 
     private val mailTimeouts = mutableMapOf<UUID, Long>()
 

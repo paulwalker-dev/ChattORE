@@ -10,7 +10,10 @@ import chattore.entity.ChattORESpec
 import chattore.legacyDeserialize
 
 @CommandAlias("chattore")
-class Chattore(private val chattORE: ChattORE) : BaseCommand() {
+class Chattore(
+    private val chattORE: ChattORE
+) : BaseCommand() {
+
     @Default
     @CatchUnknown
     @Subcommand("version")
