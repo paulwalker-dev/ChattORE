@@ -1,17 +1,29 @@
-package chattore.commands
+package chattore.feature
 
-import chattore.ChattORE
-import chattore.SpyEnabled
-import chattore.render
+import chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
-import chattore.entity.ChattORESpec
-import chattore.legacyDeserialize
+
+object SpyEnabled : Setting<Boolean>("spy")
+
+data class ChattoreConfig(
+    val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
+)
+
+fun createChattoreFeature(
+    plugin: ChattORE,
+    config: ChattoreConfig
+): Feature {
+    return Feature(
+        commands = listOf(Chattore(plugin, config))
+    )
+}
 
 @CommandAlias("chattore")
 class Chattore(
-    private val chattORE: ChattORE
+    private val plugin: ChattORE,
+    private val config: ChattoreConfig
 ) : BaseCommand() {
 
     @Default
@@ -19,8 +31,8 @@ class Chattore(
     @Subcommand("version")
     fun version(player: Player) {
         player.sendMessage(
-            chattORE.config[ChattORESpec.format.chattore].render(
-                "Version &7${chattORE.getVersion()}".legacyDeserialize()
+            config.format.render(
+                "Version &7${plugin.getVersion()}".legacyDeserialize()
             )
         )
     }
@@ -28,24 +40,25 @@ class Chattore(
     @Subcommand("reload")
     @CommandPermission("chattore.manage")
     fun reload(player: Player) {
-        chattORE.reload()
+        plugin.reload()
         player.sendMessage(
-            chattORE.config[ChattORESpec.format.chattore].render(
+            config.format.render(
                 "Reloaded ChattORE"
             )
         )
     }
 
+    // This should be its own feature...
     @Subcommand("setting")
     inner class Setting : BaseCommand() {
         @Subcommand("spy")
         @CommandPermission("chattore.manage")
         fun spy(player: Player) {
-            val setting = chattORE.database.getSetting(SpyEnabled, player.uniqueId)
+            val setting = plugin.database.getSetting(SpyEnabled, player.uniqueId)
             val newSetting = !(setting ?: false)
-            chattORE.database.setSetting(SpyEnabled, player.uniqueId, newSetting)
+            plugin.database.setSetting(SpyEnabled, player.uniqueId, newSetting)
             player.sendMessage(
-                chattORE.config[ChattORESpec.format.chattore].render(
+                config.format.render(
                     if (newSetting) {
                         "You are now spying on commands."
                     } else {

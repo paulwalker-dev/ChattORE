@@ -1,7 +1,7 @@
 package chattore.entity
 
-import com.uchuhimo.konf.ConfigSpec
 import chattore.pridePresets
+import com.uchuhimo.konf.ConfigSpec
 
 object ChattORESpec : ConfigSpec("") {
 

@@ -20,7 +20,6 @@ fun String.legacyDeserialize() = LegacyComponentSerializer.legacy('&').deseriali
 fun String.miniMessageDeserialize() = MiniMessage.miniMessage().deserialize(this)
 fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
 fun String.toComponent() = Component.text(this)
-fun String.discordEscape() = this.replace("""_""", "\\_")
 
 fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
     TextReplacementConfig.builder()
@@ -43,14 +42,6 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
             }
         }
         .build()
-
-fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component {
-    var result: Component = this
-    replacements.forEach { replacement ->
-        result = result.replaceText(replacement)
-    }
-    return result
-}
 
 fun String.render(
     message: String
