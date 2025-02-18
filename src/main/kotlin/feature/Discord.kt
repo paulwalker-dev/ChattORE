@@ -71,7 +71,6 @@ private class DiscordBroadcastListener(
 
     @Subscribe
     fun onBroadcastEvent(event: DiscordBroadcastEvent) {
-        println("${event.prefix}, ${event.sender}, ${event.message}")
         val channel = serverChannelMapping[event.server] ?: return
         val content = config.format
             .replace("%prefix%", event.prefix)

@@ -77,9 +77,7 @@ class Messenger(
             )
         )
 
-        println("prefix $prefix")
         val plainPrefix = PlainTextComponentSerializer.plainText().serialize(prefix.componentize())
-        println("plainPrefix $plainPrefix")
         val discordBroadcast = DiscordBroadcastEvent(
             plainPrefix,
             player.username,
