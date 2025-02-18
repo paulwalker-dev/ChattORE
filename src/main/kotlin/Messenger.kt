@@ -2,8 +2,6 @@ package chattore
 
 import chattore.feature.DiscordBroadcastEvent
 import chattore.feature.SpyEnabled
-import chattore.feature.replaceObfuscate
-import chattore.feature.urlRegex
 import com.velocitypowered.api.proxy.Player
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray

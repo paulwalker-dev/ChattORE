@@ -1,7 +1,6 @@
 package chattore.feature
 
 import chattore.*
-import chattore.render
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import co.aikar.commands.annotation.Optional

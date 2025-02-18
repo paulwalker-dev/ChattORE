@@ -1,8 +1,6 @@
 package chattore.feature
 
-import chattore.ChattORE
-import chattore.ChattoreException
-import chattore.Feature
+import chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player

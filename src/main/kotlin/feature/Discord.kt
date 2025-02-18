@@ -1,7 +1,6 @@
 package chattore.feature
 
-import chattore.ChattORE
-import chattore.Feature
+import chattore.*
 import com.velocitypowered.api.event.Subscribe
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder

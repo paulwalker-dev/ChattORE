@@ -2,6 +2,8 @@ package chattore.feature
 
 import chattore.ChattORE
 import chattore.Feature
+import chattore.render
+import chattore.toComponent
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.ServerPostConnectEvent
