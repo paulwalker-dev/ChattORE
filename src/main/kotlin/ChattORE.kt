@@ -32,7 +32,7 @@ data class Feature(
     val unload: () -> Unit = {},
 )
 
-const val VERSION = "2.0"
+const val VERSION = "1.2"
 
 @Plugin(
     id = "chattore",
