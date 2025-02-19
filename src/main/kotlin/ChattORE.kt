@@ -179,6 +179,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             //completions.forEach { (it, handler) -> commandManager.commandCompletions.registerCompletion(it) { handler } }
             listeners.forEach { proxy.eventManager.register(this, it)}
         }
+        logger.info("Loaded ${features.size} features")
     }
 
     fun fetchUuid(input: String): UUID? =

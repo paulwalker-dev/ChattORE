@@ -27,12 +27,11 @@ fun createFunCommandsFeature(
     val resourcePath = "commands.json"
     val resourceStream = plugin.javaClass.classLoader.getResourceAsStream(resourcePath)
     if (resourceStream == null) {
-        plugin.logger.warn("$resourcePath not found. Skipping fun command loading.")
+        plugin.logger.warn("$resourcePath not found. Skipping fun command loading")
         throw ChattoreException("No $resourcePath found")
     }
     val commandsJson = resourceStream.bufferedReader().use { it.readText() }
     val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
-    plugin.logger.info("Parsed ${commands.size} commands from JSON.")
     FunCommands(plugin, commands).loadFunCommands()
     return Feature(
         commands = listOf(FunCommandsCommand(config, commands))
@@ -144,7 +143,7 @@ class FunCommands(
             plugin.proxy.commandManager.register(meta, createDynamicCommand(commandConfig))
         }
 
-        plugin.logger.info("Loaded ${commands.size} fun commands.")
+        plugin.logger.info("Loaded ${commands.size} fun commands")
     }
 
     private fun createDynamicCommand(commandConfig: FunCommandConfig): SimpleCommand {
