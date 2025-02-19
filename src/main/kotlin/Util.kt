@@ -46,13 +46,6 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
         }
         .build()
 
-fun String.replaceObfuscate(canObfuscate: Boolean): String =
-    if (canObfuscate) {
-        this
-    } else {
-        this.replace("&k", "")
-    }
-
 fun String.render(
     message: String
 ): Component = this.render(

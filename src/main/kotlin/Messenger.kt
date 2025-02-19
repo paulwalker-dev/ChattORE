@@ -130,13 +130,15 @@ class Messenger(
         return builder.build().performReplacements(plugin.chatReplacements)
     }
 
-    private fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component {
-        var result: Component = this
-        replacements.forEach { replacement ->
-            result = result.replaceText(replacement)
+    fun String.replaceObfuscate(canObfuscate: Boolean): String =
+        if (canObfuscate) {
+            this
+        } else {
+            this.replace("&k", "")
         }
-        return result
-    }
+
+    private fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component =
+        replacements.fold(this, Component::replaceText)
 
     fun broadcastAllBut(component: Component, player: Player) {
         plugin.proxy.allPlayers.filter { it != player }.forEach { it.sendMessage(component) }
@@ -144,9 +146,5 @@ class Messenger(
 
     fun broadcast(component: Component) {
         plugin.proxy.allPlayers.forEach { it.sendMessage(component) }
-    }
-
-    fun sendIndividual(component: Component, target: Player) {
-        target.sendMessage(component)
     }
 }
