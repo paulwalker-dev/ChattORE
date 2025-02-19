@@ -51,8 +51,8 @@ class Storage(
 ) {
     private val cacheLength = 86400 // One day
     private val nicknameCache = ConcurrentHashMap<UUID, Pair<String?, Long>>()
-    var uuidToUsernameCache = ConcurrentHashMap<UUID, String>()
-    var usernameToUuidCache = ConcurrentHashMap<String, UUID>()
+    val uuidToUsernameCache = ConcurrentHashMap<UUID, String>()
+    val usernameToUuidCache = ConcurrentHashMap<String, UUID>()
     val database = Database.connect("jdbc:sqlite:${dbFile}", "org.sqlite.JDBC")
 
     init {
@@ -112,12 +112,14 @@ class Storage(
     }
 
     fun updateLocalUsernameCache() {
-        uuidToUsernameCache = ConcurrentHashMap(transaction(database) {
-            UsernameCache.selectAll().associate {
-                UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
-            }
-        })
-        usernameToUuidCache = ConcurrentHashMap(uuidToUsernameCache.entries.associate{ (k,v)-> v to k })
+        uuidToUsernameCache.clear()
+        usernameToUuidCache.clear()
+        UsernameCache.selectAll().associate {
+            UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
+        }.forEach { (id, username) ->
+            uuidToUsernameCache[id] = username
+            usernameToUuidCache[username] = id
+        }
     }
 
     fun insertMessage(sender: UUID, recipient: UUID, message: String) = transaction(database) {
