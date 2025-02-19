@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import java.io.FileNotFoundException
 import java.net.URL
 import java.util.*
 
@@ -17,18 +18,17 @@ class Messenger(
     private val plugin: ChattORE,
     val format: String
 ) {
-    private var fileTypeMap: Map<String, List<String>> = hashMapOf()
-    init {
+    private val fileTypeMap: Map<String, List<String>> =
         plugin.javaClass.getResourceAsStream("/filetypes.json")?.let { inputStream ->
             val jsonElement = Json.parseToJsonElement(inputStream.reader().readText())
-            fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
+            val fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
                 value.jsonArray.map { it.jsonPrimitive.content }
             }
             fileTypeMap.forEach { (key, values) ->
                 plugin.logger.info("Loaded ${values.size} of type $key")
             }
-        }
-    }
+            fileTypeMap
+        } ?: throw FileNotFoundException("File not found")
 
     fun sendPrivileged(component: Component, exclude: UUID? = null, ignorable: Boolean = true) {
         val privileged = plugin.proxy.allPlayers.filter {
@@ -111,7 +111,7 @@ class Messenger(
                         }
                     }
                 }
-                val contentType = plugin.fileTypeMap.entries.find { type in it.value }?.key
+                val contentType = fileTypeMap.entries.find { type in it.value }?.key
                 val symbol = when (contentType) {
                     "IMAGE" -> "\uD83D\uDDBC"
                     "AUDIO" -> "\uD83D\uDD0A"

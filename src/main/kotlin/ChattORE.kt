@@ -48,7 +48,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     lateinit var config: Config
     lateinit var database: Storage
     lateinit var messenger: Messenger
-    var fileTypeMap: Map<String, List<String>> = hashMapOf()
     var emojis: Map<String, String> = hashMapOf()
     var emojisToNames: Map<String, String> = hashMapOf()
     private val dataFolder = dataFolder.toFile()
