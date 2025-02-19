@@ -33,15 +33,12 @@ class HelpOp(
 
     @Default
     @Syntax("[message]")
-    fun default(player: Player, args: Array<String>) {
-        if (args.isEmpty()) throw ChattoreException("You have to have a problem first!") // : )
-        val statement = args.joinToString(" ")
+    fun default(player: Player, statement: String) {
+        if (statement.isEmpty()) throw ChattoreException("You have to have a problem first!") // : )
         logger.info("[HelpOp] ${player.username}: $statement")
         val message = config.format.render(
-            mapOf(
-                "message" to statement.toComponent(),
-                "sender" to player.username.toComponent()
-            )
+            "message" toS statement,
+            "sender" toS player.username,
         )
         player.sendMessage(message)
         messenger.sendPrivileged(

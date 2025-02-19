@@ -122,12 +122,9 @@ class DiscordListener(
             "$text: $url"
         }.replace("""\s+""".toRegex(), " ")
         messenger.broadcast(
-            config.discord.render(
-                mapOf(
-                    "sender" to event.messageAuthor.displayName.toComponent(),
-                    "message" to messenger.prepareChatMessage(transformedMessage, null)
-                )
-            )
+            config.discord,
+            "sender" toS event.messageAuthor.displayName,
+            "message" toC messenger.prepareChatMessage(transformedMessage, null),
         )
     }
 }

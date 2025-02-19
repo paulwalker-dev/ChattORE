@@ -86,21 +86,15 @@ fun sendMessage(
 ) {
     logger.info("${player.username} (${player.uniqueId}) -> " +
         "${targetPlayer.username} (${targetPlayer.uniqueId}): $message")
-    player.sendMessage(
-        config.messageSent.render(
-            mapOf(
-                "message" to messenger.prepareChatMessage(message, player),
-                "recipient" to targetPlayer.username.toComponent()
-            )
-        )
+    player.sendRichMessage(
+        config.messageSent,
+        "message" toC messenger.prepareChatMessage(message, player),
+        "recipient" toS targetPlayer.username,
     )
-    targetPlayer.sendMessage(
-        config.messageReceived.render(
-            mapOf(
-                "message" to messenger.prepareChatMessage(message, player),
-                "sender" to player.username.toComponent()
-            )
-        )
+    targetPlayer.sendRichMessage(
+        config.messageReceived,
+        "message" toC messenger.prepareChatMessage(message, player),
+        "sender" toS player.username,
     )
     replyMap[targetPlayer.uniqueId] = player.uniqueId
     replyMap[player.uniqueId] = targetPlayer.uniqueId

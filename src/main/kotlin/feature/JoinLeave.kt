@@ -1,9 +1,6 @@
 package chattore.feature
 
-import chattore.Feature
-import chattore.Messenger
-import chattore.render
-import chattore.toComponent
+import chattore.*
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -37,9 +34,8 @@ class JoinLeaveListener(
         if (event.previousServer != null) return
         val username = event.player.username
         messenger.broadcast(
-            config.join.render(mapOf(
-                "player" to username.toComponent()
-            ))
+            config.join,
+            "player" toS username
         )
         val discordConnectEvent = DiscordBroadcastEventMain(
             config.joinDiscord,
@@ -53,9 +49,8 @@ class JoinLeaveListener(
         if (event.loginStatus != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) return
         val username = event.player.username
         messenger.broadcast(
-            config.leave.render(mapOf(
-                "player" to username.toComponent()
-            ))
+            config.leave,
+            "player" toS username
         )
         val discordDisconnectEvent = DiscordBroadcastEventMain(
             config.leaveDiscord,

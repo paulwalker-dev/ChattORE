@@ -1,9 +1,6 @@
 package chattore.feature
 
-import chattore.ChattoreException
-import chattore.Feature
-import chattore.miniMessageDeserialize
-import chattore.render
+import chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
@@ -37,12 +34,8 @@ class Emoji(
             throw ChattoreException("The following are not valid emojis: ${notEmoji.joinToString(", ")}")
         }
         val emojiMiniMessage = emojiNames.toSet().intersect(emojis.keys).joinToString(", ") {
-            "<hover:show_text:${it}>${emojis[it]}</hover>"
+            "<hover:show_text:$it>${emojis[it]}</hover>"
         }
-        player.sendMessage(
-            config.format.render(
-                "Emojis: $emojiMiniMessage".miniMessageDeserialize()
-            )
-        )
+        player.sendSimpleMM(config.format, "Emojis: $emojiMiniMessage")
     }
 }

@@ -35,10 +35,8 @@ class CommandListener(
     fun onCommandEvent(event: CommandExecuteEvent) {
         messenger.sendPrivileged(
             config.spying.render(
-                mapOf(
-                    "message" to event.command.toComponent(),
-                    "sender" to ((event.commandSource as? Player)?.username ?: "Console").toComponent()
-                )
+                "message" toS event.command,
+                "sender" toS ((event.commandSource as? Player)?.username ?: "Console")
             )
         )
     }
@@ -56,14 +54,13 @@ class CommandSpy(
         val setting = database.getSetting(SpyEnabled, player.uniqueId)
         val newSetting = !(setting ?: false)
         database.setSetting(SpyEnabled, player.uniqueId, newSetting)
-        player.sendMessage(
-            config.format.render(
-                if (newSetting) {
-                    "You are now spying on commands."
-                } else {
-                    "You are no longer spying on commands."
-                }
-            )
+        player.sendSimpleS(
+            config.format,
+            if (newSetting) {
+                "You are now spying on commands."
+            } else {
+                "You are no longer spying on commands."
+            },
         )
     }
 }

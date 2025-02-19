@@ -1,9 +1,11 @@
 package chattore
 
+import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.io.FileNotFoundException
 import java.util.*
@@ -15,7 +17,6 @@ val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[
 fun String.toComponent() = Component.text(this)
 fun fixHexFormatting(str: String): String = str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
 fun String.legacyDeserialize() = LegacyComponentSerializer.legacy('&').deserialize(this)
-fun String.miniMessageDeserialize() = MiniMessage.miniMessage().deserialize(this)
 fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
 
 fun String.componentize(): Component =
@@ -32,7 +33,7 @@ fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
         .replacement { result, _ ->
             val match = result.group(1)
             val content = emojis[match] ?: ":$match:"
-            "<hover:show_text:'$match'>$content</hover>".miniMessageDeserialize()
+            "<hover:show_text:'$match'>$content</hover>".render()
         }
         .build()
 
@@ -43,29 +44,24 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
             if (result.group(2).contains("\\") || result.group(4).endsWith("\\")) {
                 result.group(3).toComponent()
             } else {
-                "<$tag>${result.group(4)}</$tag>".miniMessageDeserialize()
+                "<$tag>${result.group(4)}</$tag>".render()
             }
         }
         .build()
 
-fun String.render(
-    message: String
-): Component = this.render(
-    mapOf("message" to Component.text(message))
-)
+fun String.renderSimpleC(message: Component): Component = render("message" toC message)
 
-fun String.render(
-    message: Component,
-): Component = this.render(
-    mapOf("message" to message)
-)
+fun String.render(vararg resolvers: TagResolver): Component =
+    MiniMessage.miniMessage().deserialize(this, *resolvers)
 
-fun String.render(
-    replacements: Map<String, Component> = emptyMap()
-): Component = MiniMessage.miniMessage().deserialize(
-    this,
-    *replacements.map { Placeholder.component(it.key, it.value) }.toTypedArray()
-)
+// IDK how dumb this is. we'll see and adjust if necessary
+infix fun String.toS(message: String) = Placeholder.unparsed(this, message)
+infix fun String.toC(message: Component) = Placeholder.component(this, message)
+infix fun String.toMM(message: String) = toC(message.render())
+
+fun Audience.sendSimpleC(format: String, message: Component) = sendMessage(format.render("message" toC message))
+fun Audience.sendSimpleS(format: String, message: String) = sendSimpleC(format, message.toComponent())
+fun Audience.sendSimpleMM(format: String, message: String) = sendSimpleC(format, message.render())
 
 /***
  * Loads a resource file [filename] as a String.

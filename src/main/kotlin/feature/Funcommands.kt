@@ -33,18 +33,18 @@ class FunCommandsCommand(
     @Default
     @Description("Displays information about the /funcommands command")
     fun onDefault(player: Player) {
-        player.sendMessage("<green>FunCommands v1.1 by <gold>Waffle [Wueffi]</gold></green>".render())
+        player.sendRichMessage("<green>FunCommands v1.1 by <gold>Waffle [Wueffi]</gold></green>")
     }
 
     @Subcommand("list")
     @Description("Lists all available fun commands in alphabetical order")
     fun onList(player: Player) {
         if (commands.isEmpty()) {
-            player.sendMessage("<red>No fun commands found.</red>".render())
+            player.sendRichMessage("<red>No fun commands found.</red>")
             return
         }
 
-        player.sendMessage("<yellow>Available Fun Commands:</yellow>".render())
+        player.sendRichMessage("<yellow>Available Fun Commands:</yellow>")
 
         // NOTE: interpolating like this is generally unsafe. We trust the commands.json file contents so this is fine.
         // same applies to the info subcommand
@@ -68,9 +68,7 @@ class FunCommandsCommand(
         val cmd = commands.find { it.command.equals(commandName, ignoreCase = true) }
             ?: throw ChattoreException("Command '$commandName' not found.")
 
-        player.sendMessage(
-            "<gold>Description for <yellow>/${cmd.command}</yellow>: ${cmd.description}></gold>".render()
-        )
+        player.sendRichMessage("<gold>Description for <yellow>/${cmd.command}</yellow>: ${cmd.description}></gold>")
     }
 }
 
@@ -108,28 +106,26 @@ fun loadFunCommands(
         }
     }
 
-    fun createDynamicCommand(cmd: FunCommand): SimpleCommand {
-        return SimpleCommand { invocation ->
-            val source = invocation.source()
-            val args = invocation.arguments()
+    fun createDynamicCommand(cmd: FunCommand) = SimpleCommand { invocation ->
+        val source = invocation.source()
+        val args = invocation.arguments()
 
-            if (source !is Player) {
-                source.sendMessage(Component.text("This command can only be used by players!"))
-                return@SimpleCommand
-            }
-
-            val replacements = mapOf(
-                "name" to source.username,
-                "arg-all" to args.joinToString(" "),
-                "arg-1" to (args.getOrNull(1) ?: "<missing>"),
-                "arg-2" to (args.getOrNull(2) ?: "<missing>")
-            ).mapValues { it.value.toComponent() }
-
-            cmd.globalChat?.render(replacements)?.let(messenger::broadcast)
-            cmd.localChat?.render(replacements)?.let(source::sendMessage)
-            cmd.othersChat?.render(replacements)?.let { messenger.broadcastAllBut(it, source) }
-            cmd.run?.let { executeAction(it, source) }
+        if (source !is Player) {
+            source.sendMessage(Component.text("This command can only be used by players!"))
+            return@SimpleCommand
         }
+
+        val replacements = arrayOf(
+            "name" toS source.username,
+            "arg-all" toS args.joinToString(" "),
+            "arg-1" toS (args.getOrNull(1) ?: "<missing>"),
+            "arg-2" toS (args.getOrNull(2) ?: "<missing>")
+        )
+
+        cmd.globalChat?.let { messenger.broadcast(it, *replacements) }
+        cmd.localChat?.let { source.sendRichMessage(it, *replacements) }
+        cmd.othersChat?.let { messenger.broadcastAllBut(source, it, *replacements) }
+        cmd.run?.let { executeAction(it, source) }
     }
 
     commands.forEach { commandConfig ->

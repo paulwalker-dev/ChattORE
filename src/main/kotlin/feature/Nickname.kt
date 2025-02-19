@@ -88,10 +88,11 @@ class Nickname(
             if (colors.size > 3) throw ChattoreException("Too many colors!")
             setNicknameGradient(player.uniqueId, *colors)
         }
-        val response = config.format.render(
-            "Your nickname has been set to $rendered".render(mapOf(
-                "username" to Component.text(player.username)
-            ))
+        // TODO WTF
+        val response = config.format.renderSimpleC(
+            "Your nickname has been set to $rendered".render(
+                "username" toS player.username
+            )
         )
         player.sendMessage(response)
     }
@@ -102,10 +103,11 @@ class Nickname(
     fun preset(player: Player, preset: String) {
         val format = config.presets[preset]
             ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
-        val rendered = format.render(mapOf("username" to Component.text(player.username)))
+        val rendered = format.render("username" toS player.username)
         plugin.database.setNickname(player.uniqueId, format)
-        val response = config.format.render(
-            "Your nickname has been set to <message>".render(rendered)
+        // TODO WTF?
+        val response = config.format.renderSimpleC(
+            "Your nickname has been set to <message>".renderSimpleC(rendered)
         )
         player.sendMessage(response)
     }
@@ -117,9 +119,7 @@ class Nickname(
         val renderedPresets = ArrayList<Component>()
         for ((presetName, preset) in config.presets) {
             val applyPreset: (String) -> Component = {
-                preset.render(mapOf(
-                    "username" to Component.text(it)
-                ))
+                preset.render("username" toS it)
             }
             val rendered = if (shownText == null) {
                 // Primarily show the preset name, else a preview of the nickname.
@@ -128,18 +128,19 @@ class Nickname(
                 // Primarily show the entered text, else the preset name.
                 // Also, we're suggesting the username as the autocompleted $shownText.
                 "<hover:show_text:'Click to apply <preset> preset'><custom></hover>"
-            }.render(mapOf(
-                "username" to applyPreset(player.username),
-                "preset" to applyPreset(presetName),
-                "custom" to applyPreset(shownText ?: "")
-            )).let {
-                "<click:run_command:'/nick preset $presetName'><message></click>".render(it)
+            }.render(
+                "username" toC applyPreset(player.username),
+                "preset" toC applyPreset(presetName),
+                "custom" toC applyPreset(shownText ?: ""),
+            ).let {
+                "<click:run_command:'/nick preset $presetName'><message></click>".renderSimpleC(it)
             }
             renderedPresets.add(rendered)
         }
 
-        val response = config.format.render(
-            "Available presets: <message>".render(
+        // TODO WTF
+        val response = config.format.renderSimpleC(
+            "Available presets: <message>".renderSimpleC(
                 Component.join(JoinConfiguration.commas(true), renderedPresets)
             )
         )
@@ -168,10 +169,10 @@ class Nickname(
         val targetUuid = userCache.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         plugin.database.removeNickname(targetUuid)
-        val response = config.format.render(
+        commandSource.sendSimpleS(
+            config.format,
             "Removed nickname for $target."
         )
-        commandSource.sendMessage(response)
     }
 
     @Subcommand("setgradient")
@@ -186,23 +187,24 @@ class Nickname(
     }
 
     private fun sendPlayerNotifications(target: String, executor: CommandSource, targetUuid: UUID, rendered: String) {
-        val response = config.format.render(
-            "Set nickname for $target as $rendered.".render(mapOf(
-                "username" to Component.text(target)
-            ))
+        // TODO is this just an "info" message?
+        executor.sendSimpleC(
+            config.format,
+            "Set nickname for $target as $rendered.".render(
+                "username" toS target,
+            )
         )
-        executor.sendMessage(response)
         plugin.proxy.getPlayer(targetUuid).ifPresent {
-            it.sendMessage(
-                config.format.render(
-                    "Your nickname has been set to $rendered".render(mapOf(
-                        "username" to Component.text(target)
-                    ))
+            it.sendSimpleC(
+                config.format,
+                "Your nickname has been set to $rendered".render(
+                    "username" toS target
                 )
             )
         }
     }
 
+    // TODO
     private fun setNicknameGradient(uniqueId: UUID, vararg colors: String): String {
         val codes = colors.joinToString(":") { it.validateColor() }
         val nickname = "<gradient:$codes><username></gradient>"

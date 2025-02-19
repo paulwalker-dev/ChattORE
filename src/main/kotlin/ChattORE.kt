@@ -203,7 +203,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         val exception = throwable as? ChattoreException ?: return false
         val message = exception.message ?: "Something went wrong!"
         if (sender is Player) {
-            sender.sendMessage(config[ChattORESpec.format.error].render(message))
+            sender.sendSimpleS(config[ChattORESpec.format.error], message)
         } else {
             sender.sendMessage("Error: $message")
         }

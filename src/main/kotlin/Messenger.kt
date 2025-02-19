@@ -9,9 +9,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import java.net.URI
-import java.net.URL
 import java.util.*
 
 class Messenger(
@@ -23,6 +23,7 @@ class Messenger(
             .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
             .onEach { (key, values) -> plugin.logger.info("Loaded ${values.size} of type $key") }
 
+    // TODO rich message support
     fun sendPrivileged(component: Component, exclude: UUID? = null, ignorable: Boolean = true) {
         val privileged = plugin.proxy.allPlayers.filter {
             it.hasPermission("chattore.privileged")
@@ -46,26 +47,19 @@ class Messenger(
         val userManager = plugin.luckPerms.userManager
         val luckUser = userManager.getUser(userId) ?: return
         val name = plugin.database.getNickname(userId) ?: player.username
-        val sender = name.render(
-            mapOf(
-                "username" to player.username.toComponent()
-            )
-        ).let {
-            "<click:run_command:'/playerprofile info ${player.username}'><message></click>".render(it)
+        val sender = name.render("username" toS player.username).let {
+            "<click:run_command:'/playerprofile info ${player.username}'><message></click>".renderSimpleC(it)
         }
 
         val prefix = luckUser.cachedData.metaData.prefix
             ?: luckUser.primaryGroup.replaceFirstChar(Char::uppercaseChar)
 
         broadcast(
-            format.render(
-                mapOf(
-                    "message" to prepareChatMessage(message, player),
-                    "sender" to sender,
-                    "username" to Component.text(player.username),
-                    "prefix" to prefix.legacyDeserialize(),
-                )
-            )
+            format,
+            "message" toC prepareChatMessage(message, player),
+            "sender" toC sender,
+            "username" toS player.username,
+            "prefix" toC prefix.legacyDeserialize(),
         )
 
         val plainPrefix = PlainTextComponentSerializer.plainText().serialize(prefix.componentize())
@@ -112,11 +106,13 @@ class Messenger(
                     "TEXT" -> "\uD83D\uDCDD"
                     else -> "\uD83D\uDCCE"
                 }
-                builder.append(("<aqua><click:open_url:'$link'>" +
-                    "<hover:show_text:'<aqua>$link'>" +
-                    "[$symbol $name]" +
-                    "</hover>" +
-                    "</click><reset>").miniMessageDeserialize())
+                builder.append(
+                    ("<aqua><click:open_url:'$link'>" +
+                        "<hover:show_text:'<aqua>$link'>" +
+                        "[$symbol $name]" +
+                        "</hover>" +
+                        "</click><reset>").render()
+                )
             }
         }
         return builder.build().performReplacements(plugin.chatReplacements)
@@ -132,11 +128,16 @@ class Messenger(
     private fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component =
         replacements.fold(this, Component::replaceText)
 
-    fun broadcastAllBut(component: Component, player: Player) {
-        plugin.proxy.allPlayers.filter { it != player }.forEach { it.sendMessage(component) }
+    fun broadcastAllBut(player: Player, message: String, vararg resolvers: TagResolver) {
+        val rendered = message.render(*resolvers)
+        plugin.proxy.allPlayers.filter { it != player }.forEach { it.sendMessage(rendered) }
     }
 
     fun broadcast(component: Component) {
         plugin.proxy.allPlayers.forEach { it.sendMessage(component) }
+    }
+
+    fun broadcast(message: String, vararg resolvers: TagResolver) {
+        broadcast(message.render(*resolvers))
     }
 }

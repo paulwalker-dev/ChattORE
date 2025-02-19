@@ -28,21 +28,13 @@ class Chattore(
     @CatchUnknown
     @Subcommand("version")
     fun version(player: Player) {
-        player.sendMessage(
-            config.format.render(
-                "Version &7${plugin.getVersion()}".legacyDeserialize()
-            )
-        )
+        player.sendSimpleMM(config.format, "Version <light_gray>${plugin.getVersion()}")
     }
 
     @Subcommand("reload")
     @CommandPermission("chattore.manage")
     fun reload(player: Player) {
         plugin.reload()
-        player.sendMessage(
-            config.format.render(
-                "Reloaded ChattORE"
-            )
-        )
+        player.sendSimpleS(config.format, "Reloaded ChattORE")
     }
 }

@@ -51,10 +51,10 @@ class Profile(
     @CommandPermission("chattore.profile.about")
     fun about(player: Player, about: String) {
         database.setAbout(player.uniqueId, about)
-        val response = config.format.render(
-            "Set your about to '$about'.".toComponent()
+        player.sendSimpleS(
+            config.format,
+            "Set your about to '$about'.",
         )
-        player.sendMessage(response)
     }
 
     @Subcommand("setabout")
@@ -63,15 +63,14 @@ class Profile(
     fun setAbout(player: Player, @Single target: String, about: String) {
         val (username, uuid) = getUsernameAndUuid(target)
         database.setAbout(uuid, about)
-        val response = config.format.render(
-            "Set about for '$username' to '$about'.".toComponent()
+        player.sendSimpleS(
+            config.format,
+            "Set about for '$username' to '$about'.",
         )
-        player.sendMessage(response)
         proxy.getPlayer(uuid).ifPresent {
-            it.sendMessage(
-                config.format.render(
-                    "Your about has been set to '$about'".toComponent()
-                )
+            it.sendSimpleS(
+                config.format,
+                "Your about has been set to '$about'",
             )
         }
     }
@@ -82,15 +81,13 @@ class Profile(
             it.cachedData.metaData.prefix?.let { prefix -> group = prefix }
         }
         return config.profile.render(
-            mapOf(
-                "about" to (database.getAbout(user.uniqueId) ?: "no about yet :(").toComponent(),
-                "ign" to ign.toComponent(),
-                "nickname" to (database.getNickname(user.uniqueId) ?: "No nickname set")
-                    .render(mapOf(
-                        "username" to ign.toComponent(),
-                    )),
-                "rank" to group.legacyDeserialize(),
-            )
+            "about" toS (database.getAbout(user.uniqueId) ?: "no about yet :("),
+            "ign" toS ign,
+            "nickname" toC (database.getNickname(user.uniqueId) ?: "No nickname set")
+                .render(
+                    "username" toS ign,
+                ),
+            "rank" toC group.legacyDeserialize(),
         )
     }
 

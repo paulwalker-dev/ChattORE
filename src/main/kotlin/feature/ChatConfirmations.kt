@@ -46,31 +46,24 @@ class ChatConfirmationListener(
     private val logger: Logger,
     private val eventManager: EventManager,
 ) {
-
-    private val regexes = config.regexes.map { Regex(it) }
+    private val regexes = config.regexes.map(::Regex)
 
     @Subscribe(priority = 32767)
     fun onChatEvent(event: PlayerChatEvent) {
         val player = event.player
         val message = event.message
         val matches = regexes.filter { it.containsMatchIn(message) }
-        if (matches.isNotEmpty()) {
-            var replaced = message
-            matches.forEach {
-                replaced = it.replace(replaced) { match ->
-                    "<red>${match.value}</red>"
-                }
-            }
-            logger.info("${player.username} (${player.uniqueId}) Attempting to send flagged message: $message")
-            player.sendMessage(config.confirmationPrompt.render(
-                mapOf("message" to replaced.miniMessageDeserialize())
-            ))
-            val flaggedMessageEvent = FlaggedMessageEvent(event.player, message, matches)
-            eventManager.fire(flaggedMessageEvent).thenAccept { /* shrug */ }
-            flaggedMessages[player.uniqueId] = flaggedMessageEvent
+        if (matches.isEmpty()) {
+            flaggedMessages.remove(player.uniqueId)
             return
         }
-        flaggedMessages.remove(player.uniqueId)
+        fun String.highlight(r: Regex) = r.replace(this) { match -> "<red>${match.value}</red>" }
+        val highlighted = matches.fold(message, String::highlight)
+        logger.info("${player.username} (${player.uniqueId}) Attempting to send flagged message: $message")
+        player.sendSimpleMM(config.confirmationPrompt, highlighted)
+        val flaggedMessageEvent = FlaggedMessageEvent(event.player, message, matches)
+        eventManager.fireAndForget(flaggedMessageEvent)
+        flaggedMessages[player.uniqueId] = flaggedMessageEvent
     }
 }
 
@@ -87,7 +80,7 @@ class ConfirmMessage(
         val message = flaggedMessages[player.uniqueId] ?:
             throw ChattoreException("You have no message to confirm!")
         logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: ${message.message}")
-        player.sendMessage(config.chatConfirm.miniMessageDeserialize())
+        player.sendRichMessage(config.chatConfirm)
         player.currentServer.ifPresent { server ->
             messenger.broadcastChatMessage(server.serverInfo.name, player, message.message)
         }
