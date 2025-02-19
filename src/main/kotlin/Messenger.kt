@@ -82,7 +82,7 @@ class Messenger(
             originServer,
             message
         )
-        plugin.proxy.eventManager.fire(discordBroadcast).thenAccept { /* shrug */ }
+        plugin.proxy.eventManager.fireAndForget(discordBroadcast)
     }
 
     fun prepareChatMessage(

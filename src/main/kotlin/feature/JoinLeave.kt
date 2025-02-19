@@ -45,7 +45,7 @@ class JoinLeaveListener(
             config.joinDiscord,
             username,
         )
-        eventManager.fire(discordConnectEvent).thenAccept { /* shrug */ }
+        eventManager.fireAndForget(discordConnectEvent)
     }
 
     @Subscribe
@@ -61,6 +61,6 @@ class JoinLeaveListener(
             config.leaveDiscord,
             username,
         )
-        eventManager.fire(discordDisconnectEvent).thenAccept { /* shrug */ }
+        eventManager.fireAndForget(discordDisconnectEvent)
     }
 }
