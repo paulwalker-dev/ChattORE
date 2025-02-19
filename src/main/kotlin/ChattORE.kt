@@ -169,7 +169,8 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.format.playerProfile],
                 config[ChattORESpec.format.chattore])
             ),
-            createSpyingFeature(messenger, SpyingConfig(
+            createSpyingFeature(database, messenger, SpyingConfig(
+                config[ChattORESpec.format.chattore],
                 config[ChattORESpec.format.commandSpy])
             )
         )

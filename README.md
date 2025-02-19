@@ -43,8 +43,9 @@ Because we want to have a chat system that actually wOREks for us.
 
 ## Other Commands
 
-| Command                 | Permission        | Description                   | Aliases    |
-|-------------------------|-------------------|-------------------------------|------------|
-| `/chattore reload`      | `chattore.manage` | Reload Chattore configuration | No aliases |
-| `/chattore version`     | `chattore.manage` | View the version of Chattore  | No aliases |
-| `/emoji <emoji_names>+` | `chattore.emoji`  | View multiple emojis          | No aliases |
+| Command                 | Permission            | Description                   | Aliases    |
+|-------------------------|-----------------------|-------------------------------|------------|
+| `/chattore reload`      | `chattore.manage`     | Reload Chattore configuration | No aliases |
+| `/commandspy`           | `chattore.commandspy` | Toggle spying on commands     | No aliases |
+| `/chattore version`     | `chattore.manage`     | View the version of Chattore  | No aliases |
+| `/emoji <emoji_names>+` | `chattore.emoji`      | View multiple emojis          | No aliases |

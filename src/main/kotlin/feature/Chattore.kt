@@ -47,25 +47,4 @@ class Chattore(
             )
         )
     }
-
-    // This should be its own feature...
-    @Subcommand("setting")
-    inner class Setting : BaseCommand() {
-        @Subcommand("spy")
-        @CommandPermission("chattore.manage")
-        fun spy(player: Player) {
-            val setting = plugin.database.getSetting(SpyEnabled, player.uniqueId)
-            val newSetting = !(setting ?: false)
-            plugin.database.setSetting(SpyEnabled, player.uniqueId, newSetting)
-            player.sendMessage(
-                config.format.render(
-                    if (newSetting) {
-                        "You are now spying on commands."
-                    } else {
-                        "You are no longer spying on commands."
-                    }
-                )
-            )
-        }
-    }
 }
