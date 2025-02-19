@@ -1,10 +1,12 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.0.10"
+    val kotlinVersion = "2.1.10"
+    kotlin("jvm") version kotlinVersion
     id("com.gradleup.shadow") version "8.3.0"
-    id("org.jetbrains.kotlin.kapt") version "1.9.22"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
+    id("org.jetbrains.kotlin.kapt") version kotlinVersion
+    id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
 }
 
 group = ""
@@ -46,8 +48,10 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "22"
-    kotlinOptions.javaParameters = true
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+        javaParameters.set(true)
+    }
 }
 
 tasks.shadowJar {
