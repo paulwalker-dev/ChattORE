@@ -9,6 +9,8 @@ import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.command.CommandExecuteEvent
 import com.velocitypowered.api.proxy.Player
 
+object SpyEnabled : Setting<Boolean>("spy")
+
 data class SpyingConfig(
     val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
     val spying: String = "<gold><sender>: <message>",

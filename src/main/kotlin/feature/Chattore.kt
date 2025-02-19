@@ -5,8 +5,6 @@ import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
 
-object SpyEnabled : Setting<Boolean>("spy")
-
 data class ChattoreConfig(
     val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
 )
