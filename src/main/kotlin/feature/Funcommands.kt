@@ -33,6 +33,7 @@ fun createFunCommandsFeature(
         throw ChattoreException("No $resourcePath found")
     }
     val commandsJson = resourceStream.bufferedReader().use { it.readText() }
+    resourceStream.close()
     val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
     FunCommands(plugin.logger, plugin.messenger, plugin.proxy.commandManager, commands).loadFunCommands()
     return Feature(

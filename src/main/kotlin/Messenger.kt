@@ -21,6 +21,7 @@ class Messenger(
     private val fileTypeMap: Map<String, List<String>> =
         plugin.javaClass.getResourceAsStream("/filetypes.json")?.let { inputStream ->
             val jsonElement = Json.parseToJsonElement(inputStream.reader().readText())
+            inputStream.close()
             val fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
                 value.jsonArray.map { it.jsonPrimitive.content }
             }
@@ -28,7 +29,7 @@ class Messenger(
                 plugin.logger.info("Loaded ${values.size} of type $key")
             }
             fileTypeMap
-        } ?: throw FileNotFoundException("File not found")
+        } ?: throw FileNotFoundException("filetypes.json not found")
 
     fun sendPrivileged(component: Component, exclude: UUID? = null, ignorable: Boolean = true) {
         val privileged = plugin.proxy.allPlayers.filter {
