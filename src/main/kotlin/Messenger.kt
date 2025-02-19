@@ -10,7 +10,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import java.io.FileNotFoundException
 import java.net.URL
 import java.util.*
 
@@ -19,17 +18,9 @@ class Messenger(
     val format: String
 ) {
     private val fileTypeMap: Map<String, List<String>> =
-        plugin.javaClass.getResourceAsStream("/filetypes.json")?.let { inputStream ->
-            val jsonElement = Json.parseToJsonElement(inputStream.reader().readText())
-            inputStream.close()
-            val fileTypeMap = jsonElement.jsonObject.mapValues { (_, value) ->
-                value.jsonArray.map { it.jsonPrimitive.content }
-            }
-            fileTypeMap.forEach { (key, values) ->
-                plugin.logger.info("Loaded ${values.size} of type $key")
-            }
-            fileTypeMap
-        } ?: throw FileNotFoundException("filetypes.json not found")
+        Json.parseToJsonElement(loadResource("/filetypes.json"))
+            .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
+            .onEach { (key, values) -> plugin.logger.info("Loaded ${values.size} of type $key") }
 
     fun sendPrivileged(component: Component, exclude: UUID? = null, ignorable: Boolean = true) {
         val privileged = plugin.proxy.allPlayers.filter {

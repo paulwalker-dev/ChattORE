@@ -5,6 +5,7 @@ import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import java.io.FileNotFoundException
 
 val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
 val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
@@ -64,3 +65,11 @@ fun String.render(
     this,
     *replacements.map { Placeholder.component(it.key, it.value) }.toTypedArray()
 )
+
+/***
+ * Loads a resource file [filename] as a String.
+ * Make sure you pass in an absolute path.
+ * Throws FileNotFoundException if not found.
+ */
+fun loadResource(filename: String) =
+    Any::class.java.getResource(filename)?.readText() ?: throw FileNotFoundException(filename)
