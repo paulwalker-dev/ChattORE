@@ -111,7 +111,7 @@ class Storage(
         updateLocalUsernameCache()
     }
 
-    fun updateLocalUsernameCache() {
+    fun updateLocalUsernameCache() = transaction(database) {
         uuidToUsernameCache.clear()
         usernameToUuidCache.clear()
         UsernameCache.selectAll().associate {
