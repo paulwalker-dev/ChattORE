@@ -7,24 +7,27 @@ import co.aikar.commands.annotation.CommandPermission
 import co.aikar.commands.annotation.Default
 import co.aikar.commands.annotation.Syntax
 import com.velocitypowered.api.proxy.Player
+import org.slf4j.Logger
 
 data class HelpOpConfig(
     val format: String = "<gold>[</gold><red>Help</red><gold>]</gold> <red><sender></red><gold>:</gold> <message>",
 )
 
 fun createHelpOpFeature(
-    plugin: ChattORE,
+    logger: Logger,
+    messenger: Messenger,
     config: HelpOpConfig
 ): Feature {
     return Feature(
-        commands = listOf(HelpOp(plugin, config))
+        commands = listOf(HelpOp(logger, messenger, config))
     )
 }
 
 @CommandAlias("helpop|ac")
 @CommandPermission("chattore.helpop")
 class HelpOp(
-    private val plugin: ChattORE,
+    private val logger: Logger,
+    private val messenger: Messenger,
     private val config: HelpOpConfig
 ) : BaseCommand() {
 
@@ -33,7 +36,7 @@ class HelpOp(
     fun default(player: Player, args: Array<String>) {
         if (args.isEmpty()) throw ChattoreException("You have to have a problem first!") // : )
         val statement = args.joinToString(" ")
-        plugin.logger.info("[HelpOp] ${player.username}: $statement")
+        logger.info("[HelpOp] ${player.username}: $statement")
         val message = config.format.render(
             mapOf(
                 "message" to statement.toComponent(),
@@ -41,7 +44,7 @@ class HelpOp(
             )
         )
         player.sendMessage(message)
-        plugin.messenger.sendPrivileged(
+        messenger.sendPrivileged(
             message,
             exclude = player.uniqueId,
             ignorable = false

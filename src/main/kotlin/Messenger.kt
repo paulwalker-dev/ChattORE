@@ -137,8 +137,8 @@ class Messenger(
         return result
     }
 
-    fun broadcast(component: Component, players: List<Player>) {
-        players.forEach { player -> player.sendMessage(component) }
+    fun broadcastAllBut(component: Component, player: Player) {
+        plugin.proxy.allPlayers.filter { it != player }.forEach { it.sendMessage(component) }
     }
 
     fun broadcast(component: Component) {

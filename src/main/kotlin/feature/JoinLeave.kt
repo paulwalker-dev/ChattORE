@@ -1,9 +1,10 @@
 package chattore.feature
 
-import chattore.ChattORE
 import chattore.Feature
+import chattore.Messenger
 import chattore.render
 import chattore.toComponent
+import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.ServerPostConnectEvent
@@ -16,24 +17,26 @@ data class JoinLeaveConfig(
 )
 
 fun createJoinLeaveFeature(
-    plugin: ChattORE,
+    messenger: Messenger,
+    eventManager: EventManager,
     config: JoinLeaveConfig
 ): Feature {
     return Feature(
-        listeners = listOf(JoinLeaveListener(plugin, config))
+        listeners = listOf(JoinLeaveListener(messenger, eventManager, config))
     )
 }
 
 class JoinLeaveListener(
-    val plugin: ChattORE,
-    val config: JoinLeaveConfig
+    private val messenger: Messenger,
+    private val eventManager: EventManager,
+    private val config: JoinLeaveConfig
 ) {
 
     @Subscribe
     fun joinEvent(event: ServerPostConnectEvent) {
         if (event.previousServer != null) return
         val username = event.player.username
-        plugin.messenger.broadcast(
+        messenger.broadcast(
             config.join.render(mapOf(
                 "player" to username.toComponent()
             ))
@@ -42,14 +45,14 @@ class JoinLeaveListener(
             config.joinDiscord,
             username,
         )
-        plugin.proxy.eventManager.fire(discordConnectEvent).thenAccept { /* shrug */ }
+        eventManager.fire(discordConnectEvent).thenAccept { /* shrug */ }
     }
 
     @Subscribe
     fun leaveMessage(event: DisconnectEvent) {
         if (event.loginStatus != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) return
         val username = event.player.username
-        plugin.messenger.broadcast(
+        messenger.broadcast(
             config.leave.render(mapOf(
                 "player" to username.toComponent()
             ))
@@ -58,6 +61,6 @@ class JoinLeaveListener(
             config.leaveDiscord,
             username,
         )
-        plugin.proxy.eventManager.fire(discordDisconnectEvent).thenAccept { /* shrug */ }
+        eventManager.fire(discordDisconnectEvent).thenAccept { /* shrug */ }
     }
 }

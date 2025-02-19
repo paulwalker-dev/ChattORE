@@ -28,13 +28,15 @@ data class FlaggedMessageEvent(
 )
 
 fun createChatConfirmationFeature(
-    plugin: ChattORE,
+    logger: Logger,
+    messenger: Messenger,
+    eventManager: EventManager,
     config: ChatConfirmationConfig,
 ): Feature {
     val flaggedMessages = ConcurrentHashMap<UUID, FlaggedMessageEvent>()
     return Feature(
-        commands = listOf(ConfirmMessage(config, flaggedMessages, plugin)),
-        listeners = listOf(ChatConfirmationListener(config, flaggedMessages, plugin.logger, plugin.proxy.eventManager)),
+        commands = listOf(ConfirmMessage(config, flaggedMessages, logger, messenger)),
+        listeners = listOf(ChatConfirmationListener(config, flaggedMessages, logger, eventManager)),
     )
 }
 
@@ -77,16 +79,17 @@ class ChatConfirmationListener(
 class ConfirmMessage(
     private val config: ChatConfirmationConfig,
     private val flaggedMessages: ConcurrentHashMap<UUID, FlaggedMessageEvent>,
-    private val plugin: ChattORE,
+    private val logger: Logger,
+    private val messenger: Messenger,
 ) : BaseCommand() {
     @Default
     fun default(player: Player) {
         val message = flaggedMessages[player.uniqueId] ?:
             throw ChattoreException("You have no message to confirm!")
-        plugin.logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: ${message.message}")
+        logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: ${message.message}")
         player.sendMessage(config.chatConfirm.miniMessageDeserialize())
         player.currentServer.ifPresent { server ->
-            plugin.messenger.broadcastChatMessage(server.serverInfo.name, player, message.message)
+            messenger.broadcastChatMessage(server.serverInfo.name, player, message.message)
         }
         flaggedMessages.remove(player.uniqueId)
     }

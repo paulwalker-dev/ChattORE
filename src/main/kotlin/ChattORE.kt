@@ -52,7 +52,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     var emojis: Map<String, String> = hashMapOf()
     var emojisToNames: Map<String, String> = hashMapOf()
     private val dataFolder = dataFolder.toFile()
-    val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
     var chatReplacements: MutableList<TextReplacementConfig> = mutableListOf(
         formatReplacement("**", "b"),
         formatReplacement("*", "i"),
@@ -112,12 +111,12 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         val features = listOf(
-            createChatConfirmationFeature(this, ChatConfirmationConfig(
+            createChatConfirmationFeature(logger, messenger, proxy.eventManager, ChatConfirmationConfig(
                 config[ChattORESpec.regexes],
                 config[ChattORESpec.format.chatConfirmPrompt],
                 config[ChattORESpec.format.chatConfirm])
             ),
-            createChatFeature(this, ChatConfig(
+            createChatFeature(logger, messenger, ChatConfig(
                 config[ChattORESpec.format.discord])
             ),
             createChattoreFeature(this, ChattoreConfig(
@@ -132,7 +131,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.discord.serverTokens],
                 config[ChattORESpec.format.discord])
             ),
-            createEmojiFeature(this, EmojiConfig(
+            createEmojiFeature(emojis, EmojiConfig(
                 config[ChattORESpec.format.chattore])
             ),
             createFunCommandsFeature(this, FunCommandsConfig(
@@ -143,10 +142,10 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.format.funcommandsMissingCommand],
                 config[ChattORESpec.format.funcommandsCommandNotFound])
             ),
-            createHelpOpFeature(this, HelpOpConfig(
+            createHelpOpFeature(logger, messenger, HelpOpConfig(
                 config[ChattORESpec.format.help])
             ),
-            createJoinLeaveFeature(this, JoinLeaveConfig(
+            createJoinLeaveFeature(messenger, proxy.eventManager, JoinLeaveConfig(
                 config[ChattORESpec.format.join],
                 config[ChattORESpec.format.leave],
                 config[ChattORESpec.format.joinDiscord],
@@ -157,7 +156,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.format.mailSent],
                 config[ChattORESpec.format.mailUnread])
             ),
-            createMessageFeature(this, MessageConfig(
+            createMessageFeature(proxy, logger, messenger, MessageConfig(
                 config[ChattORESpec.format.messageReceived],
                 config[ChattORESpec.format.messageSent])
             ),
@@ -166,11 +165,11 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.clearNicknameOnChange],
                 config[ChattORESpec.nicknamePresets])
             ),
-            createProfileFeature(this, ProfileConfig(
+            createProfileFeature(proxy, database, luckPerms, ProfileConfig(
                 config[ChattORESpec.format.playerProfile],
                 config[ChattORESpec.format.chattore])
             ),
-            createSpyingFeature(this, SpyingConfig(
+            createSpyingFeature(messenger, SpyingConfig(
                 config[ChattORESpec.format.commandSpy])
             )
         )

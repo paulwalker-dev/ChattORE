@@ -1,6 +1,9 @@
 package chattore.feature
 
-import chattore.*
+import chattore.ChattoreException
+import chattore.Feature
+import chattore.miniMessageDeserialize
+import chattore.render
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
@@ -10,11 +13,11 @@ data class EmojiConfig(
 )
 
 fun createEmojiFeature(
-    plugin: ChattORE,
+    emojis: Map<String, String>,
     config: EmojiConfig
 ): Feature {
     return Feature(
-        commands = listOf(Emoji(plugin, config))
+        commands = listOf(Emoji(emojis, config))
     )
 }
 
@@ -22,19 +25,19 @@ fun createEmojiFeature(
 @Description("Preview an emoji")
 @CommandPermission("chattore.emoji")
 class Emoji(
-    private val plugin: ChattORE,
+    private val emojis: Map<String, String>,
     private val config: EmojiConfig
 ) : BaseCommand() {
 
     @Default
     @CommandCompletion("@emojis")
     fun default(player: Player, vararg emojiNames: String) {
-        if (!plugin.emojis.keys.containsAll(emojiNames.toSet())) {
-            val notEmoji = emojiNames.toSet().minus(plugin.emojis.keys)
+        if (!emojis.keys.containsAll(emojiNames.toSet())) {
+            val notEmoji = emojiNames.toSet().minus(emojis.keys)
             throw ChattoreException("The following are not valid emojis: ${notEmoji.joinToString(", ")}")
         }
-        val emojiMiniMessage = emojiNames.toSet().intersect(plugin.emojis.keys).joinToString(", ") {
-            "<hover:show_text:${it}>${plugin.emojis[it]}</hover>"
+        val emojiMiniMessage = emojiNames.toSet().intersect(emojis.keys).joinToString(", ") {
+            "<hover:show_text:${it}>${emojis[it]}</hover>"
         }
         player.sendMessage(
             config.format.render(

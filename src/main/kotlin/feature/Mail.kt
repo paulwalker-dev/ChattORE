@@ -25,7 +25,7 @@ fun createMailFeature(
     config: MailConfig
 ): Feature {
     return Feature(
-        commands = listOf(Mail(plugin, config)),
+        commands = listOf(Mail(plugin.database, config)),
         listeners = listOf(MailListener(plugin, config)),
     )
 }
@@ -101,7 +101,7 @@ class MailContainer(private val uuidMapping: Map<UUID, String>, private val mess
 @Description("Send a message to an offline player")
 @CommandPermission("chattore.mail")
 class Mail(
-    private val plugin: ChattORE,
+    private val database: Storage,
     private val config: MailConfig
 ) : BaseCommand() {
 
@@ -113,8 +113,8 @@ class Mail(
     @Subcommand("mailbox")
     fun mailbox(player: Player, @Default("0") page: Int) {
         val container = MailContainer(
-            plugin.database.uuidToUsernameCache,
-            plugin.database.getMessages(player.uniqueId)
+            database.uuidToUsernameCache,
+            database.getMessages(player.uniqueId)
         )
         player.sendMessage(container.getPage(page))
     }
@@ -127,10 +127,10 @@ class Mail(
             // 60 second timeout to prevent flooding
             if (now < it + 60) throw ChattoreException("You are mailing too quickly!")
         }
-        val targetUuid = plugin.database.usernameToUuidCache[target]
+        val targetUuid = database.usernameToUuidCache[target]
             ?: throw ChattoreException("We do not recognize that user!")
         mailTimeouts[player.uniqueId] = now
-        plugin.database.insertMessage(player.uniqueId, targetUuid, message)
+        database.insertMessage(player.uniqueId, targetUuid, message)
         val response = config.mailSent.render(
             mapOf(
                 "message" to message.toComponent(),
@@ -142,11 +142,11 @@ class Mail(
 
     @Subcommand("read")
     fun read(player: Player, id: Int) {
-        plugin.database.readMessage(player.uniqueId, id)?.let {
+        database.readMessage(player.uniqueId, id)?.let {
             val response = config.mailReceived.render(
                 mapOf(
                     "message" to it.second.toComponent(),
-                    "sender" to plugin.database.uuidToUsernameCache.getValue(it.first).toComponent()
+                    "sender" to database.uuidToUsernameCache.getValue(it.first).toComponent()
                 )
             )
             player.sendMessage(response)

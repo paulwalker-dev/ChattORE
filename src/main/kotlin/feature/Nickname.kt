@@ -25,7 +25,7 @@ fun createNicknameFeature(
     plugin.database.updateLocalUsernameCache()
     return Feature(
         commands = listOf(Nickname(plugin, config)),
-        listeners = listOf(NicknameListener(plugin, config)),
+        listeners = listOf(NicknameListener(plugin.database, config)),
     )
 }
 
@@ -210,16 +210,16 @@ class Nickname(
 }
 
 class NicknameListener(
-    private val plugin: ChattORE,
+    private val database: Storage,
     private val config: NicknameConfig
 ) {
     @Subscribe
     fun joinEvent(event: LoginEvent) {
         if (!config.clearNicknameOnChange) return
-        val existingName = plugin.database.uuidToUsernameCache[event.player.uniqueId] ?: return
+        val existingName = database.uuidToUsernameCache[event.player.uniqueId] ?: return
         if (existingName == event.player.username) return
-        val nickname = plugin.database.getNickname(event.player.uniqueId)
+        val nickname = database.getNickname(event.player.uniqueId)
         if (nickname?.contains("<username>") == true) return
-        plugin.database.removeNickname(event.player.uniqueId)
+        database.removeNickname(event.player.uniqueId)
     }
 }

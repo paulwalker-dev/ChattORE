@@ -3,6 +3,7 @@ package chattore.feature
 import chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
+import com.velocitypowered.api.command.CommandManager
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player
 import kotlinx.serialization.Serializable
@@ -10,6 +11,7 @@ import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.event.HoverEvent
+import org.slf4j.Logger
 
 data class FunCommandsConfig(
     val funcommandsDefault: String = "<green>FunCommands v1.1 by <gold>Waffle [Wueffi]</gold></green>",
@@ -32,7 +34,7 @@ fun createFunCommandsFeature(
     }
     val commandsJson = resourceStream.bufferedReader().use { it.readText() }
     val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
-    FunCommands(plugin, commands).loadFunCommands()
+    FunCommands(plugin.logger, plugin.messenger, plugin.proxy.commandManager, commands).loadFunCommands()
     return Feature(
         commands = listOf(FunCommandsCommand(config, commands))
     )
@@ -133,17 +135,19 @@ data class FunCommandConfig(
 )
 
 class FunCommands(
-    private val plugin: ChattORE,
+    private val logger: Logger,
+    private val messenger: Messenger,
+    private val commandManager: CommandManager,
     private val commands: List<FunCommandConfig>
 ) {
 
     fun loadFunCommands() {
         commands.forEach { commandConfig ->
-            val meta = plugin.proxy.commandManager.metaBuilder(commandConfig.command).build()
-            plugin.proxy.commandManager.register(meta, createDynamicCommand(commandConfig))
+            val meta = commandManager.metaBuilder(commandConfig.command).build()
+            commandManager.register(meta, createDynamicCommand(commandConfig))
         }
 
-        plugin.logger.info("Loaded ${commands.size} fun commands")
+        logger.info("Loaded ${commands.size} fun commands")
     }
 
     private fun createDynamicCommand(commandConfig: FunCommandConfig): SimpleCommand {
@@ -177,7 +181,7 @@ class FunCommands(
 
             // Handle global chat
             renderedGlobalMessage?.let {
-                plugin.messenger.broadcast(it.render(mapOf(
+                messenger.broadcast(it.render(mapOf(
                     "message" to renderedGlobalMessage.toComponent(),
                     "sender" to source.username.toComponent()
                 )))
@@ -193,16 +197,16 @@ class FunCommands(
 
             // Handle othersChat
             renderedOthersMessage?.let {
-                plugin.proxy.allPlayers.filter { it != source }.forEach { targetPlayer ->
-                    targetPlayer.sendMessage(it.render(mapOf(
+                messenger.broadcastAllBut(
+                    it.render(mapOf(
                         "message" to renderedOthersMessage.toComponent(),
                         "sender" to source.username.toComponent()
-                    )))
-                }
+                    )), source
+                )
             }
 
             // Log and execute additional actions
-            plugin.logger.info(
+            logger.info(
                 "Executed command: /${commandConfig.command} by ${source.username} with arguments: ${
                     args.joinToString(" ")
                 }"
@@ -220,7 +224,7 @@ class FunCommands(
             }
 
             action.startsWith("kill") -> {
-                plugin.proxy.commandManager.executeAsync(player, "suicide")
+                commandManager.executeAsync(player, "suicide")
             }
         }
     }

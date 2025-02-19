@@ -8,6 +8,7 @@ import org.javacord.api.entity.channel.TextChannel
 import org.javacord.api.entity.message.MessageBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
+import org.slf4j.Logger
 
 fun String.discordEscape() = this.replace("""_""", "\\_")
 
@@ -47,7 +48,9 @@ fun createDiscordFeature(
     val discordMap = loadDiscordTokens(plugin, config.serverTokens)
     discordMap.forEach { (_, discordApi) -> discordApi.updateActivity(config.playingMessage) }
     discordNetwork.getTextChannelById(config.channelId)?.ifPresent { textChannel ->
-        textChannel.addMessageCreateListener(DiscordListener(plugin, plugin.emojisToNames, config))
+        textChannel.addMessageCreateListener(
+            DiscordListener(plugin.logger, plugin.messenger, plugin.emojisToNames, config)
+        )
     }
     return Feature(
         listeners = listOf(DiscordBroadcastListener(config, discordMap, discordNetwork))
@@ -91,7 +94,8 @@ private class DiscordBroadcastListener(
 }
 
 class DiscordListener(
-    private val plugin: ChattORE,
+    private val logger: Logger,
+    private val messenger: Messenger,
     private val emojisToNames: Map<String, String>,
     private val config: DiscordConfig,
 ) : MessageCreateListener {
@@ -111,17 +115,17 @@ class DiscordListener(
         if (event.messageAuthor.isBotUser && event.messageAuthor.id != config.chadId) return
         val attachments = event.messageAttachments.joinToString(" ", " ") { it.url.toString() }
         val toSend = replaceEmojis(event.message.readableContent) + attachments
-        plugin.logger.info("[Discord] ${event.messageAuthor.displayName} (${event.messageAuthor.id}): $toSend")
+        logger.info("[Discord] ${event.messageAuthor.displayName} (${event.messageAuthor.id}): $toSend")
         val transformedMessage = toSend.replace(urlMarkdownRegex) { matchResult ->
             val text = matchResult.groupValues[1].trim()
             val url = matchResult.groupValues[2].trim()
             "$text: $url"
         }.replace("""\s+""".toRegex(), " ")
-        plugin.messenger.broadcast(
+        messenger.broadcast(
             config.discord.render(
                 mapOf(
                     "sender" to event.messageAuthor.displayName.toComponent(),
-                    "message" to plugin.messenger.prepareChatMessage(transformedMessage, null)
+                    "message" to messenger.prepareChatMessage(transformedMessage, null)
                 )
             )
         )

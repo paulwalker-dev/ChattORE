@@ -1,7 +1,7 @@
 package chattore.feature
 
-import chattore.ChattORE
 import chattore.Feature
+import chattore.Messenger
 import chattore.render
 import chattore.toComponent
 import com.velocitypowered.api.event.Subscribe
@@ -13,21 +13,21 @@ data class SpyingConfig(
 )
 
 fun createSpyingFeature(
-    plugin: ChattORE,
+    messenger: Messenger,
     config: SpyingConfig,
 ): Feature {
     return Feature(
-        listeners = listOf(CommandListener(plugin, config))
+        listeners = listOf(CommandListener(messenger, config))
     )
 }
 
 class CommandListener(
-    private val plugin: ChattORE,
+    private val messenger: Messenger,
     private val config: SpyingConfig
 ) {
     @Subscribe
     fun onCommandEvent(event: CommandExecuteEvent) {
-        plugin.messenger.sendPrivileged(
+        messenger.sendPrivileged(
             config.format.render(
                 mapOf(
                     "message" to event.command.toComponent(),

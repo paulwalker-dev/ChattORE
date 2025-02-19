@@ -1,9 +1,10 @@
 package chattore.feature
 
-import chattore.ChattORE
 import chattore.Feature
+import chattore.Messenger
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.player.PlayerChatEvent
+import org.slf4j.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -12,16 +13,18 @@ data class ChatConfig(
 )
 
 fun createChatFeature(
-    plugin: ChattORE,
+    logger: Logger,
+    messenger: Messenger,
     config: ChatConfig,
 ): Feature {
     return Feature(
-        listeners = listOf(ChatListener(plugin, config))
+        listeners = listOf(ChatListener(logger, messenger, config))
     )
 }
 
 class ChatListener(
-    val plugin: ChattORE,
+    val logger: Logger,
+    val messenger: Messenger,
     val config: ChatConfig,
 ) {
 
@@ -46,8 +49,8 @@ class ChatListener(
         val player = event.player
         val message = event.message
         player.currentServer.ifPresent { server ->
-            plugin.logger.info("${player.username} (${player.uniqueId}): $message")
-            plugin.messenger.broadcastChatMessage(server.serverInfo.name, player, message)
+            logger.info("${player.username} (${player.uniqueId}): $message")
+            messenger.broadcastChatMessage(server.serverInfo.name, player, message)
         }
     }
 }
