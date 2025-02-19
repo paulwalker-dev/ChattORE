@@ -20,12 +20,13 @@ data class NicknameConfig(
 
 fun createNicknameFeature(
     plugin: ChattORE,
+    userCache: UserCache,
     config: NicknameConfig
 ): Feature {
-    plugin.database.updateLocalUsernameCache()
+    userCache.updateLocalUsernameCache()
     return Feature(
-        commands = listOf(Nickname(plugin, config)),
-        listeners = listOf(NicknameListener(plugin.database, config)),
+        commands = listOf(Nickname(plugin, userCache, config)),
+        listeners = listOf(NicknameListener(plugin.database, userCache, config)),
     )
 }
 
@@ -70,6 +71,7 @@ fun String.validateColor() = if (this.startsWith("&")) {
 @CommandPermission("chattore.nick")
 class Nickname(
     private val plugin: ChattORE,
+    private val userCache: UserCache,
     private val config: NicknameConfig
 ) : BaseCommand() {
 
@@ -148,7 +150,7 @@ class Nickname(
     @CommandPermission("chattore.nick.others")
     @CommandCompletion("@usernameCache")
     fun nick(commandSource: CommandSource, @Single target: String, @Single nick: String) {
-        val targetUuid = plugin.fetchUuid(target)
+        val targetUuid = userCache.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         val nickname = if (nick.contains("&")) {
             nick.legacyDeserialize().miniMessageSerialize()
@@ -163,7 +165,7 @@ class Nickname(
     @CommandPermission("chattore.nick.remove")
     @CommandCompletion("@usernameCache")
     fun remove(commandSource: CommandSource, @Single target: String) {
-        val targetUuid = plugin.fetchUuid(target)
+        val targetUuid = userCache.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         plugin.database.removeNickname(targetUuid)
         val response = config.format.render(
@@ -177,7 +179,7 @@ class Nickname(
     @CommandCompletion("@usernameCache")
     fun setgradient(player: Player, @Single target: String, vararg colors: String) {
         if (colors.size < 2) throw ChattoreException("Not enough colors!")
-        val targetUuid = plugin.fetchUuid(target)
+        val targetUuid = userCache.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         val rendered = setNicknameGradient(targetUuid, target, *colors)
         sendPlayerNotifications(target, player, targetUuid, rendered)
@@ -211,12 +213,13 @@ class Nickname(
 
 class NicknameListener(
     private val database: Storage,
+    private val userCache: UserCache,
     private val config: NicknameConfig
 ) {
     @Subscribe
     fun joinEvent(event: LoginEvent) {
         if (!config.clearNicknameOnChange) return
-        val existingName = database.uuidToUsernameCache[event.player.uniqueId] ?: return
+        val existingName = userCache.usernameOrNull(event.player.uniqueId) ?: return
         if (existingName == event.player.username) return
         val nickname = database.getNickname(event.player.uniqueId)
         if (nickname?.contains("<username>") == true) return

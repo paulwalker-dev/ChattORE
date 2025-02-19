@@ -63,6 +63,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         config = loadConfig()
         luckPerms = LuckPermsProvider.get()
         database = Storage(this.dataFolder.resolve(config[ChattORESpec.storage]).toString())
+        val userCache = UserCache(database.database)
         emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
             val parts = item.split(",")
             parts[0] to parts[1]
@@ -101,12 +102,13 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 })
             }
             commandCompletions.registerCompletion("emojis") { emojis.keys }
-            commandCompletions.registerCompletion("usernameCache") { database.uuidToUsernameCache.values }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
-            commandCompletions.registerCompletion("uuidAndUsernameCache") {
-                database.uuidToUsernameCache.values + database.uuidToUsernameCache.keys.map { it.toString() }
-            }
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
+            // TODO move to the place
+            commandCompletions.registerCompletion("usernameCache") { userCache.usernames }
+            commandCompletions.registerCompletion("uuidAndUsernameCache") {
+                userCache.usernames + userCache.uuids.map(UUID::toString)
+            }
         }
         val features = listOf(
             createChatConfirmationFeature(logger, messenger, proxy.eventManager, ChatConfirmationConfig(
@@ -149,7 +151,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.format.joinDiscord],
                 config[ChattORESpec.format.leaveDiscord])
             ),
-            createMailFeature(this, MailConfig(
+            createMailFeature(this, userCache, MailConfig(
                 config[ChattORESpec.format.mailReceived],
                 config[ChattORESpec.format.mailSent],
                 config[ChattORESpec.format.mailUnread])
@@ -158,12 +160,12 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 config[ChattORESpec.format.messageReceived],
                 config[ChattORESpec.format.messageSent])
             ),
-            createNicknameFeature(this, NicknameConfig(
+            createNicknameFeature(this, userCache, NicknameConfig(
                 config[ChattORESpec.format.chattore],
                 config[ChattORESpec.clearNicknameOnChange],
                 config[ChattORESpec.nicknamePresets])
             ),
-            createProfileFeature(proxy, database, luckPerms, ProfileConfig(
+            createProfileFeature(proxy, database, luckPerms, userCache, ProfileConfig(
                 config[ChattORESpec.format.playerProfile],
                 config[ChattORESpec.format.chattore])
             ),
@@ -179,15 +181,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         }
         logger.info("Loaded ${features.size} features")
     }
-
-    fun fetchUuid(input: String): UUID? =
-        if (this.database.usernameToUuidCache.containsKey(input)) {
-            this.database.usernameToUuidCache.getValue(input)
-        } else if (uuidRegex.matches(input)) {
-            UUID.fromString(input)
-        } else {
-            null
-        }
 
     private fun loadConfig(reloaded: Boolean = false): Config {
         if (!dataFolder.exists()) {

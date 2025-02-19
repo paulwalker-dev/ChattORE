@@ -51,8 +51,6 @@ class Storage(
 ) {
     private val cacheLength = 86400 // One day
     private val nicknameCache = ConcurrentHashMap<UUID, Pair<String?, Long>>()
-    val uuidToUsernameCache = ConcurrentHashMap<UUID, String>()
-    val usernameToUuidCache = ConcurrentHashMap<String, UUID>()
     val database = Database.connect("jdbc:sqlite:${dbFile}", "org.sqlite.JDBC")
 
     init {
@@ -101,25 +99,6 @@ class Storage(
         val now = System.currentTimeMillis() / 1000
         nicknameCache.entries.removeIf { it.value.second + cacheLength < now }
         nicknameCache[target] = Pair(nickname, now)
-    }
-
-    fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
-        UsernameCache.upsert {
-            it[this.uuid] = user.toString()
-            it[this.username] = username
-        }
-        updateLocalUsernameCache()
-    }
-
-    fun updateLocalUsernameCache() = transaction(database) {
-        uuidToUsernameCache.clear()
-        usernameToUuidCache.clear()
-        UsernameCache.selectAll().associate {
-            UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
-        }.forEach { (id, username) ->
-            uuidToUsernameCache[id] = username
-            usernameToUuidCache[username] = id
-        }
     }
 
     fun insertMessage(sender: UUID, recipient: UUID, message: String) = transaction(database) {
@@ -173,3 +152,37 @@ class Storage(
         Json.decodeFromString<T>(jsonString)
     }
 }
+
+class UserCache(private val database: Database) {
+    // TODO fix thread safety?
+    private var uuidToName = mapOf<UUID, String>()
+    private var nameToUuid = mapOf<String, UUID>()
+
+    fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
+        UsernameCache.upsert {
+            it[this.uuid] = user.toString()
+            it[this.username] = username
+        }
+        updateLocalUsernameCache()
+    }
+
+    fun updateLocalUsernameCache() = transaction(database) {
+        uuidToName = UsernameCache.selectAll().associate {
+            UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
+        }
+        nameToUuid = uuidToName.entries.associate { (k, v) -> v to k }
+
+    }
+
+    fun fetchUuid(input: String): UUID? = nameToUuid[input] ?: parseUuid(input)
+
+    // TODO: what do, this can fail?
+    fun username(uuid: UUID): String = uuidToName.getValue(uuid)
+    fun usernameOrNull(uuid: UUID): String? = uuidToName[uuid]
+    fun uuidOrNull(username: String): UUID? = nameToUuid[username]
+
+    val usernames get() = uuidToName.values
+    val uuids get() = nameToUuid.values
+
+}
+

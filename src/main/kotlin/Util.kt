@@ -6,6 +6,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.io.FileNotFoundException
+import java.util.*
 
 val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
 val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
@@ -73,3 +74,5 @@ fun String.render(
  */
 fun loadResource(filename: String) =
     Any::class.java.getResource(filename)?.readText() ?: throw FileNotFoundException(filename)
+
+fun parseUuid(input: String): UUID? = if (uuidRegex.matches(input)) UUID.fromString(input) else null

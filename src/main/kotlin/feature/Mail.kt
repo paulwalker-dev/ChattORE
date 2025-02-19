@@ -22,10 +22,11 @@ data class MailConfig(
 
 fun createMailFeature(
     plugin: ChattORE,
+    userCache: UserCache,
     config: MailConfig
 ): Feature {
     return Feature(
-        commands = listOf(Mail(plugin.database, config)),
+        commands = listOf(Mail(plugin.database, userCache, config)),
         listeners = listOf(MailListener(plugin, config)),
     )
 }
@@ -52,7 +53,7 @@ data class MailboxItem(
     val read: Boolean
 )
 
-class MailContainer(private val uuidMapping: Map<UUID, String>, private val messages: List<MailboxItem>) {
+class MailContainer(private val userCache: UserCache, private val messages: List<MailboxItem>) {
     private val pageSize = 6
     fun getPage(page: Int = 0) : Component {
         val maxPage = messages.size / pageSize
@@ -71,7 +72,7 @@ class MailContainer(private val uuidMapping: Map<UUID, String>, private val mess
             }
             val item = mini.render(
                 mapOf(
-                    "sender" to uuidMapping.getValue(it.sender).toComponent(),
+                    "sender" to userCache.username(it.sender).toComponent(),
                     "timestamp" to getRelativeTimestamp(it.timestamp.toLong()).toComponent(),
                     "read" to readComponent
                 )
@@ -102,6 +103,7 @@ class MailContainer(private val uuidMapping: Map<UUID, String>, private val mess
 @CommandPermission("chattore.mail")
 class Mail(
     private val database: Storage,
+    private val userCache: UserCache,
     private val config: MailConfig
 ) : BaseCommand() {
 
@@ -113,7 +115,7 @@ class Mail(
     @Subcommand("mailbox")
     fun mailbox(player: Player, @Default("0") page: Int) {
         val container = MailContainer(
-            database.uuidToUsernameCache,
+            userCache,
             database.getMessages(player.uniqueId)
         )
         player.sendMessage(container.getPage(page))
@@ -127,7 +129,7 @@ class Mail(
             // 60 second timeout to prevent flooding
             if (now < it + 60) throw ChattoreException("You are mailing too quickly!")
         }
-        val targetUuid = database.usernameToUuidCache[target]
+        val targetUuid = userCache.uuidOrNull(target)
             ?: throw ChattoreException("We do not recognize that user!")
         mailTimeouts[player.uniqueId] = now
         database.insertMessage(player.uniqueId, targetUuid, message)
@@ -146,7 +148,7 @@ class Mail(
             val response = config.mailReceived.render(
                 mapOf(
                     "message" to it.second.toComponent(),
-                    "sender" to database.uuidToUsernameCache.getValue(it.first).toComponent()
+                    "sender" to userCache.username(it.first).toComponent()
                 )
             )
             player.sendMessage(response)

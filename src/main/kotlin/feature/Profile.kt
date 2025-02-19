@@ -19,10 +19,11 @@ fun createProfileFeature(
     proxy: ProxyServer,
     database: Storage,
     luckPerm: LuckPerms,
+    userCache: UserCache,
     config: ProfileConfig
 ): Feature {
     return Feature(
-        commands = listOf(Profile(proxy, database, luckPerm, config))
+        commands = listOf(Profile(proxy, database, luckPerm, userCache, config))
     )
 }
 
@@ -32,15 +33,17 @@ class Profile(
     private val proxy: ProxyServer,
     private val database: Storage,
     private val luckPerms: LuckPerms,
+    private val userCache: UserCache,
     private val config: ProfileConfig
 ) : BaseCommand() {
 
     @Subcommand("info")
     @CommandCompletion("@uuidAndUsernameCache")
     fun profile(player: Player, @Single target: String) {
-        val usernameAndUuid = getUsernameAndUuid(target)
-        luckPerms.userManager.loadUser(usernameAndUuid.second).whenComplete { user, throwable ->
-            player.sendMessage(parsePlayerProfile(user, usernameAndUuid.first))
+        val (username, uuid) = getUsernameAndUuid(target)
+        // TODO this might fail
+        luckPerms.userManager.loadUser(uuid).whenComplete { user, _ ->
+            player.sendMessage(parsePlayerProfile(user, username))
         }
     }
 
@@ -58,13 +61,13 @@ class Profile(
     @CommandPermission("chattore.profile.about.others")
     @CommandCompletion("@uuidAndUsernameCache")
     fun setAbout(player: Player, @Single target: String, about: String) {
-        val usernameAndUuid = getUsernameAndUuid(target)
-        database.setAbout(usernameAndUuid.second, about)
+        val (username, uuid) = getUsernameAndUuid(target)
+        database.setAbout(uuid, about)
         val response = config.format.render(
-            "Set about for '${usernameAndUuid.first}' to '$about'.".toComponent()
+            "Set about for '$username' to '$about'.".toComponent()
         )
         player.sendMessage(response)
-        proxy.getPlayer(usernameAndUuid.second).ifPresent {
+        proxy.getPlayer(uuid).ifPresent {
             it.sendMessage(
                 config.format.render(
                     "Your about has been set to '$about'".toComponent()
@@ -73,7 +76,7 @@ class Profile(
         }
     }
 
-    fun parsePlayerProfile(user: User, ign: String): Component {
+    private fun parsePlayerProfile(user: User, ign: String): Component {
         var group = user.primaryGroup
         luckPerms.groupManager.getGroup(user.primaryGroup)?.let {
             it.cachedData.metaData.prefix?.let { prefix -> group = prefix }
@@ -91,20 +94,11 @@ class Profile(
         )
     }
 
-    fun getUsernameAndUuid(input: String): Pair<String, UUID> {
-        var ign = input // Assume target is the IGN
-        val uuid: UUID
-        if (database.usernameToUuidCache.containsKey(ign)) {
-            uuid = database.usernameToUuidCache.getValue(ign)
-        } else {
-            if (!uuidRegex.matches(input)) {
-                throw ChattoreException("Invalid target specified")
-            }
-            uuid = UUID.fromString(input)
-            val fetchedName = database.uuidToUsernameCache[uuid]
-                ?: throw ChattoreException("We do not recognize that user!")
-            ign = fetchedName
-        }
-        return Pair(ign, uuid)
+    // TODO move to UserCache?
+    private fun getUsernameAndUuid(input: String): Pair<String, UUID> {
+        // next line conflates two error cases into what was previously one
+        val uuid = userCache.fetchUuid(input) ?: throw ChattoreException("Invalid target specified")
+        val ign = userCache.usernameOrNull(uuid) ?: throw ChattoreException("We do not recognize that user!")
+        return ign to uuid
     }
 }

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import java.net.URI
 import java.net.URL
 import java.util.*
 
@@ -89,7 +90,7 @@ class Messenger(
             builder.append(part.replaceObfuscate(canObfuscate).legacyDeserialize())
             if (matches.hasNext()) {
                 val nextMatch = matches.next()
-                val link = URL(nextMatch.groupValues[1])
+                val link = URI(nextMatch.groupValues[1]).toURL()
                 var type = "link"
                 var name = link.host
                 if (link.file.isNotEmpty()) {
@@ -121,7 +122,7 @@ class Messenger(
         return builder.build().performReplacements(plugin.chatReplacements)
     }
 
-    fun String.replaceObfuscate(canObfuscate: Boolean): String =
+    private fun String.replaceObfuscate(canObfuscate: Boolean): String =
         if (canObfuscate) {
             this
         } else {
