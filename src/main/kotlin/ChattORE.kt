@@ -68,6 +68,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 val parts = item.split(",")
                 parts[0] to parts[1]
             }
+            inputStream.close()
             emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
             chatReplacements.add(buildEmojiReplacement(emojis))
             logger.info("Loaded ${emojis.size} emojis")
