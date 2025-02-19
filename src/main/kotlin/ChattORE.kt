@@ -134,14 +134,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             createEmojiFeature(emojis, EmojiConfig(
                 config[ChattORESpec.format.chattore])
             ),
-            createFunCommandsFeature(this, FunCommandsConfig(
-                config[ChattORESpec.format.funcommandsDefault],
-                config[ChattORESpec.format.funcommandsNoCommands],
-                config[ChattORESpec.format.funcommandsHeader],
-                config[ChattORESpec.format.funcommandsCommandInfo],
-                config[ChattORESpec.format.funcommandsMissingCommand],
-                config[ChattORESpec.format.funcommandsCommandNotFound])
-            ),
+            createFunCommandsFeature(logger, messenger, proxy.commandManager),
             createHelpOpFeature(logger, messenger, HelpOpConfig(
                 config[ChattORESpec.format.help])
             ),

@@ -46,12 +46,6 @@ object ChattORESpec : ConfigSpec("") {
         val leave by optional("<yellow><player> has left the network")
         val joinDiscord by optional("**<player> has joined the network**")
         val leaveDiscord by optional("**<player> has left the network**")
-        val funcommandsDefault by optional("<green>FunCommands v1.1 by <gold>Waffle [Wueffi]</gold></green>")
-        val funcommandsNoCommands by optional("<red>No fun commands found.</red>")
-        val funcommandsHeader by optional("<yellow>Available Fun Commands:</yellow>")
-        val funcommandsCommandInfo by optional("<gold>Description for <yellow>/<command></yellow>: <description></gold>")
-        val funcommandsMissingCommand by optional("<red>You must specify a command.</red>")
-        val funcommandsCommandNotFound by optional("<red>Command '<command>' not found.</red>")
     }
 
     val nicknamePresets by optional(pridePresets)
