@@ -6,6 +6,7 @@ import co.aikar.commands.annotation.CommandAlias
 import co.aikar.commands.annotation.CommandPermission
 import co.aikar.commands.annotation.Default
 import com.velocitypowered.api.event.EventManager
+import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.player.PlayerChatEvent
 import com.velocitypowered.api.proxy.Player
@@ -40,7 +41,7 @@ class ChatConfirmationListener(
 ) {
     private val regexes = config.regexes.map(::Regex)
 
-    @Subscribe(priority = Short.MAX_VALUE)
+    @Subscribe(order = PostOrder.CUSTOM, priority = Short.MAX_VALUE)
     fun onChatEvent(event: PlayerChatEvent) {
         val player = event.player
         val message = event.message
