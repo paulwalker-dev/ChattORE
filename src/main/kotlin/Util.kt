@@ -6,7 +6,15 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 
+val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
+val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
+val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
+
+fun String.toComponent() = Component.text(this)
 fun fixHexFormatting(str: String): String = str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
+fun String.legacyDeserialize() = LegacyComponentSerializer.legacy('&').deserialize(this)
+fun String.miniMessageDeserialize() = MiniMessage.miniMessage().deserialize(this)
+fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
 
 fun String.componentize(): Component =
     LegacyComponentSerializer.builder()
@@ -15,12 +23,6 @@ fun String.componentize(): Component =
         .extractUrls()
         .build()
         .deserialize(fixHexFormatting(this))
-
-fun String.legacyDeserialize() = LegacyComponentSerializer.legacy('&').deserialize(this)
-fun String.miniMessageDeserialize() = MiniMessage.miniMessage().deserialize(this)
-fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
-fun String.toComponent() = Component.text(this)
-fun String.discordEscape() = this.replace("""_""", "\\_")
 
 fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
     TextReplacementConfig.builder()
@@ -43,14 +45,6 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
             }
         }
         .build()
-
-fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component {
-    var result: Component = this
-    replacements.forEach { replacement ->
-        result = result.replaceText(replacement)
-    }
-    return result
-}
 
 fun String.render(
     message: String

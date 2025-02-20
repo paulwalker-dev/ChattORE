@@ -1,12 +1,13 @@
 package chattore
 
-import chattore.commands.MailboxItem
+import chattore.feature.MailboxItem
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.UUID
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object About : Table("about") {
     val uuid = varchar("about_uuid", 36).uniqueIndex()
@@ -45,13 +46,13 @@ object StringSetting : Table("setting") {
 
 open class Setting<T>(val key: String)
 
-object SpyEnabled : Setting<Boolean>("spy")
-
 class Storage(
     dbFile: String
 ) {
-    var uuidToUsernameCache = mapOf<UUID, String>()
-    var usernameToUuidCache = mapOf<String, UUID>()
+    private val cacheLength = 86400 // One day
+    private val nicknameCache = ConcurrentHashMap<UUID, Pair<String?, Long>>()
+    val uuidToUsernameCache = ConcurrentHashMap<UUID, String>()
+    val usernameToUuidCache = ConcurrentHashMap<String, UUID>()
     val database = Database.connect("jdbc:sqlite:${dbFile}", "org.sqlite.JDBC")
 
     init {
@@ -79,7 +80,13 @@ class Storage(
     }
 
     fun getNickname(target: UUID): String? = transaction(database) {
-        Nick.selectAll().where { Nick.uuid eq target.toString() }.firstOrNull()?.let { it[Nick.nick] }
+        val nickname = if (nicknameCache.containsKey(target)) {
+            nicknameCache[target]?.first
+        } else {
+            Nick.selectAll().where { Nick.uuid eq target.toString() }.firstOrNull()?.let { it[Nick.nick] }
+        }
+        ensureCachedNickname(target, nickname)
+        nickname
     }
 
     fun setNickname(target: UUID, nickname: String) = transaction(database) {
@@ -87,6 +94,13 @@ class Storage(
             it[this.uuid] = target.toString()
             it[this.nick] = nickname
         }
+        ensureCachedNickname(target, nickname)
+    }
+
+    fun ensureCachedNickname(target: UUID, nickname: String?) {
+        val now = System.currentTimeMillis() / 1000
+        nicknameCache.entries.removeIf { it.value.second + cacheLength < now }
+        nicknameCache[target] = Pair(nickname, now)
     }
 
     fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
@@ -97,13 +111,15 @@ class Storage(
         updateLocalUsernameCache()
     }
 
-    fun updateLocalUsernameCache() {
-        uuidToUsernameCache = transaction(database) {
-            UsernameCache.selectAll().associate {
-                UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
-            }
+    fun updateLocalUsernameCache() = transaction(database) {
+        uuidToUsernameCache.clear()
+        usernameToUuidCache.clear()
+        UsernameCache.selectAll().associate {
+            UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
+        }.forEach { (id, username) ->
+            uuidToUsernameCache[id] = username
+            usernameToUuidCache[username] = id
         }
-        usernameToUuidCache = uuidToUsernameCache.entries.associate{(k,v)-> v to k}
     }
 
     fun insertMessage(sender: UUID, recipient: UUID, message: String) = transaction(database) {

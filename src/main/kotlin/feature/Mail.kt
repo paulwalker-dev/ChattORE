@@ -1,9 +1,10 @@
-package chattore.commands
+package chattore.feature
 
 import chattore.*
-import chattore.entity.ChattORESpec
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
+import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.proxy.Player
 import net.kyori.adventure.text.Component
 import java.time.Instant
@@ -11,6 +12,23 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.concurrent.TimeUnit
+
+data class MailConfig(
+    val mailReceived: String = "<gold>[</gold><red>From <sender></red><gold>]</gold> <message>",
+    val mailSent: String = "<gold>[</gold><red>To <recipient></red><gold>]</gold> <message>",
+    val mailUnread: String = "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>."
+)
+
+fun createMailFeature(
+    plugin: ChattORE,
+    config: MailConfig
+): Feature {
+    return Feature(
+        commands = listOf(Mail(plugin.database, config)),
+        listeners = listOf(MailListener(plugin, config)),
+    )
+}
 
 fun getRelativeTimestamp(unixTimestamp: Long): String {
     val currentTime = LocalDateTime.now(ZoneOffset.UTC)
@@ -27,7 +45,12 @@ fun getRelativeTimestamp(unixTimestamp: Long): String {
     }
 }
 
-data class MailboxItem(val id: Int, val timestamp: Int, val sender: UUID, val read: Boolean)
+data class MailboxItem(
+    val id: Int,
+    val timestamp: Int,
+    val sender: UUID,
+    val read: Boolean
+)
 
 class MailContainer(private val uuidMapping: Map<UUID, String>, private val messages: List<MailboxItem>) {
     private val pageSize = 6
@@ -78,7 +101,8 @@ class MailContainer(private val uuidMapping: Map<UUID, String>, private val mess
 @Description("Send a message to an offline player")
 @CommandPermission("chattore.mail")
 class Mail(
-    private val chattORE: ChattORE
+    private val database: Storage,
+    private val config: MailConfig
 ) : BaseCommand() {
 
     private val mailTimeouts = mutableMapOf<UUID, Long>()
@@ -89,8 +113,8 @@ class Mail(
     @Subcommand("mailbox")
     fun mailbox(player: Player, @Default("0") page: Int) {
         val container = MailContainer(
-            chattORE.database.uuidToUsernameCache,
-            chattORE.database.getMessages(player.uniqueId)
+            database.uuidToUsernameCache,
+            database.getMessages(player.uniqueId)
         )
         player.sendMessage(container.getPage(page))
     }
@@ -103,11 +127,11 @@ class Mail(
             // 60 second timeout to prevent flooding
             if (now < it + 60) throw ChattoreException("You are mailing too quickly!")
         }
-        val targetUuid = chattORE.database.usernameToUuidCache[target]
+        val targetUuid = database.usernameToUuidCache[target]
             ?: throw ChattoreException("We do not recognize that user!")
         mailTimeouts[player.uniqueId] = now
-        chattORE.database.insertMessage(player.uniqueId, targetUuid, message)
-        val response = chattORE.config[ChattORESpec.format.mailSent].render(
+        database.insertMessage(player.uniqueId, targetUuid, message)
+        val response = config.mailSent.render(
             mapOf(
                 "message" to message.toComponent(),
                 "recipient" to target.toComponent()
@@ -118,16 +142,32 @@ class Mail(
 
     @Subcommand("read")
     fun read(player: Player, id: Int) {
-        chattORE.database.readMessage(player.uniqueId, id)?.let {
-            val response = chattORE.config[ChattORESpec.format.mailReceived].render(
+        database.readMessage(player.uniqueId, id)?.let {
+            val response = config.mailReceived.render(
                 mapOf(
                     "message" to it.second.toComponent(),
-                    "sender" to chattORE.database.uuidToUsernameCache.getValue(it.first).toComponent()
+                    "sender" to database.uuidToUsernameCache.getValue(it.first).toComponent()
                 )
             )
             player.sendMessage(response)
         } ?: run {
             throw ChattoreException("Invalid message ID!")
         }
+    }
+}
+
+class MailListener(
+    private val plugin: ChattORE,
+    private val config: MailConfig
+) {
+    @Subscribe
+    fun joinEvent(event: LoginEvent) {
+        val unreadCount = plugin.database.getMessages(event.player.uniqueId).filter { !it.read }.size
+        if (unreadCount > 0)
+            plugin.proxy.scheduler.buildTask(plugin, Runnable {
+                event.player.sendMessage(config.mailUnread.render(mapOf(
+                    "count" to "$unreadCount".toComponent()
+                )))
+            }).delay(2L, TimeUnit.SECONDS).schedule()
     }
 }

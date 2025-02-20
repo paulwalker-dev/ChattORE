@@ -1,24 +1,32 @@
-package chattore.commands
+package chattore.feature
 
-import chattore.entity.ChattORESpec
+import chattore.ChattoreException
+import chattore.Feature
 import chattore.miniMessageDeserialize
 import chattore.render
-import chattore.toComponent
 import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.CommandAlias
-import co.aikar.commands.annotation.CommandCompletion
-import co.aikar.commands.annotation.CommandPermission
-import co.aikar.commands.annotation.Default
-import co.aikar.commands.annotation.Description
-import com.uchuhimo.konf.Config
+import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
+
+data class EmojiConfig(
+    val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>"
+)
+
+fun createEmojiFeature(
+    emojis: Map<String, String>,
+    config: EmojiConfig
+): Feature {
+    return Feature(
+        commands = listOf(Emoji(emojis, config))
+    )
+}
 
 @CommandAlias("emoji")
 @Description("Preview an emoji")
 @CommandPermission("chattore.emoji")
 class Emoji(
-    private val config: Config,
-    private val emojis: Map<String, String>
+    private val emojis: Map<String, String>,
+    private val config: EmojiConfig
 ) : BaseCommand() {
 
     @Default
@@ -26,17 +34,13 @@ class Emoji(
     fun default(player: Player, vararg emojiNames: String) {
         if (!emojis.keys.containsAll(emojiNames.toSet())) {
             val notEmoji = emojiNames.toSet().minus(emojis.keys)
-            player.sendMessage(
-                config[ChattORESpec.format.error].render(
-                    "The following are not valid emojis: ${notEmoji.joinToString(", ")}".toComponent()
-                )
-            )
+            throw ChattoreException("The following are not valid emojis: ${notEmoji.joinToString(", ")}")
         }
         val emojiMiniMessage = emojiNames.toSet().intersect(emojis.keys).joinToString(", ") {
             "<hover:show_text:${it}>${emojis[it]}</hover>"
         }
         player.sendMessage(
-            config[ChattORESpec.format.chattore].render(
+            config.format.render(
                 "Emojis: $emojiMiniMessage".miniMessageDeserialize()
             )
         )
