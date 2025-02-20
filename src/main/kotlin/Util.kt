@@ -89,10 +89,11 @@ fun ProxyServer.playerOrNull(uuid: UUID): Player? = getPlayer(uuid).getOrNull()
 
 /***
  * Loads a resource file [filename] as a String.
- * Make sure you pass in an absolute path.
+ * Absolute paths recommended.
  * Throws FileNotFoundException if not found.
  */
 fun loadResource(filename: String) =
-    Any::class.java.getResource(filename)?.readText() ?: throw FileNotFoundException(filename)
+    Dummy::class.java.getResource(filename)?.readText() ?: throw FileNotFoundException(filename)
+object Dummy
 
 fun parseUuid(input: String): UUID? = if (uuidRegex.matches(input)) UUID.fromString(input) else null
