@@ -4,6 +4,7 @@ import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
@@ -25,12 +26,15 @@ private val legacyNoObfuscate = LegacyComponentSerializer.builder()
     .character('&')
     .formats(CharacterAndFormat.defaults().filter { it != CharacterAndFormat.OBFUSCATED })
     .build()
-fun String.legacyDeserialize(canObfuscate: Boolean = false) =
-    if (canObfuscate) {
-        LegacyComponentSerializer.legacyAmpersand().deserialize(this)
+fun String.legacyDeserialize(canObfuscate: Boolean = false): TextComponent {
+    // remove section signs so the client doesn't render them. ew
+    val noSections = replace('§', '&')
+    return if (canObfuscate) {
+        LegacyComponentSerializer.legacyAmpersand().deserialize(noSections)
     } else {
-        legacyNoObfuscate.deserialize(this)
+        legacyNoObfuscate.deserialize(noSections)
     }
+}
 
 // TODO: this is used for sending prefixes to Discord only, wut
 private val componentizeSerializer = LegacyComponentSerializer.builder()
