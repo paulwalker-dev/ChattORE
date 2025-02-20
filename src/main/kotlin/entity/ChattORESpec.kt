@@ -7,7 +7,7 @@ object ChattORESpec : ConfigSpec("") {
 
     val storage by optional("storage.db")
     val clearNicknameOnChange by optional(true)
-    val regexes by optional(listOf(""))
+    val regexes by optional(listOf<String>())
 
     object discord : ConfigSpec() {
         val enable by optional(false)
