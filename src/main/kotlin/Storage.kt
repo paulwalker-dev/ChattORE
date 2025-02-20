@@ -2,6 +2,8 @@ package chattore
 
 import chattore.feature.MailboxItem
 import chattore.feature.NickPreset
+import com.velocitypowered.api.event.EventManager
+import com.velocitypowered.api.event.player.ServerPreConnectEvent
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
@@ -60,7 +62,8 @@ class Storage(
 
     private fun initTables() = transaction(database) {
         SchemaUtils.create(
-            About, Mail, Nick, UsernameCache, StringSetting)
+            About, Mail, Nick, UsernameCache, StringSetting
+        )
     }
 
     fun setAbout(uuid: UUID, about: String) = transaction(database) {
@@ -70,7 +73,7 @@ class Storage(
         }
     }
 
-    fun getAbout(uuid: UUID) : String? = transaction(database) {
+    fun getAbout(uuid: UUID): String? = transaction(database) {
         About.selectAll().where { About.uuid eq uuid.toString() }.firstOrNull()?.let { it[About.about] }
     }
 
@@ -120,18 +123,18 @@ class Storage(
 
     fun getMessages(recipient: UUID): List<MailboxItem> = transaction(database) {
         Mail.selectAll().where { Mail.recipient eq recipient.toString() }
-            .orderBy(Mail.timestamp to SortOrder.DESC) .map {
-            MailboxItem(
-                it[Mail.id],
-                it[Mail.timestamp],
-                UUID.fromString(it[Mail.sender]),
-                it[Mail.read]
-            )
-        }
+            .orderBy(Mail.timestamp to SortOrder.DESC).map {
+                MailboxItem(
+                    it[Mail.id],
+                    it[Mail.timestamp],
+                    UUID.fromString(it[Mail.sender]),
+                    it[Mail.read]
+                )
+            }
     }
 
     private fun markRead(id: Int, read: Boolean) = transaction(database) {
-        Mail.update({Mail.id eq id}) {
+        Mail.update({ Mail.id eq id }) {
             it[this.read] = read
         }
     }
@@ -153,7 +156,7 @@ class Storage(
     }
 }
 
-class UserCache(private val database: Database) {
+class UserCache private constructor(private val database: Database) {
     // TODO fix thread safety?
     private var uuidToName = mapOf<UUID, String>()
     private var nameToUuid = mapOf<String, UUID>()
@@ -181,12 +184,22 @@ class UserCache(private val database: Database) {
     fun uuidOrNull(username: String): UUID? = nameToUuid[username]
 
     fun usernameOrUuid(uuid: UUID) = usernameOrNull(uuid) ?: uuid.toString()
+
     // TODO: inline?
     fun usernameOrUuid(u: User) = usernameOrUuid(u.uuid)
 
     val usernames get() = uuidToName.values
     val uuids get() = nameToUuid.values
+
+    companion object {
+        fun create(database: Database, events: PluginEvents): UserCache = UserCache(database).also { cache ->
+            events.register<ServerPreConnectEvent> { event ->
+                cache.ensureCachedUsername(event.player.uniqueId, event.player.username)
+            }
+        }
+    }
 }
+
 
 // idk what to call it
 class KnownUser(val uuid: UUID, val name: String)

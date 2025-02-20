@@ -64,7 +64,8 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         config = loadConfig()
         luckPerms = LuckPermsProvider.get()
         database = Storage(this.dataFolder.resolve(config[ChattORESpec.storage]).toString())
-        val userCache = UserCache(database.database)
+        val pluginEvents = PluginEvents(this, proxy.eventManager)
+        val userCache = UserCache.create(database.database, pluginEvents)
         emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
             val parts = item.split(",")
             parts[0] to parts[1]

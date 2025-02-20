@@ -1,5 +1,7 @@
 package chattore
 
+import com.velocitypowered.api.event.EventHandler
+import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
@@ -90,6 +92,16 @@ fun Audience.sendInfoMM(message: String, vararg resolvers: TagResolver) =
     sendSimpleC(infoFormat, message.render(*resolvers))
 
 fun ProxyServer.playerOrNull(uuid: UUID): Player? = getPlayer(uuid).getOrNull()
+
+/*** Convenience ***/
+class PluginEvents(private val plugin: Any, private val eventManager: EventManager) {
+    fun <E> register(eventClass: Class<E>, postOrder: Short, handler: EventHandler<E>) =
+        eventManager.register(plugin, eventClass, postOrder, handler)
+    fun registerAll(listener: Any) = eventManager.register(plugin, listener)
+}
+
+inline fun <reified T> PluginEvents.register(postOrder: Short = 0, noinline handler: (T) -> Unit): EventHandler<T> =
+    EventHandler(handler).also { register(T::class.java, postOrder, it) }
 
 /***
  * Loads a resource file [filename] as a String.
