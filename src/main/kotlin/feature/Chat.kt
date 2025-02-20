@@ -23,29 +23,13 @@ fun createChatFeature(
 }
 
 class ChatListener(
-    val logger: Logger,
-    val messenger: Messenger,
-    val config: ChatConfig,
+    private val logger: Logger,
+    private val messenger: Messenger,
+    private val config: ChatConfig,
 ) {
-
-    private val flaggedMessages = ConcurrentHashMap<UUID, FlaggedMessageEvent>()
-
-    @Subscribe(priority = 32767)
-    fun onFlaggedMessageEvent(event: FlaggedMessageEvent) {
-        flaggedMessages[event.sender.uniqueId] = event
-    }
-
     @Subscribe
     fun onChatEvent(event: PlayerChatEvent) {
-        flaggedMessages[event.player.uniqueId]?.let {
-            if (it.message == event.message) {
-                // message was flagged, do not send
-                return
-            } else {
-                // message was not flagged, so remove if previous flagged message
-                flaggedMessages.remove(event.player.uniqueId)
-            }
-        }
+        if (!event.result.isAllowed) return
         val player = event.player
         val message = event.message
         player.currentServer.ifPresent { server ->

@@ -21,34 +21,26 @@ data class ChatConfirmationConfig(
     val chatConfirm: String = "<red>Override recognized"
 )
 
-data class FlaggedMessageEvent(
-    val sender: Player,
-    val message: String,
-    val matchedRegexes: List<Regex>,
-)
-
 fun createChatConfirmationFeature(
     logger: Logger,
     messenger: Messenger,
-    eventManager: EventManager,
     config: ChatConfirmationConfig,
 ): Feature {
-    val flaggedMessages = ConcurrentHashMap<UUID, FlaggedMessageEvent>()
+    val flaggedMessages = ConcurrentHashMap<UUID, String>()
     return Feature(
         commands = listOf(ConfirmMessage(config, flaggedMessages, logger, messenger)),
-        listeners = listOf(ChatConfirmationListener(config, flaggedMessages, logger, eventManager)),
+        listeners = listOf(ChatConfirmationListener(config, flaggedMessages, logger)),
     )
 }
 
 class ChatConfirmationListener(
     private val config: ChatConfirmationConfig,
-    private val flaggedMessages: ConcurrentHashMap<UUID, FlaggedMessageEvent>,
+    private val flaggedMessages: ConcurrentHashMap<UUID, String>,
     private val logger: Logger,
-    private val eventManager: EventManager,
 ) {
     private val regexes = config.regexes.map(::Regex)
 
-    @Subscribe(priority = 32767)
+    @Subscribe(priority = Short.MAX_VALUE)
     fun onChatEvent(event: PlayerChatEvent) {
         val player = event.player
         val message = event.message
@@ -57,13 +49,12 @@ class ChatConfirmationListener(
             flaggedMessages.remove(player.uniqueId)
             return
         }
+        event.result = PlayerChatEvent.ChatResult.denied()
         fun String.highlight(r: Regex) = r.replace(this) { match -> "<red>${match.value}</red>" }
         val highlighted = matches.fold(message, String::highlight)
         logger.info("${player.username} (${player.uniqueId}) Attempting to send flagged message: $message")
         player.sendSimpleMM(config.confirmationPrompt, highlighted)
-        val flaggedMessageEvent = FlaggedMessageEvent(event.player, message, matches)
-        eventManager.fireAndForget(flaggedMessageEvent)
-        flaggedMessages[player.uniqueId] = flaggedMessageEvent
+        flaggedMessages[player.uniqueId] = event.message
     }
 }
 
@@ -71,7 +62,7 @@ class ChatConfirmationListener(
 @CommandPermission("chattore.confirmmessage")
 class ConfirmMessage(
     private val config: ChatConfirmationConfig,
-    private val flaggedMessages: ConcurrentHashMap<UUID, FlaggedMessageEvent>,
+    private val flaggedMessages: ConcurrentHashMap<UUID, String>,
     private val logger: Logger,
     private val messenger: Messenger,
 ) : BaseCommand() {
@@ -79,10 +70,10 @@ class ConfirmMessage(
     fun default(player: Player) {
         val message = flaggedMessages[player.uniqueId] ?:
             throw ChattoreException("You have no message to confirm!")
-        logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: ${message.message}")
+        logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: $message")
         player.sendRichMessage(config.chatConfirm)
         player.currentServer.ifPresent { server ->
-            messenger.broadcastChatMessage(server.serverInfo.name, player, message.message)
+            messenger.broadcastChatMessage(server.serverInfo.name, player, message)
         }
         flaggedMessages.remove(player.uniqueId)
     }

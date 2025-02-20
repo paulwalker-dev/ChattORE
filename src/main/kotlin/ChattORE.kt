@@ -127,7 +127,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         }
         val features = listOf(
             createChatConfirmationFeature(
-                logger, messenger, proxy.eventManager, ChatConfirmationConfig(
+                logger, messenger, ChatConfirmationConfig(
                     config[ChattORESpec.regexes],
                     config[ChattORESpec.format.chatConfirmPrompt],
                     config[ChattORESpec.format.chatConfirm],
