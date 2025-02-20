@@ -4,9 +4,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     val kotlinVersion = "2.1.10"
     kotlin("jvm") version kotlinVersion
-    id("com.gradleup.shadow") version "8.3.0"
-    id("org.jetbrains.kotlin.kapt") version kotlinVersion
-    id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
+    kotlin("kapt") version kotlinVersion
+    kotlin("plugin.serialization") version kotlinVersion
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 group = ""
