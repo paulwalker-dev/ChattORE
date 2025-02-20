@@ -22,7 +22,7 @@ class Chattore(
     @CatchUnknown
     @Subcommand("version")
     fun version(player: Player) {
-        player.sendInfoMM("Version <light_gray>${plugin.getVersion()}")
+        player.sendInfoMM("Version <gray>${plugin.getVersion()}")
     }
 
     @Subcommand("reload")

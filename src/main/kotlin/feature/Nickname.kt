@@ -12,7 +12,6 @@ import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import java.util.*
-import kotlin.jvm.optionals.getOrNull
 
 data class NicknameConfig(
     val clearNicknameOnChange: Boolean = true,
@@ -69,7 +68,7 @@ private fun String.validateColor() = if (this.startsWith("&")) {
 }
 
 data class NickPreset(val miniMessageFormat: String) {
-    fun render(nickname: String): Component = miniMessageFormat.render("nickname" toS nickname)
+    fun render(username: String): Component = miniMessageFormat.render("username" toS username)
     val isGeneric get() = "<username>" in miniMessageFormat
 
     companion object {
