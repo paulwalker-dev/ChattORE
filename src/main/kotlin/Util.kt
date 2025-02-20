@@ -59,7 +59,7 @@ infix fun String.toS(message: String) = Placeholder.unparsed(this, message)
 infix fun String.toC(message: Component) = Placeholder.component(this, message)
 infix fun String.toMM(message: String) = toC(message.render())
 
-fun Audience.sendSimpleC(format: String, message: Component) = sendMessage(format.render("message" toC message))
+fun Audience.sendSimpleC(format: String, message: Component) = sendMessage(format.renderSimpleC(message))
 fun Audience.sendSimpleS(format: String, message: String) = sendSimpleC(format, message.toComponent())
 fun Audience.sendSimpleMM(format: String, message: String) = sendSimpleC(format, message.render())
 

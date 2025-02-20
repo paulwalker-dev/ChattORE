@@ -8,14 +8,16 @@ import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.proxy.Player
+import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.*
 
 data class NicknameConfig(
     val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
     val clearNicknameOnChange: Boolean = true,
-    val presets: SortedMap<String, String>,
+    val presets: SortedMap<String, NickPreset>,
 )
 
 fun createNicknameFeature(
@@ -51,19 +53,36 @@ val hexColorMap = mapOf(
 
 val hexPattern = """#[0-f]{6}""".toRegex()
 
-fun String.validateColor() = if (this.startsWith("&")) {
+private fun String.validateColor() = if (this.startsWith("&")) {
     if (this.length != 2) {
         throw ChattoreException("When providing legacy color codes, use a single character after &.")
     }
-    val code = hexColorMap[this.substring(1)]
-        ?: throw ChattoreException("Invalid color code provided")
-    code.second
+    val (_, colorName) = hexColorMap[this.substring(1)]
+        ?: throw ChattoreException("Invalid legacy color code provided")
+    colorName
 } else if (hexPattern.matches(this)) {
     this
 } else if (this in hexColorMap.values.map { it.second }) {
     this
 } else {
     throw ChattoreException("Invalid color code provided")
+}
+
+data class NickPreset(val miniMessageFormat: String) {
+    fun render(nickname: String): Component = miniMessageFormat.render("nickname" toS nickname)
+    val isGeneric get() = "<username>" in miniMessageFormat
+
+    companion object {
+        fun colorOrGradient(colors: Array<out String>): NickPreset {
+            val codes = colors.joinToString(":") { it.validateColor() }
+            val nickname = if (colors.size == 1) {
+                "<color:$codes><username></color:$codes>"
+            } else {
+                "<gradient:$codes><username></gradient>"
+            }
+            return NickPreset(nickname)
+        }
+    }
 }
 
 @CommandAlias("nick|nickname")
@@ -75,26 +94,25 @@ class Nickname(
     private val config: NicknameConfig
 ) : BaseCommand() {
 
+    private fun Audience.sendInfo(message: String, vararg resolvers: TagResolver) =
+        sendSimpleC(config.format, message.render(*resolvers))
+
+    private fun setNickname(target: UUID, nickname: NickPreset) {
+        plugin.database.setNickname(target, nickname)
+        plugin.proxy.getPlayer(target).ifPresent { player ->
+            player.sendInfo(
+                "Your nickname has been set to <rendered>",
+                "rendered" toC nickname.render(player.username)
+            )
+        }
+    }
+
     @Subcommand("color")
     @CommandCompletion("@colors")
     fun set(player: Player, vararg colors: String) {
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
-        val rendered = if (colors.size == 1) {
-            val color = colors.first().validateColor()
-            val nickname = "<color:$color><username></color:$color>"
-            plugin.database.setNickname(player.uniqueId, nickname)
-            nickname
-        } else {
-            if (colors.size > 3) throw ChattoreException("Too many colors!")
-            setNicknameGradient(player.uniqueId, *colors)
-        }
-        // TODO WTF
-        val response = config.format.renderSimpleC(
-            "Your nickname has been set to $rendered".render(
-                "username" toS player.username
-            )
-        )
-        player.sendMessage(response)
+        if (colors.size > 3) throw ChattoreException("Too many colors! Please provide 1 to 3 colors!")
+        setNickname(player.uniqueId, NickPreset.colorOrGradient(colors))
     }
 
     @Subcommand("preset")
@@ -103,13 +121,7 @@ class Nickname(
     fun preset(player: Player, preset: String) {
         val format = config.presets[preset]
             ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
-        val rendered = format.render("username" toS player.username)
-        plugin.database.setNickname(player.uniqueId, format)
-        // TODO WTF?
-        val response = config.format.renderSimpleC(
-            "Your nickname has been set to <message>".renderSimpleC(rendered)
-        )
-        player.sendMessage(response)
+        setNickname(player.uniqueId, format)
     }
 
     @Subcommand("presets")
@@ -118,9 +130,6 @@ class Nickname(
     fun presets(player: Player, @Optional shownText: String?) {
         val renderedPresets = ArrayList<Component>()
         for ((presetName, preset) in config.presets) {
-            val applyPreset: (String) -> Component = {
-                preset.render("username" toS it)
-            }
             val rendered = if (shownText == null) {
                 // Primarily show the preset name, else a preview of the nickname.
                 "<hover:show_text:'Click to apply <username>'><preset></hover>"
@@ -129,37 +138,33 @@ class Nickname(
                 // Also, we're suggesting the username as the autocompleted $shownText.
                 "<hover:show_text:'Click to apply <preset> preset'><custom></hover>"
             }.render(
-                "username" toC applyPreset(player.username),
-                "preset" toC applyPreset(presetName),
-                "custom" toC applyPreset(shownText ?: ""),
+                "username" toC preset.render(player.username),
+                "preset" toC preset.render(presetName),
+                "custom" toC preset.render(shownText ?: ""),
             ).let {
                 "<click:run_command:'/nick preset $presetName'><message></click>".renderSimpleC(it)
             }
             renderedPresets.add(rendered)
         }
 
-        // TODO WTF
-        val response = config.format.renderSimpleC(
-            "Available presets: <message>".renderSimpleC(
-                Component.join(JoinConfiguration.commas(true), renderedPresets)
-            )
+        player.sendInfo(
+            "Available presets: <presets>",
+            "presets" toC Component.join(JoinConfiguration.commas(true), renderedPresets),
         )
-        player.sendMessage(response)
     }
 
     @Subcommand("nick")
     @CommandPermission("chattore.nick.others")
     @CommandCompletion("@usernameCache")
     fun nick(commandSource: CommandSource, @Single target: String, @Single nick: String) {
-        val targetUuid = userCache.fetchUuid(target)
-            ?: throw ChattoreException("Invalid user!")
+        val targetUuid = userCache.fetchUuid(target) ?: throw ChattoreException("Invalid user!")
         val nickname = if (nick.contains("&")) {
             nick.legacyDeserialize().miniMessageSerialize()
         } else {
             nick
-        }
-        plugin.database.setNickname(targetUuid, nickname)
-        sendPlayerNotifications(target, commandSource, targetUuid, nickname)
+        }.let(::NickPreset)
+        setNickname(targetUuid, nickname)
+        commandSource.notifyExecutor(target, nickname)
     }
 
     @Subcommand("remove")
@@ -169,10 +174,7 @@ class Nickname(
         val targetUuid = userCache.fetchUuid(target)
             ?: throw ChattoreException("Invalid user!")
         plugin.database.removeNickname(targetUuid)
-        commandSource.sendSimpleS(
-            config.format,
-            "Removed nickname for $target."
-        )
+        commandSource.sendInfo("Removed nickname for $target.")
     }
 
     @Subcommand("setgradient")
@@ -180,37 +182,22 @@ class Nickname(
     @CommandCompletion("@usernameCache")
     fun setgradient(player: Player, @Single target: String, vararg colors: String) {
         if (colors.size < 2) throw ChattoreException("Not enough colors!")
-        val targetUuid = userCache.fetchUuid(target)
-            ?: throw ChattoreException("Invalid user!")
-        val rendered = setNicknameGradient(targetUuid, target, *colors)
-        sendPlayerNotifications(target, player, targetUuid, rendered)
+        val targetUuid = userCache.fetchUuid(target) ?: throw ChattoreException("Invalid user!")
+        val nickname = NickPreset.colorOrGradient(colors)
+        setNickname(targetUuid, nickname)
+        player.notifyExecutor(target, nickname)
     }
 
-    private fun sendPlayerNotifications(target: String, executor: CommandSource, targetUuid: UUID, rendered: String) {
-        // TODO is this just an "info" message?
-        executor.sendSimpleC(
-            config.format,
-            "Set nickname for $target as $rendered.".render(
-                "username" toS target,
-            )
+    private fun CommandSource.notifyExecutor(
+        target: String,
+        nickname: NickPreset,
+    ) {
+        sendInfo(
+            "Set nickname for $target as <rendered>.",
+            "rendered" toC nickname.render(target),
         )
-        plugin.proxy.getPlayer(targetUuid).ifPresent {
-            it.sendSimpleC(
-                config.format,
-                "Your nickname has been set to $rendered".render(
-                    "username" toS target
-                )
-            )
-        }
     }
 
-    // TODO
-    private fun setNicknameGradient(uniqueId: UUID, vararg colors: String): String {
-        val codes = colors.joinToString(":") { it.validateColor() }
-        val nickname = "<gradient:$codes><username></gradient>"
-        plugin.database.setNickname(uniqueId, nickname)
-        return nickname
-    }
 }
 
 class NicknameListener(
@@ -223,8 +210,8 @@ class NicknameListener(
         if (!config.clearNicknameOnChange) return
         val existingName = userCache.usernameOrNull(event.player.uniqueId) ?: return
         if (existingName == event.player.username) return
-        val nickname = database.getNickname(event.player.uniqueId)
-        if (nickname?.contains("<username>") == true) return
+        val nickname = database.getNickname(event.player.uniqueId) ?: return
+        if (nickname.isGeneric) return
         database.removeNickname(event.player.uniqueId)
     }
 }

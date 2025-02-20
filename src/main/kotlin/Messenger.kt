@@ -1,6 +1,7 @@
 package chattore
 
 import chattore.feature.DiscordBroadcastEvent
+import chattore.feature.NickPreset
 import chattore.feature.SpyEnabled
 import com.velocitypowered.api.proxy.Player
 import kotlinx.serialization.json.Json
@@ -46,8 +47,8 @@ class Messenger(
         val userId = player.uniqueId
         val userManager = plugin.luckPerms.userManager
         val luckUser = userManager.getUser(userId) ?: return
-        val name = plugin.database.getNickname(userId) ?: player.username
-        val sender = name.render("username" toS player.username).let {
+        val name = plugin.database.getNickname(userId) ?: NickPreset(player.username)
+        val sender = name.render(player.username).let {
             "<click:run_command:'/playerprofile info ${player.username}'><message></click>".renderSimpleC(it)
         }
 

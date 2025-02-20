@@ -1,6 +1,7 @@
 package chattore
 
 import chattore.feature.MailboxItem
+import chattore.feature.NickPreset
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
@@ -50,7 +51,7 @@ class Storage(
     dbFile: String
 ) {
     private val cacheLength = 86400 // One day
-    private val nicknameCache = ConcurrentHashMap<UUID, Pair<String?, Long>>()
+    private val nicknameCache = ConcurrentHashMap<UUID, Pair<NickPreset, Long>>()
     val database = Database.connect("jdbc:sqlite:${dbFile}", "org.sqlite.JDBC")
 
     init {
@@ -75,27 +76,26 @@ class Storage(
 
     fun removeNickname(target: UUID) = transaction(database) {
         Nick.deleteWhere { Nick.uuid eq target.toString() }
+        nicknameCache.remove(target)
     }
 
-    fun getNickname(target: UUID): String? = transaction(database) {
-        val nickname = if (nicknameCache.containsKey(target)) {
-            nicknameCache[target]?.first
-        } else {
-            Nick.selectAll().where { Nick.uuid eq target.toString() }.firstOrNull()?.let { it[Nick.nick] }
+    fun getNickname(target: UUID): NickPreset? = transaction(database) {
+        val nickname = nicknameCache[target]?.first ?: run {
+            Nick.selectAll().where { Nick.uuid eq target.toString() }.firstOrNull()?.let { NickPreset(it[Nick.nick]) }
         }
-        ensureCachedNickname(target, nickname)
+        if (nickname != null) cacheNickname(target, nickname)
         nickname
     }
 
-    fun setNickname(target: UUID, nickname: String) = transaction(database) {
+    fun setNickname(target: UUID, nickname: NickPreset) = transaction(database) {
         Nick.upsert {
             it[this.uuid] = target.toString()
-            it[this.nick] = nickname
+            it[this.nick] = nickname.miniMessageFormat
         }
-        ensureCachedNickname(target, nickname)
+        cacheNickname(target, nickname)
     }
 
-    fun ensureCachedNickname(target: UUID, nickname: String?) {
+    private fun cacheNickname(target: UUID, nickname: NickPreset) {
         val now = System.currentTimeMillis() / 1000
         nicknameCache.entries.removeIf { it.value.second + cacheLength < now }
         nicknameCache[target] = Pair(nickname, now)

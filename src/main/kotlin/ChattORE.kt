@@ -77,7 +77,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
             setDefaultExceptionHandler(::handleCommandException, false)
-            commandCompletions.registerCompletion("bool") { listOf("true", "false")}
+            commandCompletions.registerCompletion("bool") { listOf("true", "false") }
             commandCompletions.registerCompletion("colors") { ctx ->
                 (hexColorMap.values.map { it.second }
                     + if (ctx.input.isEmpty()) {
@@ -89,7 +89,8 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                         // do not suggest if it's not a valid hex color
                         if (it.matches(Regex("^#[0-9A-Fa-f]{6}$"))
                             && ctx.input.uppercase() !in hexColorMap.values.map
-                            { (hex, _) -> hex.substring(0, ctx.input.length) }) {
+                            { (hex, _) -> hex.substring(0, ctx.input.length) }
+                        ) {
                             listOf(it.uppercase())
                         } else {
                             listOf()
@@ -111,66 +112,91 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             }
         }
         val features = listOf(
-            createChatConfirmationFeature(logger, messenger, proxy.eventManager, ChatConfirmationConfig(
-                config[ChattORESpec.regexes],
-                config[ChattORESpec.format.chatConfirmPrompt],
-                config[ChattORESpec.format.chatConfirm])
+            createChatConfirmationFeature(
+                logger, messenger, proxy.eventManager, ChatConfirmationConfig(
+                    config[ChattORESpec.regexes],
+                    config[ChattORESpec.format.chatConfirmPrompt],
+                    config[ChattORESpec.format.chatConfirm]
+                )
             ),
-            createChatFeature(logger, messenger, ChatConfig(
-                config[ChattORESpec.format.discord])
+            createChatFeature(
+                logger, messenger, ChatConfig(
+                    config[ChattORESpec.format.discord]
+                )
             ),
-            createChattoreFeature(this, ChattoreConfig(
-                config[ChattORESpec.format.chattore]
-            )),
-            createDiscordFeature(this, DiscordConfig(
-                config[ChattORESpec.discord.networkToken],
-                config[ChattORESpec.discord.channelId],
-                config[ChattORESpec.discord.chadId],
-                config[ChattORESpec.discord.playingMessage],
-                config[ChattORESpec.discord.format],
-                config[ChattORESpec.discord.serverTokens],
-                config[ChattORESpec.format.discord])
+            createChattoreFeature(
+                this, ChattoreConfig(
+                    config[ChattORESpec.format.chattore]
+                )
             ),
-            createEmojiFeature(emojis, EmojiConfig(
-                config[ChattORESpec.format.chattore])
+            createDiscordFeature(
+                this, DiscordConfig(
+                    config[ChattORESpec.discord.networkToken],
+                    config[ChattORESpec.discord.channelId],
+                    config[ChattORESpec.discord.chadId],
+                    config[ChattORESpec.discord.playingMessage],
+                    config[ChattORESpec.discord.format],
+                    config[ChattORESpec.discord.serverTokens],
+                    config[ChattORESpec.format.discord]
+                )
+            ),
+            createEmojiFeature(
+                emojis, EmojiConfig(
+                    config[ChattORESpec.format.chattore]
+                )
             ),
             createFunCommandsFeature(logger, messenger, proxy.commandManager),
-            createHelpOpFeature(logger, messenger, HelpOpConfig(
-                config[ChattORESpec.format.help])
+            createHelpOpFeature(
+                logger, messenger, HelpOpConfig(
+                    config[ChattORESpec.format.help]
+                )
             ),
-            createJoinLeaveFeature(messenger, proxy.eventManager, JoinLeaveConfig(
-                config[ChattORESpec.format.join],
-                config[ChattORESpec.format.leave],
-                config[ChattORESpec.format.joinDiscord],
-                config[ChattORESpec.format.leaveDiscord])
+            createJoinLeaveFeature(
+                messenger, proxy.eventManager, JoinLeaveConfig(
+                    config[ChattORESpec.format.join],
+                    config[ChattORESpec.format.leave],
+                    config[ChattORESpec.format.joinDiscord],
+                    config[ChattORESpec.format.leaveDiscord]
+                )
             ),
-            createMailFeature(this, userCache, MailConfig(
-                config[ChattORESpec.format.mailReceived],
-                config[ChattORESpec.format.mailSent],
-                config[ChattORESpec.format.mailUnread])
+            createMailFeature(
+                this, userCache, MailConfig(
+                    config[ChattORESpec.format.mailReceived],
+                    config[ChattORESpec.format.mailSent],
+                    config[ChattORESpec.format.mailUnread]
+                )
             ),
-            createMessageFeature(proxy, logger, messenger, MessageConfig(
-                config[ChattORESpec.format.messageReceived],
-                config[ChattORESpec.format.messageSent])
+            createMessageFeature(
+                proxy, logger, messenger, MessageConfig(
+                    config[ChattORESpec.format.messageReceived],
+                    config[ChattORESpec.format.messageSent]
+                )
             ),
-            createNicknameFeature(this, userCache, NicknameConfig(
-                config[ChattORESpec.format.chattore],
-                config[ChattORESpec.clearNicknameOnChange],
-                config[ChattORESpec.nicknamePresets])
+            createNicknameFeature(
+                this, userCache, NicknameConfig(
+                    config[ChattORESpec.format.chattore],
+                    config[ChattORESpec.clearNicknameOnChange],
+                    // IDK, this when config
+                    config[ChattORESpec.nicknamePresets].mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
+                )
             ),
-            createProfileFeature(proxy, database, luckPerms, userCache, ProfileConfig(
-                config[ChattORESpec.format.playerProfile],
-                config[ChattORESpec.format.chattore])
+            createProfileFeature(
+                proxy, database, luckPerms, userCache, ProfileConfig(
+                    config[ChattORESpec.format.playerProfile],
+                    config[ChattORESpec.format.chattore]
+                )
             ),
-            createSpyingFeature(database, messenger, SpyingConfig(
-                config[ChattORESpec.format.chattore],
-                config[ChattORESpec.format.commandSpy])
+            createSpyingFeature(
+                database, messenger, SpyingConfig(
+                    config[ChattORESpec.format.chattore],
+                    config[ChattORESpec.format.commandSpy]
+                )
             )
         )
         features.forEach { (commands, listeners, completions) ->
             commands.forEach(commandManager::registerCommand)
             //completions.forEach { (it, handler) -> commandManager.commandCompletions.registerCompletion(it) { handler } }
-            listeners.forEach { proxy.eventManager.register(this, it)}
+            listeners.forEach { proxy.eventManager.register(this, it) }
         }
         logger.info("Loaded ${features.size} features")
     }

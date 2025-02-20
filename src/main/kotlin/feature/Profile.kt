@@ -83,10 +83,7 @@ class Profile(
         return config.profile.render(
             "about" toS (database.getAbout(user.uniqueId) ?: "no about yet :("),
             "ign" toS ign,
-            "nickname" toC (database.getNickname(user.uniqueId) ?: "No nickname set")
-                .render(
-                    "username" toS ign,
-                ),
+            "nickname" toC (database.getNickname(user.uniqueId)?.render(ign) ?: "No nickname set".toComponent()),
             "rank" toC group.legacyDeserialize(),
         )
     }
