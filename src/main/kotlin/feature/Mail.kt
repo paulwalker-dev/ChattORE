@@ -75,7 +75,7 @@ class MailContainer(private val userCache: UserCache, private val messages: List
                 "<i><yellow>Read</yellow></i>".render()
             }
             val item = mini.render(
-                "sender" toS userCache.username(it.sender),
+                "sender" toS userCache.usernameOrUuid(it.sender),
                 "timestamp" toS getRelativeTimestamp(it.timestamp.toLong()),
                 "read" toC readComponent,
             )
@@ -149,7 +149,7 @@ class Mail(
         player.sendRichMessage(
             config.mailReceived,
             "message" toS message,
-            "sender" toS userCache.username(senderUUID),
+            "sender" toS userCache.usernameOrUuid(senderUUID),
         )
     }
 }

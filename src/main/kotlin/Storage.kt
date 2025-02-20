@@ -177,12 +177,12 @@ class UserCache(private val database: Database) {
 
     fun fetchUuid(input: String): UUID? = parseUuid(input) ?: nameToUuid[input]
 
-    // TODO: what do, this can fail?
-    fun username(uuid: UUID): String = uuidToName.getValue(uuid)
     fun usernameOrNull(uuid: UUID): String? = uuidToName[uuid]
     fun uuidOrNull(username: String): UUID? = nameToUuid[username]
 
-    fun usernameOrUuid(u: User) = usernameOrNull(u.uuid) ?: u.uuid.toString()
+    fun usernameOrUuid(uuid: UUID) = usernameOrNull(uuid) ?: uuid.toString()
+    // TODO: inline?
+    fun usernameOrUuid(u: User) = usernameOrUuid(u.uuid)
 
     val usernames get() = uuidToName.values
     val uuids get() = nameToUuid.values
