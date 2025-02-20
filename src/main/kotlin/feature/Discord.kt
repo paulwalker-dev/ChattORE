@@ -14,6 +14,7 @@ import kotlin.jvm.optionals.getOrNull
 fun String.discordEscape() = this.replace("""_""", "\\_")
 
 data class DiscordConfig(
+    val enable: Boolean = false,
     val token: String = "",
     val channelId: Long = 1234L,
     val chadId: Long = 1234L,
@@ -41,6 +42,8 @@ fun createDiscordFeature(
     plugin: ChattORE,
     config: DiscordConfig,
 ): Feature {
+    // HAX
+    if (!config.enable) return Feature()
     val discordNetwork = DiscordApiBuilder()
         .setToken(config.token)
         .setAllIntents()

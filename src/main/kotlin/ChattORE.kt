@@ -140,6 +140,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             createChattoreFeature(this),
             createDiscordFeature(
                 this, DiscordConfig(
+                    config[ChattORESpec.discord.enable],
                     config[ChattORESpec.discord.networkToken],
                     config[ChattORESpec.discord.channelId],
                     config[ChattORESpec.discord.chadId],
