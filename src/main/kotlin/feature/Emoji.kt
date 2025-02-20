@@ -30,6 +30,6 @@ class Emoji(
         val emojiMiniMessage = emojiNames.toSet().intersect(emojis.keys).joinToString(", ") {
             "<hover:show_text:$it>${emojis[it]}</hover>"
         }
-        player.sendInfo("Emojis: $emojiMiniMessage")
+        player.sendInfoMM("Emojis: $emojiMiniMessage")
     }
 }

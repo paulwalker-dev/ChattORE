@@ -3,6 +3,7 @@ package chattore.feature
 import chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
+import co.aikar.commands.velocity.contexts.OnlinePlayer
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import org.slf4j.Logger
@@ -23,7 +24,7 @@ fun createMessageFeature(
     val replyMap = ConcurrentHashMap<UUID, UUID>()
     return Feature(
         commands = listOf(
-            Message(proxy, logger, messenger, config, replyMap),
+            Message(logger, messenger, config, replyMap),
             Reply(proxy, logger, messenger, config, replyMap)
         ),
     )
@@ -32,7 +33,6 @@ fun createMessageFeature(
 @CommandAlias("m|pm|msg|message|vmsg|vmessage|whisper|tell")
 @CommandPermission("chattore.message")
 private class Message(
-    private val proxy: ProxyServer,
     private val logger: Logger,
     private val messenger: Messenger,
     private val config: MessageConfig,
@@ -40,13 +40,10 @@ private class Message(
 ) : BaseCommand() {
     @Default
     @Syntax("[target] <message>")
+    // unsure if this is needed
     @CommandCompletion("@players")
-    fun default(player: Player, target: String, args: Array<String>) {
-        proxy.getPlayer(target).ifPresentOrElse({ targetPlayer ->
-            sendMessage(logger, messenger, replyMap, config, player, targetPlayer, args.joinToString(" "))
-        }, {
-            throw ChattoreException("That user doesn't exist!")
-        })
+    fun default(sender: Player, recipient: OnlinePlayer, message: String) {
+        sendMessage(logger, messenger, replyMap, config, sender, recipient.player, message)
     }
 }
 
@@ -60,42 +57,35 @@ private class Reply(
     private val replyMap: ConcurrentHashMap<UUID, UUID>
 ) : BaseCommand() {
     @Default
-    fun default(player: Player, args: Array<String>) {
-        proxy.getPlayer(
-            replyMap[player.uniqueId] ?: throw ChattoreException(
-                "You have no one to reply to!"
-            )
-        ).ifPresentOrElse({ target ->
-            sendMessage(logger, messenger, replyMap, config, player, target, args.joinToString(" "))
-        }, {
-            throw ChattoreException(
-                "The person you are trying to reply to is no longer online!"
-            )
-        })
+    fun default(sender: Player, message: String) {
+        val recipientUuid = replyMap[sender.uniqueId] ?: throw ChattoreException("You have no one to reply to!")
+        val recipient = proxy.playerOrNull(recipientUuid)
+            ?: throw ChattoreException("The person you are trying to reply to is no longer online!")
+        sendMessage(logger, messenger, replyMap, config, sender, recipient, message)
     }
 }
 
-fun sendMessage(
+private fun sendMessage(
     logger: Logger,
     messenger: Messenger,
     replyMap: MutableMap<UUID, UUID>,
     config: MessageConfig,
-    player: Player,
-    targetPlayer: Player,
+    sender: Player,
+    recipient: Player,
     message: String
 ) {
-    logger.info("${player.username} (${player.uniqueId}) -> " +
-        "${targetPlayer.username} (${targetPlayer.uniqueId}): $message")
-    player.sendRichMessage(
+    logger.info("${sender.username} (${sender.uniqueId}) -> " +
+        "${recipient.username} (${recipient.uniqueId}): $message")
+    sender.sendRichMessage(
         config.messageSent,
-        "message" toC messenger.prepareChatMessage(message, player),
-        "recipient" toS targetPlayer.username,
+        "message" toC messenger.prepareChatMessage(message, sender),
+        "recipient" toS recipient.username,
     )
-    targetPlayer.sendRichMessage(
+    recipient.sendRichMessage(
         config.messageReceived,
-        "message" toC messenger.prepareChatMessage(message, player),
-        "sender" toS player.username,
+        "message" toC messenger.prepareChatMessage(message, sender),
+        "sender" toS sender.username,
     )
-    replyMap[targetPlayer.uniqueId] = player.uniqueId
-    replyMap[player.uniqueId] = targetPlayer.uniqueId
+    replyMap[recipient.uniqueId] = sender.uniqueId
+    replyMap[sender.uniqueId] = recipient.uniqueId
 }

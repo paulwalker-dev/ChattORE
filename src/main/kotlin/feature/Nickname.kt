@@ -8,9 +8,11 @@ import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 data class NicknameConfig(
     val clearNicknameOnChange: Boolean = true,
@@ -18,14 +20,15 @@ data class NicknameConfig(
 )
 
 fun createNicknameFeature(
-    plugin: ChattORE,
+    proxy: ProxyServer,
+    database: Storage,
     userCache: UserCache,
     config: NicknameConfig
 ): Feature {
     userCache.updateLocalUsernameCache()
     return Feature(
-        commands = listOf(Nickname(plugin, userCache, config)),
-        listeners = listOf(NicknameListener(plugin.database, userCache, config)),
+        commands = listOf(Nickname(database, proxy, userCache, config)),
+        listeners = listOf(NicknameListener(database, userCache, config)),
     )
 }
 
@@ -86,36 +89,30 @@ data class NickPreset(val miniMessageFormat: String) {
 @Description("Manage nicknames")
 @CommandPermission("chattore.nick")
 class Nickname(
-    private val plugin: ChattORE,
+    private val database: Storage,
+    private val proxy: ProxyServer,
     private val userCache: UserCache,
     private val config: NicknameConfig
 ) : BaseCommand() {
-
-    private fun setNickname(target: UUID, nickname: NickPreset) {
-        plugin.database.setNickname(target, nickname)
-        plugin.proxy.getPlayer(target).ifPresent { player ->
-            player.sendInfo(
-                "Your nickname has been set to <rendered>",
-                "rendered" toC nickname.render(player.username)
-            )
-        }
-    }
 
     @Subcommand("color")
     @CommandCompletion("@colors")
     fun set(player: Player, vararg colors: String) {
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         if (colors.size > 3) throw ChattoreException("Too many colors! Please provide 1 to 3 colors!")
-        setNickname(player.uniqueId, NickPreset.colorOrGradient(colors))
+        val nickname = NickPreset.colorOrGradient(colors)
+        database.setNickname(player.uniqueId, nickname)
+        player.notifyOfNickChange(nickname)
     }
 
     @Subcommand("preset")
     @CommandPermission("chattore.nick.preset")
     @CommandCompletion("@nickPresets")
     fun preset(player: Player, preset: String) {
-        val format = config.presets[preset]
+        val nickname = config.presets[preset]
             ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
-        setNickname(player.uniqueId, format)
+        database.setNickname(player.uniqueId, nickname)
+        player.notifyOfNickChange(nickname)
     }
 
     @Subcommand("presets")
@@ -141,7 +138,7 @@ class Nickname(
             renderedPresets.add(rendered)
         }
 
-        player.sendInfo(
+        player.sendInfoMM(
             "Available presets: <presets>",
             "presets" toC Component.join(JoinConfiguration.commas(true), renderedPresets),
         )
@@ -149,49 +146,47 @@ class Nickname(
 
     @Subcommand("nick")
     @CommandPermission("chattore.nick.others")
-    @CommandCompletion("@usernameCache")
-    fun nick(commandSource: CommandSource, @Single target: String, @Single nick: String) {
-        val targetUuid = userCache.fetchUuid(target) ?: throw ChattoreException("Invalid user!")
+    fun nick(commandSource: CommandSource, target: User, @Single nick: String) {
         val nickname = if (nick.contains("&")) {
             nick.legacyDeserialize().miniMessageSerialize()
         } else {
             nick
         }.let(::NickPreset)
-        setNickname(targetUuid, nickname)
+        database.setNickname(target.uuid, nickname)
+        proxy.playerOrNull(target.uuid)?.notifyOfNickChange(nickname)
         commandSource.notifyExecutor(target, nickname)
     }
 
     @Subcommand("remove")
     @CommandPermission("chattore.nick.remove")
-    @CommandCompletion("@usernameCache")
-    fun remove(commandSource: CommandSource, @Single target: String) {
-        val targetUuid = userCache.fetchUuid(target)
-            ?: throw ChattoreException("Invalid user!")
-        plugin.database.removeNickname(targetUuid)
-        commandSource.sendInfo("Removed nickname for $target.")
+    fun remove(commandSource: CommandSource, target: User) {
+        database.removeNickname(target.uuid)
+        proxy.playerOrNull(target.uuid)?.sendInfo("Your nickname has been removed")
+        commandSource.sendInfo("Removed nickname for ${userCache.usernameOrUuid(target)}.")
     }
 
     @Subcommand("setgradient")
     @CommandPermission("chattore.nick.setgradient")
-    @CommandCompletion("@usernameCache")
-    fun setgradient(player: Player, @Single target: String, vararg colors: String) {
+    fun setgradient(player: Player, target: User, vararg colors: String) {
         if (colors.size < 2) throw ChattoreException("Not enough colors!")
-        val targetUuid = userCache.fetchUuid(target) ?: throw ChattoreException("Invalid user!")
         val nickname = NickPreset.colorOrGradient(colors)
-        setNickname(targetUuid, nickname)
+        database.setNickname(target.uuid, nickname)
+        proxy.playerOrNull(target.uuid)?.notifyOfNickChange(nickname)
         player.notifyExecutor(target, nickname)
     }
 
-    private fun CommandSource.notifyExecutor(
-        target: String,
-        nickname: NickPreset,
-    ) {
-        sendInfo(
-            "Set nickname for $target as <rendered>.",
-            "rendered" toC nickname.render(target),
+    private fun CommandSource.notifyExecutor(target: User, nickname: NickPreset) {
+        val targetName = userCache.usernameOrUuid(target)
+        sendInfoMM(
+            "Set nickname for $targetName as <rendered>.",
+            "rendered" toC nickname.render(targetName),
         )
     }
 
+    private fun Player.notifyOfNickChange(nickname: NickPreset) = sendInfoMM(
+        "Your nickname has been set to <rendered>",
+        "rendered" toC nickname.render(username)
+    )
 }
 
 class NicknameListener(

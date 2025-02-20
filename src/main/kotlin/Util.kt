@@ -1,5 +1,7 @@
 package chattore
 
+import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
@@ -9,6 +11,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.io.FileNotFoundException
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
 val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
 val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
@@ -64,8 +67,11 @@ fun Audience.sendSimpleS(format: String, message: String) = sendSimpleC(format, 
 fun Audience.sendSimpleMM(format: String, message: String) = sendSimpleC(format, message.render())
 
 private const val infoFormat = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>"
-fun Audience.sendInfo(message: String, vararg resolvers: TagResolver) =
+fun Audience.sendInfo(message: String) = sendSimpleC(infoFormat, message.toComponent())
+fun Audience.sendInfoMM(message: String, vararg resolvers: TagResolver) =
     sendSimpleC(infoFormat, message.render(*resolvers))
+
+fun ProxyServer.playerOrNull(uuid: UUID): Player? = getPlayer(uuid).getOrNull()
 
 /***
  * Loads a resource file [filename] as a String.

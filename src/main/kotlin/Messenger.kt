@@ -17,7 +17,7 @@ import java.util.*
 
 class Messenger(
     private val plugin: ChattORE,
-    val format: String
+    private val chatBroadcastFormat: String,
 ) {
     private val fileTypeMap: Map<String, List<String>> =
         Json.parseToJsonElement(loadResource("/filetypes.json"))
@@ -56,7 +56,7 @@ class Messenger(
             ?: luckUser.primaryGroup.replaceFirstChar(Char::uppercaseChar)
 
         broadcast(
-            format,
+            chatBroadcastFormat,
             "message" toC prepareChatMessage(message, player),
             "sender" toC sender,
             "username" toS player.username,

@@ -7,7 +7,7 @@ import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.luckperms.api.LuckPerms
-import net.luckperms.api.model.user.User
+import net.luckperms.api.model.user.User as LPUser
 import java.util.*
 
 data class ProfileConfig(
@@ -38,11 +38,10 @@ class Profile(
 
     @Subcommand("info")
     @CommandCompletion("@uuidAndUsernameCache")
-    fun profile(player: Player, @Single target: String) {
-        val (username, uuid) = getUsernameAndUuid(target)
+    fun profile(player: Player, target: KnownUser) {
         // TODO this might fail
-        luckPerms.userManager.loadUser(uuid).whenComplete { user, _ ->
-            player.sendMessage(parsePlayerProfile(user, username))
+        luckPerms.userManager.loadUser(target.uuid).whenComplete { user, _ ->
+            player.sendMessage(parsePlayerProfile(user, target.name))
         }
     }
 
@@ -55,17 +54,15 @@ class Profile(
 
     @Subcommand("setabout")
     @CommandPermission("chattore.profile.about.others")
+    // TODO do we want to complete uuids too here?
     @CommandCompletion("@uuidAndUsernameCache")
-    fun setAbout(player: Player, @Single target: String, about: String) {
-        val (username, uuid) = getUsernameAndUuid(target)
-        database.setAbout(uuid, about)
-        player.sendInfo("Set about for '$username' to '$about'.")
-        proxy.getPlayer(uuid).ifPresent {
-            it.sendInfo("Your about has been set to '$about'")
-        }
+    fun setAbout(player: Player, target: User, about: String) {
+        database.setAbout(target.uuid, about)
+        player.sendInfo("Set about for '${userCache.usernameOrUuid(target)}' to '$about'.")
+        proxy.playerOrNull(target.uuid)?.sendInfo("Your about has been set to '$about'")
     }
 
-    private fun parsePlayerProfile(user: User, ign: String): Component {
+    private fun parsePlayerProfile(user: LPUser, ign: String): Component {
         var group = user.primaryGroup
         luckPerms.groupManager.getGroup(user.primaryGroup)?.let {
             it.cachedData.metaData.prefix?.let { prefix -> group = prefix }
@@ -76,13 +73,5 @@ class Profile(
             "nickname" toC (database.getNickname(user.uniqueId)?.render(ign) ?: "No nickname set".toComponent()),
             "rank" toC group.legacyDeserialize(),
         )
-    }
-
-    // TODO move to UserCache?
-    private fun getUsernameAndUuid(input: String): Pair<String, UUID> {
-        // next line conflates two error cases into what was previously one
-        val uuid = userCache.fetchUuid(input) ?: throw ChattoreException("Invalid target specified")
-        val ign = userCache.usernameOrNull(uuid) ?: throw ChattoreException("We do not recognize that user!")
-        return ign to uuid
     }
 }

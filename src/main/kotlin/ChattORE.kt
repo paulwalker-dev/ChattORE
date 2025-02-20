@@ -4,6 +4,7 @@ import chattore.entity.ChattORESpec
 import chattore.feature.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.CommandIssuer
+import co.aikar.commands.InvalidCommandArgument
 import co.aikar.commands.RegisteredCommand
 import co.aikar.commands.VelocityCommandManager
 import com.google.inject.Inject
@@ -77,6 +78,23 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
             setDefaultExceptionHandler(::handleCommandException, false)
+            // TODO move to the place
+            commandContexts.registerContext(User::class.java) {
+                userCache.fetchUuid(it.popFirstArg())?.let(::User)
+                    ?: throw InvalidCommandArgument("Don't know that user")
+            }
+            commandContexts.registerContext(KnownUser::class.java) {
+                val uuid = userCache.fetchUuid(it.popFirstArg()) ?: throw InvalidCommandArgument("Don't know that user")
+                val ign = userCache.usernameOrNull(uuid) ?: throw InvalidCommandArgument("Don't know that user")
+                KnownUser(uuid, ign)
+            }
+            commandCompletions.registerCompletion("usernameCache") { userCache.usernames }
+            commandCompletions.registerCompletion("uuidAndUsernameCache") {
+                userCache.usernames + userCache.uuids.map(UUID::toString)
+            }
+            // TODO check this
+            commandCompletions.setDefaultCompletion("usernameCache", User::class.java, KnownUser::class.java)
+
             commandCompletions.registerCompletion("bool") { listOf("true", "false") }
             commandCompletions.registerCompletion("colors") { ctx ->
                 (hexColorMap.values.map { it.second }
@@ -105,11 +123,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("emojis") { emojis.keys }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
-            // TODO move to the place
-            commandCompletions.registerCompletion("usernameCache") { userCache.usernames }
-            commandCompletions.registerCompletion("uuidAndUsernameCache") {
-                userCache.usernames + userCache.uuids.map(UUID::toString)
-            }
         }
         val features = listOf(
             createChatConfirmationFeature(
@@ -165,7 +178,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 )
             ),
             createNicknameFeature(
-                this, userCache, NicknameConfig(
+                proxy, database, userCache, NicknameConfig(
                     config[ChattORESpec.clearNicknameOnChange],
                     // IDK, this when config
                     config[ChattORESpec.nicknamePresets].mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),

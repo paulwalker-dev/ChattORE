@@ -158,6 +158,7 @@ class UserCache(private val database: Database) {
     private var uuidToName = mapOf<UUID, String>()
     private var nameToUuid = mapOf<String, UUID>()
 
+    // TODO call this from an onJoin listener
     fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
         UsernameCache.upsert {
             it[this.uuid] = user.toString()
@@ -174,15 +175,20 @@ class UserCache(private val database: Database) {
 
     }
 
-    fun fetchUuid(input: String): UUID? = nameToUuid[input] ?: parseUuid(input)
+    fun fetchUuid(input: String): UUID? = parseUuid(input) ?: nameToUuid[input]
 
     // TODO: what do, this can fail?
     fun username(uuid: UUID): String = uuidToName.getValue(uuid)
     fun usernameOrNull(uuid: UUID): String? = uuidToName[uuid]
     fun uuidOrNull(username: String): UUID? = nameToUuid[username]
 
+    fun usernameOrUuid(u: User) = usernameOrNull(u.uuid) ?: u.uuid.toString()
+
     val usernames get() = uuidToName.values
     val uuids get() = nameToUuid.values
-
 }
+
+// idk what to call it
+class KnownUser(val uuid: UUID, val name: String)
+class User(val uuid: UUID)
 

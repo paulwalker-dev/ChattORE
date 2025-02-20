@@ -9,6 +9,7 @@ import org.javacord.api.entity.message.MessageBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
 import org.slf4j.Logger
+import kotlin.jvm.optionals.getOrNull
 
 fun String.discordEscape() = this.replace("""_""", "\\_")
 
@@ -47,11 +48,11 @@ fun createDiscordFeature(
         .join()
     val discordMap = loadDiscordTokens(plugin, config.serverTokens)
     discordMap.forEach { (_, discordApi) -> discordApi.updateActivity(config.playingMessage) }
-    discordNetwork.getTextChannelById(config.channelId)?.ifPresent { textChannel ->
-        textChannel.addMessageCreateListener(
-            DiscordListener(plugin.logger, plugin.messenger, plugin.emojisToNames, config)
-        )
-    }
+    val textChannel = discordNetwork.getTextChannelById(config.channelId).getOrNull()
+        ?: throw ChattoreException("Cannot find Discord channel")
+    textChannel.addMessageCreateListener(
+        DiscordListener(plugin.logger, plugin.messenger, plugin.emojisToNames, config)
+    )
     return Feature(
         listeners = listOf(DiscordBroadcastListener(config, discordMap, discordNetwork))
     )
@@ -64,12 +65,12 @@ private class DiscordBroadcastListener(
 ) {
 
     private val serverChannelMapping: Map<String, TextChannel> = discordMap.entries.associate { (server, api) ->
-        server to (api.getTextChannelById(config.channelId).orElse(null) ?:
-            throw IllegalArgumentException("Could not get specified channel"))
+        server to (api.getTextChannelById(config.channelId).getOrNull()
+            ?: throw IllegalArgumentException("Could not get specified channel"))
     }
 
-    private val mainBotChannel: TextChannel = discordApi.getTextChannelById(config.channelId).orElse(null) ?:
-        throw IllegalArgumentException("Could not get specified channel")
+    private val mainBotChannel: TextChannel = discordApi.getTextChannelById(config.channelId).getOrNull()
+        ?: throw IllegalArgumentException("Could not get specified channel")
 
     @Subscribe
     fun onBroadcastEvent(event: DiscordBroadcastEvent) {
