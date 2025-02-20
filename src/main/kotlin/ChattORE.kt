@@ -116,19 +116,15 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 logger, messenger, proxy.eventManager, ChatConfirmationConfig(
                     config[ChattORESpec.regexes],
                     config[ChattORESpec.format.chatConfirmPrompt],
-                    config[ChattORESpec.format.chatConfirm]
+                    config[ChattORESpec.format.chatConfirm],
                 )
             ),
             createChatFeature(
                 logger, messenger, ChatConfig(
-                    config[ChattORESpec.format.discord]
+                    config[ChattORESpec.format.discord],
                 )
             ),
-            createChattoreFeature(
-                this, ChattoreConfig(
-                    config[ChattORESpec.format.chattore]
-                )
-            ),
+            createChattoreFeature(this),
             createDiscordFeature(
                 this, DiscordConfig(
                     config[ChattORESpec.discord.networkToken],
@@ -137,18 +133,14 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                     config[ChattORESpec.discord.playingMessage],
                     config[ChattORESpec.discord.format],
                     config[ChattORESpec.discord.serverTokens],
-                    config[ChattORESpec.format.discord]
+                    config[ChattORESpec.format.discord],
                 )
             ),
-            createEmojiFeature(
-                emojis, EmojiConfig(
-                    config[ChattORESpec.format.chattore]
-                )
-            ),
+            createEmojiFeature(emojis),
             createFunCommandsFeature(logger, messenger, proxy.commandManager),
             createHelpOpFeature(
                 logger, messenger, HelpOpConfig(
-                    config[ChattORESpec.format.help]
+                    config[ChattORESpec.format.help],
                 )
             ),
             createJoinLeaveFeature(
@@ -156,25 +148,24 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                     config[ChattORESpec.format.join],
                     config[ChattORESpec.format.leave],
                     config[ChattORESpec.format.joinDiscord],
-                    config[ChattORESpec.format.leaveDiscord]
+                    config[ChattORESpec.format.leaveDiscord],
                 )
             ),
             createMailFeature(
                 this, userCache, MailConfig(
                     config[ChattORESpec.format.mailReceived],
                     config[ChattORESpec.format.mailSent],
-                    config[ChattORESpec.format.mailUnread]
+                    config[ChattORESpec.format.mailUnread],
                 )
             ),
             createMessageFeature(
                 proxy, logger, messenger, MessageConfig(
                     config[ChattORESpec.format.messageReceived],
-                    config[ChattORESpec.format.messageSent]
+                    config[ChattORESpec.format.messageSent],
                 )
             ),
             createNicknameFeature(
                 this, userCache, NicknameConfig(
-                    config[ChattORESpec.format.chattore],
                     config[ChattORESpec.clearNicknameOnChange],
                     // IDK, this when config
                     config[ChattORESpec.nicknamePresets].mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
@@ -183,13 +174,11 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             createProfileFeature(
                 proxy, database, luckPerms, userCache, ProfileConfig(
                     config[ChattORESpec.format.playerProfile],
-                    config[ChattORESpec.format.chattore]
                 )
             ),
             createSpyingFeature(
                 database, messenger, SpyingConfig(
-                    config[ChattORESpec.format.chattore],
-                    config[ChattORESpec.format.commandSpy]
+                    config[ChattORESpec.format.commandSpy],
                 )
             )
         )

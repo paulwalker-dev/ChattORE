@@ -8,14 +8,11 @@ import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.proxy.Player
-import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import java.util.*
 
 data class NicknameConfig(
-    val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
     val clearNicknameOnChange: Boolean = true,
     val presets: SortedMap<String, NickPreset>,
 )
@@ -93,9 +90,6 @@ class Nickname(
     private val userCache: UserCache,
     private val config: NicknameConfig
 ) : BaseCommand() {
-
-    private fun Audience.sendInfo(message: String, vararg resolvers: TagResolver) =
-        sendSimpleC(config.format, message.render(*resolvers))
 
     private fun setNickname(target: UUID, nickname: NickPreset) {
         plugin.database.setNickname(target, nickname)

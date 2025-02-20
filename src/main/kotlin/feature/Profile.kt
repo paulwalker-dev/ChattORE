@@ -11,8 +11,7 @@ import net.luckperms.api.model.user.User
 import java.util.*
 
 data class ProfileConfig(
-    val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>",
-    val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>"
+    val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>"
 )
 
 fun createProfileFeature(
@@ -51,10 +50,7 @@ class Profile(
     @CommandPermission("chattore.profile.about")
     fun about(player: Player, about: String) {
         database.setAbout(player.uniqueId, about)
-        player.sendSimpleS(
-            config.format,
-            "Set your about to '$about'.",
-        )
+        player.sendInfo("Set your about to '$about'.")
     }
 
     @Subcommand("setabout")
@@ -63,15 +59,9 @@ class Profile(
     fun setAbout(player: Player, @Single target: String, about: String) {
         val (username, uuid) = getUsernameAndUuid(target)
         database.setAbout(uuid, about)
-        player.sendSimpleS(
-            config.format,
-            "Set about for '$username' to '$about'.",
-        )
+        player.sendInfo("Set about for '$username' to '$about'.")
         proxy.getPlayer(uuid).ifPresent {
-            it.sendSimpleS(
-                config.format,
-                "Your about has been set to '$about'",
-            )
+            it.sendInfo("Your about has been set to '$about'")
         }
     }
 

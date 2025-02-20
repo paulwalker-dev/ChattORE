@@ -63,6 +63,10 @@ fun Audience.sendSimpleC(format: String, message: Component) = sendMessage(forma
 fun Audience.sendSimpleS(format: String, message: String) = sendSimpleC(format, message.toComponent())
 fun Audience.sendSimpleMM(format: String, message: String) = sendSimpleC(format, message.render())
 
+private const val infoFormat = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>"
+fun Audience.sendInfo(message: String, vararg resolvers: TagResolver) =
+    sendSimpleC(infoFormat, message.render(*resolvers))
+
 /***
  * Loads a resource file [filename] as a String.
  * Make sure you pass in an absolute path.

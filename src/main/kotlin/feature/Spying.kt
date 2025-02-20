@@ -12,7 +12,6 @@ import com.velocitypowered.api.proxy.Player
 object SpyEnabled : Setting<Boolean>("spy")
 
 data class SpyingConfig(
-    val format: String = "<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>",
     val spying: String = "<gold><sender>: <message>",
 )
 
@@ -54,8 +53,7 @@ class CommandSpy(
         val setting = database.getSetting(SpyEnabled, player.uniqueId)
         val newSetting = !(setting ?: false)
         database.setSetting(SpyEnabled, player.uniqueId, newSetting)
-        player.sendSimpleS(
-            config.format,
+        player.sendInfo(
             if (newSetting) {
                 "You are now spying on commands."
             } else {

@@ -40,7 +40,6 @@ object ChattORESpec : ConfigSpec("") {
         val chatConfirm by optional("<red>Override recognized")
         val chatConfirmPrompt by optional("<red><bold>The following message was not sent because it contained potentially inappropriate language:<newline><reset><message><newline><red>To send this message anyway, run <gray>/confirmmessage<red>.")
         val error by optional("<b><red>Oh NO ! </red></b><gray>:</gray> <red><message></red>")
-        val chattore by optional("<gold>[</gold><red>ChattORE</red><gold>]</gold> <red><message></red>")
         val help by optional("<gold>[</gold><red>Help</red><gold>]</gold> <red><sender></red><gold>:</gold> <message>")
         val join by optional("<yellow><player> has joined the network")
         val leave by optional("<yellow><player> has left the network")
