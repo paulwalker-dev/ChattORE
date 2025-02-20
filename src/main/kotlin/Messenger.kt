@@ -82,7 +82,7 @@ class Messenger(
         val matches = urlRegex.findAll(message).iterator()
         val builder = Component.text()
         parts.forEach { part ->
-            builder.append(part.replaceObfuscate(canObfuscate).legacyDeserialize())
+            builder.append(part.legacyDeserialize(canObfuscate))
             if (matches.hasNext()) {
                 val nextMatch = matches.next()
                 val link = URI(nextMatch.groupValues[1]).toURL()
@@ -118,13 +118,6 @@ class Messenger(
         }
         return builder.build().performReplacements(plugin.chatReplacements)
     }
-
-    private fun String.replaceObfuscate(canObfuscate: Boolean): String =
-        if (canObfuscate) {
-            this
-        } else {
-            this.replace("&k", "")
-        }
 
     private fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component =
         replacements.fold(this, Component::replaceText)

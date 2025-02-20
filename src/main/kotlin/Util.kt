@@ -8,6 +8,7 @@ import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
+import net.kyori.adventure.text.serializer.legacy.CharacterAndFormat
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.io.FileNotFoundException
 import java.util.*
@@ -18,17 +19,30 @@ val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
 val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
 
 fun String.toComponent() = Component.text(this)
-fun fixHexFormatting(str: String): String = str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
-fun String.legacyDeserialize() = LegacyComponentSerializer.legacy('&').deserialize(this)
 fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
 
-fun String.componentize(): Component =
-    LegacyComponentSerializer.builder()
-        .character('&')
-        .hexCharacter('#')
-        .extractUrls()
-        .build()
-        .deserialize(fixHexFormatting(this))
+private val legacyNoObfuscate = LegacyComponentSerializer.builder()
+    .character('&')
+    .formats(CharacterAndFormat.defaults().filter { it != CharacterAndFormat.OBFUSCATED })
+    .build()
+fun String.legacyDeserialize(canObfuscate: Boolean = false) =
+    if (canObfuscate) {
+        LegacyComponentSerializer.legacyAmpersand().deserialize(this)
+    } else {
+        legacyNoObfuscate.deserialize(this)
+    }
+
+// TODO: this is used for sending prefixes to Discord only, wut
+private val componentizeSerializer = LegacyComponentSerializer.builder()
+    .character('&')
+    .hexCharacter('#')
+    .extractUrls()
+    .build()
+
+private fun fixHexFormatting(str: String): String =
+    str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
+
+fun String.componentize(): Component = componentizeSerializer.deserialize(fixHexFormatting(this))
 
 fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
     TextReplacementConfig.builder()
