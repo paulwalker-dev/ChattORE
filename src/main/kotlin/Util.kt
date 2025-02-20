@@ -72,15 +72,21 @@ fun formatReplacement(key: String, tag: String): TextReplacementConfig =
         }
         .build()
 
-fun String.renderSimpleC(message: Component): Component = render("message" toC message)
-
 fun String.render(vararg resolvers: TagResolver): Component =
     MiniMessage.miniMessage().deserialize(this, *resolvers)
 
-// IDK how dumb this is. we'll see and adjust if necessary
+// Suffixes:
+// - S: String
+// - C: Component
+// - MM: MiniMessage
+
+// Convenience functions for constructing TagResolvers that act as placeholders
 infix fun String.toS(message: String) = Placeholder.unparsed(this, message)
 infix fun String.toC(message: Component) = Placeholder.component(this, message)
 infix fun String.toMM(message: String) = toC(message.render())
+
+// The "simple" functions take a MiniMessage with a "<message>" placeholder and fill that with the argument
+fun String.renderSimpleC(message: Component): Component = render("message" toC message)
 
 fun Audience.sendSimpleC(format: String, message: Component) = sendMessage(format.renderSimpleC(message))
 fun Audience.sendSimpleS(format: String, message: String) = sendSimpleC(format, message.toComponent())
@@ -109,7 +115,8 @@ inline fun <reified T> PluginEvents.register(postOrder: Short = 0, noinline hand
  * Throws FileNotFoundException if not found.
  */
 fun loadResource(filename: String) =
-    Dummy::class.java.getResource(filename)?.readText() ?: throw FileNotFoundException(filename)
+    Dummy::class.java.getResource(filename)?.readText()
+        ?: throw FileNotFoundException("Cannot load resource file $filename. This is probably a bug.")
 object Dummy
 
 fun parseUuid(input: String): UUID? = if (uuidRegex.matches(input)) UUID.fromString(input) else null
