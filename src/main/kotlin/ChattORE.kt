@@ -126,16 +126,11 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         val features = listOf(
-            createChatConfirmationFeature(
+            createChatFeature(
                 logger, messenger, ChatConfirmationConfig(
                     config[ChattORESpec.regexes],
                     config[ChattORESpec.format.chatConfirmPrompt],
                     config[ChattORESpec.format.chatConfirm],
-                )
-            ),
-            createChatFeature(
-                logger, messenger, ChatConfig(
-                    config[ChattORESpec.format.discord],
                 )
             ),
             createChattoreFeature(this),
