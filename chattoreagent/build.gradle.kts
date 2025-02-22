@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    val kotlinVersion = "2.1.10"
-    kotlin("jvm") version kotlinVersion
-    id("com.gradleup.shadow") version "8.3.6"
+    kotlin("jvm")
+    id("com.gradleup.shadow")
 }
 
 group = ""
