@@ -55,13 +55,6 @@ tasks.withType<KotlinCompile> {
 tasks.shadowJar {
     relocate("co.aikar.commands", "chattore.acf")
     relocate("co.aikar.locales", "chattore.locales")
-    dependencies {
-        exclude(
-            dependency(
-                "net.luckperms:api:.*"
-            )
-        )
-    }
 }
 
 java {
