@@ -44,6 +44,9 @@ dependencies {
     implementation(group = "org.javacord", name = "javacord", version = "3.8.0")
     implementation(group = "com.velocitypowered", name = "velocity-api", version = "3.3.0-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.10.1")
+    val jacksonVersion = "2.18.2"
+    implementation(group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version = jacksonVersion)
+    implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
     kapt(group = "com.velocitypowered", name = "velocity-api", version = "3.3.0-SNAPSHOT")
 }
 

@@ -8,7 +8,6 @@ import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.model.user.User as LPUser
-import java.util.*
 
 data class ProfileConfig(
     val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>"
