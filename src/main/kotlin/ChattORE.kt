@@ -1,16 +1,16 @@
 package chattore
 
-import chattore.entity.ChattORESpec
+import chattore.Migrations.p
+import chattore.entity.ChattOREConfig
 import chattore.feature.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.CommandIssuer
 import co.aikar.commands.InvalidCommandArgument
 import co.aikar.commands.RegisteredCommand
 import co.aikar.commands.VelocityCommandManager
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.inject.Inject
-import com.uchuhimo.konf.Config
-import com.uchuhimo.konf.source.yaml
-import com.uchuhimo.konf.source.yaml.toYaml
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
 import com.velocitypowered.api.plugin.Dependency
@@ -45,8 +45,9 @@ const val VERSION = "1.2"
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
+    private val objectMapper = ObjectMapper(YAMLFactory())
     lateinit var luckPerms: LuckPerms
-    lateinit var config: Config
+    lateinit var config: ChattOREConfig
     lateinit var database: Storage
     lateinit var messenger: Messenger
     private lateinit var emojis: Map<String, String>
@@ -63,7 +64,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         config = loadConfig()
         luckPerms = LuckPermsProvider.get()
-        database = Storage(this.dataFolder.resolve(config[ChattORESpec.storage]).toString())
+        database = Storage(this.dataFolder.resolve(config.storage).toString())
         val pluginEvents = PluginEvents(this, proxy.eventManager)
         val userCache = UserCache.create(database.database, pluginEvents)
         emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
@@ -74,7 +75,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         chatReplacements.add(buildEmojiReplacement(emojis))
         logger.info("Loaded ${emojis.size} emojis")
 
-        messenger = Messenger(this, config[ChattORESpec.format.global])
+        messenger = Messenger(this, config.format.global)
 
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
@@ -123,72 +124,72 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             }
             commandCompletions.registerCompletion("emojis") { emojis.keys }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
-            commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
+            commandCompletions.registerCompletion("nickPresets") { config.nicknamePresets.keys }
         }
         val features = listOf(
             createChatFeature(
                 logger, messenger, ChatConfirmationConfig(
-                    config[ChattORESpec.regexes],
-                    config[ChattORESpec.format.chatConfirmPrompt],
-                    config[ChattORESpec.format.chatConfirm],
+                    config.regexes,
+                    config.format.chatConfirmPrompt,
+                    config.format.chatConfirm,
                 )
             ),
             createChattoreFeature(this),
             createDiscordFeature(
                 this, DiscordConfig(
-                    config[ChattORESpec.discord.enable],
-                    config[ChattORESpec.discord.networkToken],
-                    config[ChattORESpec.discord.channelId],
-                    config[ChattORESpec.discord.chadId],
-                    config[ChattORESpec.discord.playingMessage],
-                    config[ChattORESpec.discord.format],
-                    config[ChattORESpec.discord.serverTokens],
-                    config[ChattORESpec.format.discord],
+                    config.discord.enable,
+                    config.discord.networkToken,
+                    config.discord.channelId,
+                    config.discord.chadId,
+                    config.discord.playingMessage,
+                    config.discord.format,
+                    config.discord.serverTokens,
+                    config.format.discord,
                 )
             ),
             createEmojiFeature(emojis),
             createFunCommandsFeature(logger, messenger, proxy.commandManager),
             createHelpOpFeature(
                 logger, messenger, HelpOpConfig(
-                    config[ChattORESpec.format.help],
+                    config.format.help,
                 )
             ),
             createJoinLeaveFeature(
                 messenger, proxy.eventManager, JoinLeaveConfig(
-                    config[ChattORESpec.format.join],
-                    config[ChattORESpec.format.leave],
-                    config[ChattORESpec.format.joinDiscord],
-                    config[ChattORESpec.format.leaveDiscord],
+                    config.format.join,
+                    config.format.leave,
+                    config.format.joinDiscord,
+                    config.format.leaveDiscord,
                 )
             ),
             createMailFeature(
                 this, userCache, MailConfig(
-                    config[ChattORESpec.format.mailReceived],
-                    config[ChattORESpec.format.mailSent],
-                    config[ChattORESpec.format.mailUnread],
+                    config.format.mailReceived,
+                    config.format.mailSent,
+                    config.format.mailUnread,
                 )
             ),
             createMessageFeature(
                 proxy, logger, messenger, MessageConfig(
-                    config[ChattORESpec.format.messageReceived],
-                    config[ChattORESpec.format.messageSent],
+                    config.format.messageReceived,
+                    config.format.messageSent,
                 )
             ),
             createNicknameFeature(
                 proxy, database, userCache, NicknameConfig(
-                    config[ChattORESpec.clearNicknameOnChange],
+                    config.clearNicknameOnChange,
                     // IDK, this when config
-                    config[ChattORESpec.nicknamePresets].mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
+                    config.nicknamePresets.mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
                 )
             ),
             createProfileFeature(
                 proxy, database, luckPerms, userCache, ProfileConfig(
-                    config[ChattORESpec.format.playerProfile],
+                    config.format.playerProfile,
                 )
             ),
             createSpyingFeature(
                 database, messenger, SpyingConfig(
-                    config[ChattORESpec.format.commandSpy],
+                    config.format.commandSpy,
                 )
             )
         )
@@ -200,22 +201,18 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         logger.info("Loaded ${features.size} features")
     }
 
-    private fun loadConfig(reloaded: Boolean = false): Config {
+    private fun loadConfig(): ChattOREConfig {
         if (!dataFolder.exists()) {
             logger.info("No resource directory found, creating directory")
             dataFolder.mkdir()
         }
         val configFile = File(dataFolder, "config.yml")
-        val loadedConfig = if (!configFile.exists()) {
-            logger.info("No config file found, generating from default config.yml")
-            configFile.createNewFile()
-            Config { addSpec(ChattORESpec) }
-        } else {
-            Config { addSpec(ChattORESpec) }.from.yaml.watchFile(configFile)
-        }
-        loadedConfig.toYaml.toFile(configFile)
-        logger.info("${if (reloaded) "Rel" else "L"}oaded config.yml")
-        return loadedConfig
+        // does not overwrite or throw
+        configFile.createNewFile()
+        val k = konf("".p, ChattOREConfig())
+        val config = readConfig(listOf(k), configFile)
+        logger.info("Loaded config.yml")
+        return config.getValue(k)
     }
 
     private fun handleCommandException(
@@ -228,7 +225,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         val exception = throwable as? ChattoreException ?: return false
         val message = exception.message ?: "Something went wrong!"
         if (sender is Player) {
-            sender.sendSimpleS(config[ChattORESpec.format.error], message)
+            sender.sendSimpleS(config.format.error, message)
         } else {
             sender.sendMessage("Error: $message")
         }
