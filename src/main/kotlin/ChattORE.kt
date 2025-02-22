@@ -1,6 +1,5 @@
 package chattore
 
-import chattore.Migrations.p
 import chattore.entity.ChattOREConfig
 import chattore.feature.*
 import co.aikar.commands.BaseCommand
@@ -8,8 +7,6 @@ import co.aikar.commands.CommandIssuer
 import co.aikar.commands.InvalidCommandArgument
 import co.aikar.commands.RegisteredCommand
 import co.aikar.commands.VelocityCommandManager
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.inject.Inject
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
@@ -23,6 +20,7 @@ import net.luckperms.api.LuckPerms
 import net.luckperms.api.LuckPermsProvider
 import org.slf4j.Logger
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -45,7 +43,6 @@ const val VERSION = "1.2"
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
-    private val objectMapper = ObjectMapper(YAMLFactory())
     lateinit var luckPerms: LuckPerms
     lateinit var config: ChattOREConfig
     lateinit var database: Storage
@@ -203,16 +200,20 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
 
     private fun loadConfig(): ChattOREConfig {
         if (!dataFolder.exists()) {
-            logger.info("No resource directory found, creating directory")
+            logger.info("No resource directory found, creating")
             dataFolder.mkdir()
         }
         val configFile = File(dataFolder, "config.yml")
-        // does not overwrite or throw
-        configFile.createNewFile()
-        val k = konf("".p, ChattOREConfig())
-        val config = readConfig(listOf(k), configFile)
+        if (!configFile.exists()) {
+            logger.info("No config file found, creating")
+            // NOTE this is an empty YAML dictionary, it will get populated from default config
+            Files.writeString(configFile.toPath(), "{}")
+        }
+        val config = readConfig<ChattOREConfig>(configFile)
+        // save migrated config
+        writeConfig(config, configFile)
         logger.info("Loaded config.yml")
-        return config.getValue(k)
+        return config
     }
 
     private fun handleCommandException(
@@ -225,7 +226,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         val exception = throwable as? ChattoreException ?: return false
         val message = exception.message ?: "Something went wrong!"
         if (sender is Player) {
-            sender.sendSimpleS(config.format.error, message)
+            sender.sendSimpleS("<b><red>Oh NO ! </red></b><gray>:</gray> <red><message></red>", message)
         } else {
             sender.sendMessage("Error: $message")
         }
