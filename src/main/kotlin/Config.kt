@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.slf4j.Logger
 import java.io.File
 
 typealias ConfigVersion = Int
@@ -19,13 +20,22 @@ val objectMapper: ObjectMapper = ObjectMapper(yaml)
     .registerKotlinModule()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
 
-inline fun <reified T> readConfig(f: File) = readConfig<T>(objectMapper.readTree(f))
-inline fun <reified T> readConfig(node: JsonNode): T {
-    node as? ObjectNode ?: throw Exception("Config root has to be an object")
+inline fun <reified T> readConfig(logger: Logger, f: File): T {
+    val node = objectMapper.readTree(f) as? ObjectNode ?: throw Exception("Config root has to be an object")
     val version = parseVersion(node)
     node.remove(CONFIG_VERSION_PROPERTY)
-    doMigrations(node, version)
-    return objectMapper.convertValue(node)
+    when {
+        version > currentConfigVersion -> throw Exception("Config version is greater than supported")
+        version < currentConfigVersion -> {
+            val backupName = "backup_config_ver$version.yml"
+            logger.info("Migrating config from version $version to $currentConfigVersion")
+            f.copyTo(f.resolveSibling(backupName))
+            logger.info("Made config backup $backupName")
+            runMigrations(node, version)
+            logger.info("Migrations complete")
+        }
+    }
+    return objectMapper.convertValue<T>(node)
 }
 
 fun writeConfig(config: Any, f: File) {
@@ -34,7 +44,7 @@ fun writeConfig(config: Any, f: File) {
     objectMapper.writeValue(f, node)
 }
 
-fun doMigrations(config: ObjectNode, version: ConfigVersion) {
+fun runMigrations(config: ObjectNode, version: ConfigVersion) {
     for (ver in version..<currentConfigVersion) {
         migrations[ver](config)
     }

@@ -209,7 +209,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             // NOTE this is an empty YAML dictionary, it will get populated from default config
             Files.writeString(configFile.toPath(), "{}")
         }
-        val config = readConfig<ChattOREConfig>(configFile)
+        val config = readConfig<ChattOREConfig>(logger, configFile)
         // save migrated config
         writeConfig(config, configFile)
         logger.info("Loaded config.yml")
