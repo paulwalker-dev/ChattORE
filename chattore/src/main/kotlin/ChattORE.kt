@@ -22,6 +22,7 @@ import net.luckperms.api.LuckPerms
 import net.luckperms.api.LuckPermsProvider
 import org.slf4j.Logger
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 
@@ -111,6 +112,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             commandCompletions.registerCompletion("nickPresets") { config[ChattORESpec.nicknamePresets].keys }
         }
         val features = listOf(
+            createAliasFeature(this),
             createChatConfirmationFeature(logger, messenger, proxy.eventManager, ChatConfirmationConfig(
                 config[ChattORESpec.regexes],
                 config[ChattORESpec.format.chatConfirmPrompt],
@@ -180,6 +182,30 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             listeners.forEach { proxy.eventManager.register(this, it)}
         }
         logger.info("Loaded ${features.size} features")
+    }
+
+    fun loadResource(name: String, saveToFolder: Boolean = true): ByteArray {
+        // This is goofy
+        fun getResourceAsStream(name: String): InputStream = javaClass.classLoader.getResourceAsStream(name)
+            ?: throw ChattoreException("Resource $name not found")
+
+        if (!saveToFolder) {
+            getResourceAsStream(name).use { return it.readBytes() }
+        }
+
+        val resource = File(dataFolder, name)
+        if (resource.exists()) {
+            resource.inputStream().use { return it.readBytes() }
+        } else {
+            logger.info("Resource $name not saved to folder, saving")
+            getResourceAsStream(name).use {
+                val data = it.readBytes()
+                resource.outputStream().use { out ->
+                    out.write(data)
+                }
+                return data
+            }
+        }
     }
 
     fun fetchUuid(input: String): UUID? =

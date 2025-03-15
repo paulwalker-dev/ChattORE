@@ -1,0 +1,25 @@
+[
+  {
+    "alias": "bancapo",
+    "commands": [
+      "ban LordDecapo"
+    ]
+  },
+  {
+    "alias": "/clear",
+    "commands": [
+      "/pos1",
+      "/pos2",
+      "/copy",
+      "/sel"
+    ]
+  },
+  {
+    "alias": "gamemodeshuffle",
+    "commands": [
+      "gamemode creative",
+      "gamemode survival",
+      "gamemode creative"
+    ]
+  }
+]

@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    id("com.gradleup.shadow")
+    kotlin("plugin.serialization")
 }
 
 group = ""
@@ -11,13 +11,10 @@ version = "1.1"
 
 repositories {
     mavenCentral()
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version = "1.8.0")
-    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.17-R0.1-SNAPSHOT")
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.8.0")
 }
 
 tasks.withType<KotlinCompile> {
@@ -30,8 +27,4 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
-}
-
-tasks.build {
-    dependsOn(tasks.shadowJar)
 }
