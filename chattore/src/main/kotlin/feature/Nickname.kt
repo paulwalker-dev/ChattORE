@@ -48,7 +48,7 @@ val hexColorMap = mapOf(
     "f" to Pair("#FFFFFF", "white")
 )
 
-val hexPattern = """#[0-f]{6}""".toRegex()
+val hexPattern = """#[0-9a-fA-F]{6}""".toRegex()
 
 fun String.validateColor() = if (this.startsWith("&")) {
     if (this.length != 2) {
