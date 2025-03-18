@@ -1,3 +1,4 @@
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import org.bukkit.entity.Player
@@ -35,6 +36,7 @@ class ChattoreAgent : JavaPlugin() {
         server.messenger.registerIncomingPluginChannel(this, ALIAS_CHANNEL, this::onPluginMessageReceived)
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun onPluginMessageReceived(channel: String, target: Player, data: ByteArray) {
         if (channel != ALIAS_CHANNEL) return
         val alias = Cbor.decodeFromByteArray<AliasMessage>(data)

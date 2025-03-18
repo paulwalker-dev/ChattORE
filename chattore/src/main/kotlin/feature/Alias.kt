@@ -8,6 +8,7 @@ import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.PluginMessageEvent
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
@@ -66,6 +67,7 @@ class AliasCommand(
         executeAlias(source, args.toList())
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     private fun executeAlias(player: Player, args: List<String> = emptyList()) {
         val server = player.currentServer.orElse(null) ?: return
         commands.forEach { command ->
