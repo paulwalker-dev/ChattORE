@@ -74,7 +74,7 @@ class AliasCommand(
             val commandLine = "$command ${args.joinToString(" ")}".trimEnd()
             plugin.proxy.commandManager.executeImmediatelyAsync(player, commandLine).whenComplete { result, throwable ->
                 if (throwable != null) {
-                    println(throwable)
+                    plugin.logger.error(throwable.message, throwable)
                 }
                 if (result) {
                     plugin.logger.info("Ran \"$commandLine\" on the proxy")
