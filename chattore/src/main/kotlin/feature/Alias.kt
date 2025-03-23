@@ -2,6 +2,7 @@ package chattore.feature
 
 import chattore.ChattORE
 import chattore.Feature
+import chattore.render
 import chattore.toComponent
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.event.Subscribe
@@ -15,10 +16,11 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.json.Json
 import org.openredstone.chattore.common.AliasMessage
 import org.openredstone.chattore.common.ALIAS_CHANNEL
+import org.slf4j.Logger
 
-val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
+private val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
 
-val argumentsRegex = Regex("\\\$(args|[0-9])")
+private val argumentsRegex = Regex("\\\$(args|[0-9])")
 
 @Serializable
 data class AliasConfig(
@@ -43,7 +45,7 @@ fun createAliasFeature(
         plugin.proxy.commandManager.register(meta, aliasCommand)
     }
     plugin.logger.info("Loaded ${aliases.size} aliases")
-    return Feature(listeners = listOf(ClientAliasListener()))
+    return Feature(listeners = listOf(ClientAliasListener(plugin.logger)))
 }
 
 class AliasCommand(
@@ -107,12 +109,20 @@ class AliasCommand(
     }
 }
 
-class ClientAliasListener {
+class ClientAliasListener(private val logger: Logger) {
     @Subscribe
     fun onPluginMessageFromPlayer(message: PluginMessageEvent) {
         if (IDENTIFIER != message.identifier) {
             return
         }
+        // cancel forwarding immediately
         message.result = PluginMessageEvent.ForwardResult.handled()
+        when (val src = message.source) {
+            is Player -> {
+                logger.warn("Player ${src.username} (${src.uniqueId}) tried to send a plugin message to $IDENTIFIER!")
+                src.disconnect("<red>We don't really like it when you try to break things".render())
+            }
+            // is ServerConnection for when we want to handle messages from chattoreagent
+        }
     }
 }
