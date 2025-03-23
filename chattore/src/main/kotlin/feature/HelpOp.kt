@@ -7,6 +7,7 @@ import co.aikar.commands.annotation.CommandPermission
 import co.aikar.commands.annotation.Default
 import co.aikar.commands.annotation.Syntax
 import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
 import org.slf4j.Logger
 
 data class HelpOpConfig(
@@ -15,11 +16,11 @@ data class HelpOpConfig(
 
 fun createHelpOpFeature(
     logger: Logger,
-    messenger: Messenger,
-    config: HelpOpConfig
+    proxy: ProxyServer,
+    config: HelpOpConfig,
 ): Feature {
     return Feature(
-        commands = listOf(HelpOp(logger, messenger, config))
+        commands = listOf(HelpOp(logger, proxy, config))
     )
 }
 
@@ -27,8 +28,8 @@ fun createHelpOpFeature(
 @CommandPermission("chattore.helpop")
 class HelpOp(
     private val logger: Logger,
-    private val messenger: Messenger,
-    private val config: HelpOpConfig
+    private val proxy: ProxyServer,
+    private val config: HelpOpConfig,
 ) : BaseCommand() {
 
     @Default
@@ -40,11 +41,7 @@ class HelpOp(
             "message" toS statement,
             "sender" toS player.username,
         )
-        player.sendMessage(message)
-        messenger.sendPrivileged(
-            message,
-            exclude = player.uniqueId,
-            ignorable = false
-        )
+        proxy.all { it.hasChattorePrivilege || it.uniqueId == player.uniqueId }
+            .sendMessage(message)
     }
 }

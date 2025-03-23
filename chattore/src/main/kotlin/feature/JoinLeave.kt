@@ -5,6 +5,7 @@ import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.ServerPostConnectEvent
+import com.velocitypowered.api.proxy.ProxyServer
 
 data class JoinLeaveConfig(
     val join: String = "<yellow><player> has joined the network",
@@ -14,28 +15,28 @@ data class JoinLeaveConfig(
 )
 
 fun createJoinLeaveFeature(
-    messenger: Messenger,
+    proxy: ProxyServer,
     eventManager: EventManager,
-    config: JoinLeaveConfig
+    config: JoinLeaveConfig,
 ): Feature {
     return Feature(
-        listeners = listOf(JoinLeaveListener(messenger, eventManager, config))
+        listeners = listOf(JoinLeaveListener(proxy, eventManager, config))
     )
 }
 
 class JoinLeaveListener(
-    private val messenger: Messenger,
+    private val proxy: ProxyServer,
     private val eventManager: EventManager,
-    private val config: JoinLeaveConfig
+    private val config: JoinLeaveConfig,
 ) {
 
     @Subscribe
     fun joinEvent(event: ServerPostConnectEvent) {
         if (event.previousServer != null) return
         val username = event.player.username
-        messenger.broadcast(
+        proxy.all.sendRichMessage(
             config.join,
-            "player" toS username
+            "player" toS username,
         )
         val discordConnectEvent = DiscordBroadcastEventMain(
             config.joinDiscord,
@@ -48,9 +49,9 @@ class JoinLeaveListener(
     fun leaveMessage(event: DisconnectEvent) {
         if (event.loginStatus != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) return
         val username = event.player.username
-        messenger.broadcast(
+        proxy.all.sendRichMessage(
             config.leave,
-            "player" toS username
+            "player" toS username,
         )
         val discordDisconnectEvent = DiscordBroadcastEventMain(
             config.leaveDiscord,

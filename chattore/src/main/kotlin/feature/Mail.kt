@@ -5,7 +5,9 @@ import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.LoginEvent
+import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import java.time.Instant
@@ -19,17 +21,19 @@ import kotlin.math.min
 data class MailConfig(
     val mailReceived: String = "<gold>[</gold><red>From <sender></red><gold>]</gold> <message>",
     val mailSent: String = "<gold>[</gold><red>To <recipient></red><gold>]</gold> <message>",
-    val mailUnread: String = "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>."
+    val mailUnread: String = "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>.",
 )
 
 fun createMailFeature(
-    plugin: ChattORE,
+    plugin: Any,
+    database: Storage,
+    proxy: ProxyServer,
     userCache: UserCache,
-    config: MailConfig
+    config: MailConfig,
 ): Feature {
     return Feature(
-        commands = listOf(Mail(plugin.database, userCache, config)),
-        listeners = listOf(MailListener(plugin, config)),
+        commands = listOf(Mail(database, userCache, config)),
+        listeners = listOf(MailListener(plugin, database, proxy, config)),
     )
 }
 
@@ -52,7 +56,7 @@ data class MailboxItem(
     val id: Int,
     val timestamp: Int,
     val sender: UUID,
-    val read: Boolean
+    val read: Boolean,
 )
 
 class MailContainer(private val userCache: UserCache, private val messages: List<MailboxItem>) {
@@ -106,7 +110,7 @@ class MailContainer(private val userCache: UserCache, private val messages: List
 class Mail(
     private val database: Storage,
     private val userCache: UserCache,
-    private val config: MailConfig
+    private val config: MailConfig,
 ) : BaseCommand() {
 
     private val mailTimeouts = mutableMapOf<UUID, Long>()
@@ -155,14 +159,16 @@ class Mail(
 }
 
 class MailListener(
-    private val plugin: ChattORE,
-    private val config: MailConfig
+    private val plugin: Any,
+    private val database: Storage,
+    private val proxy: ProxyServer,
+    private val config: MailConfig,
 ) {
     @Subscribe
     fun joinEvent(event: LoginEvent) {
-        val unreadCount = plugin.database.getMessages(event.player.uniqueId).filter { !it.read }.size
+        val unreadCount = database.getMessages(event.player.uniqueId).filter { !it.read }.size
         if (unreadCount > 0)
-            plugin.proxy.scheduler.buildTask(plugin, Runnable {
+            proxy.scheduler.buildTask(plugin, Runnable {
                 event.player.sendRichMessage(
                     config.mailUnread,
                     "count" toS unreadCount.toString(),

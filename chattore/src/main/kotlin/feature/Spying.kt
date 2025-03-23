@@ -8,6 +8,8 @@ import co.aikar.commands.annotation.Default
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.command.CommandExecuteEvent
 import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
+import net.kyori.adventure.audience.Audience
 
 object SpyEnabled : Setting<Boolean>("spy")
 
@@ -17,25 +19,30 @@ data class SpyingConfig(
 
 fun createSpyingFeature(
     database: Storage,
-    messenger: Messenger,
+    proxy: ProxyServer,
     config: SpyingConfig,
 ): Feature {
     return Feature(
-        commands = listOf(CommandSpy(database, config)),
-        listeners = listOf(CommandListener(messenger, config))
+        commands = listOf(CommandSpy(database)),
+        listeners = listOf(CommandListener(database, proxy, config))
     )
 }
 
 class CommandListener(
-    private val messenger: Messenger,
-    private val config: SpyingConfig
+    private val database: Storage,
+    proxy: ProxyServer,
+    private val config: SpyingConfig,
 ) {
+
+    private val Player.isSpying: Boolean get() = database.getSetting(SpyEnabled, uniqueId) ?: false
+    private val spies: Audience = proxy.all { it.hasChattorePrivilege && it.isSpying }
+
     @Subscribe
     fun onCommandEvent(event: CommandExecuteEvent) {
-        messenger.sendPrivileged(
+        spies.sendMessage(
             config.spying.render(
                 "message" toS event.command,
-                "sender" toS ((event.commandSource as? Player)?.username ?: "Console")
+                "sender" toS ((event.commandSource as? Player)?.username ?: "Console"),
             )
         )
     }
@@ -45,7 +52,6 @@ class CommandListener(
 @CommandPermission("chattore.commandspy")
 class CommandSpy(
     private val database: Storage,
-    private val config: SpyingConfig,
 ) : BaseCommand() {
 
     @Default

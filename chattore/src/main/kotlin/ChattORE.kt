@@ -43,14 +43,14 @@ const val VERSION = "1.2"
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
-    lateinit var luckPerms: LuckPerms
-    lateinit var config: ChattOREConfig
-    lateinit var database: Storage
-    lateinit var messenger: Messenger
+    private lateinit var luckPerms: LuckPerms
+    private lateinit var config: ChattOREConfig
+    private lateinit var database: Storage
+    private lateinit var messenger: Messenger
     private lateinit var emojis: Map<String, String>
-    lateinit var emojisToNames: Map<String, String>
+    private lateinit var emojisToNames: Map<String, String>
     private val dataFolder = dataFolder.toFile()
-    val chatReplacements: MutableList<TextReplacementConfig> = mutableListOf(
+    private val chatReplacements: MutableList<TextReplacementConfig> = mutableListOf(
         formatReplacement("**", "b"),
         formatReplacement("*", "i"),
         formatReplacement("__", "u"),
@@ -72,7 +72,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         chatReplacements.add(buildEmojiReplacement(emojis))
         logger.info("Loaded ${emojis.size} emojis")
 
-        messenger = Messenger(this, config.format.global)
+        messenger = Messenger(chatReplacements, logger, proxy, database, luckPerms, config.format.global)
 
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
@@ -133,7 +133,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             ),
             createChattoreFeature(this),
             createDiscordFeature(
-                this, DiscordConfig(
+                logger, messenger, proxy, emojisToNames, DiscordConfig(
                     config.discord.enable,
                     config.discord.networkToken,
                     config.discord.channelId,
@@ -145,14 +145,14 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 )
             ),
             createEmojiFeature(emojis),
-            createFunCommandsFeature(logger, messenger, proxy.commandManager),
+            createFunCommandsFeature(logger, proxy),
             createHelpOpFeature(
-                logger, messenger, HelpOpConfig(
+                logger, proxy, HelpOpConfig(
                     config.format.help,
                 )
             ),
             createJoinLeaveFeature(
-                messenger, proxy.eventManager, JoinLeaveConfig(
+                proxy, proxy.eventManager, JoinLeaveConfig(
                     config.format.join,
                     config.format.leave,
                     config.format.joinDiscord,
@@ -160,7 +160,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 )
             ),
             createMailFeature(
-                this, userCache, MailConfig(
+                this, database, proxy, userCache, MailConfig(
                     config.format.mailReceived,
                     config.format.mailSent,
                     config.format.mailUnread,
@@ -185,7 +185,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
                 )
             ),
             createSpyingFeature(
-                database, messenger, SpyingConfig(
+                database, proxy, SpyingConfig(
                     config.format.commandSpy,
                 )
             )
@@ -221,7 +221,7 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
         registeredCommand: RegisteredCommand<*>,
         sender: CommandIssuer,
         args: List<String>,
-        throwable: Throwable
+        throwable: Throwable,
     ): Boolean {
         val exception = throwable as? ChattoreException ?: return false
         val message = exception.message ?: "Something went wrong!"

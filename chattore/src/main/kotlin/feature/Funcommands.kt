@@ -6,6 +6,7 @@ import co.aikar.commands.annotation.*
 import com.velocitypowered.api.command.CommandManager
 import com.velocitypowered.api.command.SimpleCommand
 import com.velocitypowered.api.proxy.Player
+import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
@@ -14,11 +15,10 @@ import org.slf4j.Logger
 
 fun createFunCommandsFeature(
     logger: Logger,
-    messenger: Messenger,
-    commandManager: CommandManager,
+    proxy: ProxyServer,
 ): Feature {
     val commands = Json.decodeFromString<List<FunCommand>>(loadResource("/commands.json"))
-    loadFunCommands(logger, messenger, commandManager, commands)
+    loadFunCommands(logger, proxy, proxy.commandManager, commands)
     return Feature(
         commands = listOf(FunCommandsCommand(commands))
     )
@@ -87,9 +87,9 @@ data class FunCommand(
     val run: String? = null,
 )
 
-fun loadFunCommands(
+private fun loadFunCommands(
     logger: Logger,
-    messenger: Messenger,
+    proxy: ProxyServer,
     commandManager: CommandManager,
     commands: List<FunCommand>,
 ) {
@@ -122,9 +122,9 @@ fun loadFunCommands(
             "arg-2" toS (args.getOrNull(2) ?: "<missing>")
         )
 
-        cmd.globalChat?.let { messenger.broadcast(it, *replacements) }
+        cmd.globalChat?.let { proxy.all.sendRichMessage(it, *replacements) }
         cmd.localChat?.let { source.sendRichMessage(it, *replacements) }
-        cmd.othersChat?.let { messenger.broadcastAllBut(source, it, *replacements) }
+        cmd.othersChat?.let { proxy.allBut(source).sendRichMessage(it, *replacements) }
         cmd.run?.let { executeAction(it, source) }
     }
 

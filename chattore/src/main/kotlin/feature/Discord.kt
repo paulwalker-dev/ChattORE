@@ -2,6 +2,7 @@ package chattore.feature
 
 import chattore.*
 import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.proxy.ProxyServer
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.entity.channel.TextChannel
@@ -21,7 +22,7 @@ data class DiscordConfig(
     val playingMessage: String = "on the ORE Network",
     val format: String = "`%prefix%` **%sender%**: %message%",
     val serverTokens: Map<String, String>,
-    val discord: String = "<dark_aqua>Discord</dark_aqua> <gray>|</gray> <dark_purple><sender></dark_purple><gray>:</gray> <message>"
+    val discord: String = "<dark_aqua>Discord</dark_aqua> <gray>|</gray> <dark_purple><sender></dark_purple><gray>:</gray> <message>",
 )
 
 // TO Discord
@@ -39,7 +40,10 @@ data class DiscordBroadcastEventMain(
 )
 
 fun createDiscordFeature(
-    plugin: ChattORE,
+    logger: Logger,
+    messenger: Messenger,
+    proxy: ProxyServer,
+    emojisToNames: Map<String, String>,
     config: DiscordConfig,
 ): Feature {
     // HAX
@@ -49,12 +53,12 @@ fun createDiscordFeature(
         .setAllIntents()
         .login()
         .join()
-    val discordMap = loadDiscordTokens(plugin, config.serverTokens)
+    val discordMap = loadDiscordTokens(proxy, logger, config.serverTokens)
     discordMap.forEach { (_, discordApi) -> discordApi.updateActivity(config.playingMessage) }
     val textChannel = discordNetwork.getTextChannelById(config.channelId).getOrNull()
         ?: throw ChattoreException("Cannot find Discord channel")
     textChannel.addMessageCreateListener(
-        DiscordListener(plugin.logger, plugin.messenger, plugin.emojisToNames, config)
+        DiscordListener(logger, messenger, proxy, emojisToNames, config)
     )
     return Feature(
         listeners = listOf(DiscordBroadcastListener(config, discordMap, discordNetwork))
@@ -100,6 +104,7 @@ private class DiscordBroadcastListener(
 class DiscordListener(
     private val logger: Logger,
     private val messenger: Messenger,
+    private val proxy: ProxyServer,
     private val emojisToNames: Map<String, String>,
     private val config: DiscordConfig,
 ) : MessageCreateListener {
@@ -125,7 +130,7 @@ class DiscordListener(
             val url = matchResult.groupValues[2].trim()
             "$text: $url"
         }.replace("""\s+""".toRegex(), " ")
-        messenger.broadcast(
+        proxy.all.sendRichMessage(
             config.discord,
             "sender" toS event.messageAuthor.displayName,
             "message" toC messenger.prepareChatMessage(transformedMessage, null),
@@ -133,11 +138,15 @@ class DiscordListener(
     }
 }
 
-private fun loadDiscordTokens(plugin: ChattORE, serverTokens: Map<String, String>): Map<String, DiscordApi> {
-    val availableServers = plugin.proxy.allServers.map { it.serverInfo.name.lowercase() }.sorted()
+private fun loadDiscordTokens(
+    proxy: ProxyServer,
+    logger: Logger,
+    serverTokens: Map<String, String>,
+): Map<String, DiscordApi> {
+    val availableServers = proxy.allServers.map { it.serverInfo.name.lowercase() }.sorted()
     val configServers = serverTokens.map { it.key.lowercase() }.sorted()
     if (availableServers != configServers) {
-        plugin.logger.warn(
+        logger.warn(
             """
                     Supplied server keys in Discord configuration section does not match available servers:
                     Available servers: ${availableServers.joinToString()}
