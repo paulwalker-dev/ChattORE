@@ -29,6 +29,7 @@ data class AliasConfig(
 fun createAliasFeature(
     plugin: ChattORE
 ): Feature {
+    plugin.proxy.channelRegistrar.register(IDENTIFIER)
     fun String.toCommandAliasMeta() = plugin.proxy.commandManager.metaBuilder(this)
         .plugin(plugin)
         .build()
