@@ -18,6 +18,8 @@ import org.openredstone.chattore.common.ALIAS_CHANNEL
 
 val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
 
+val argumentsRegex = Regex("\\\$(args|[0-9])")
+
 @Serializable
 data class AliasConfig(
     val alias: String = "alias",
@@ -30,7 +32,6 @@ fun createAliasFeature(
     fun String.toCommandAliasMeta() = plugin.proxy.commandManager.metaBuilder(this)
         .plugin(plugin)
         .build()
-
     val resourcePath = "aliases.json"
     val resourceBytes = plugin.loadResource(resourcePath)
     val aliasesJson = resourceBytes.decodeToString()
@@ -49,9 +50,17 @@ class AliasCommand(
     private val base: String,
     private val commands: List<String>
 ) : SimpleCommand {
+
+    private val requiredArgs = commands.maxOfOrNull { argumentsRegex.findAll(it).toList().size } ?: 0
+
     override fun execute(invocation: SimpleCommand.Invocation) {
         val source = invocation.source()
         val args = invocation.arguments()
+
+        if (requiredArgs > args.size) {
+            source.sendMessage("Not enough arguments! I expected $requiredArgs argument(s)!".toComponent())
+            return
+        }
 
         if (source !is Player) {
             source.sendMessage("This command can only be used by players!".toComponent())
@@ -62,7 +71,7 @@ class AliasCommand(
             plugin.logger.info("Executing alias $base for user ${source.username} (${source.uniqueId})")
         } else {
             plugin.logger.info("Executing alias $base for user ${source.username}" +
-                " (${source.uniqueId}) with args ${args.joinToString(" ")}")
+                " (${source.uniqueId}) with args: ${args.joinToString(" ")}")
         }
         executeAlias(source, args.toList())
     }
@@ -71,7 +80,14 @@ class AliasCommand(
     private fun executeAlias(player: Player, args: List<String> = emptyList()) {
         val server = player.currentServer.orElse(null) ?: return
         commands.forEach { command ->
-            val commandLine = "$command ${args.joinToString(" ")}".trimEnd()
+            val commandLine = command.replace(argumentsRegex) {matchResult ->
+                val group = matchResult.groupValues[1]
+                if (group == "args") {
+                    args.joinToString(" ")
+                } else {
+                    args[group.toInt()]
+                }
+            }
             plugin.proxy.commandManager.executeImmediatelyAsync(player, commandLine).whenComplete { result, throwable ->
                 if (throwable != null) {
                     plugin.logger.error(throwable.message, throwable)
