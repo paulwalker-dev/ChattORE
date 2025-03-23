@@ -184,7 +184,7 @@ class Nickname(
 
     private fun Player.notifyOfNickChange(nickname: NickPreset) = sendInfoMM(
         "Your nickname has been set to <rendered>",
-        "rendered" toC nickname.render(username)
+        "rendered" toC nickname.render(username),
     )
 }
 
