@@ -15,8 +15,6 @@ import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
-import net.kyori.adventure.text.TextReplacementConfig
-import net.luckperms.api.LuckPerms
 import net.luckperms.api.LuckPermsProvider
 import org.slf4j.Logger
 import java.io.File
@@ -42,30 +40,24 @@ const val VERSION = "1.2"
     authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo", "Waffle [Wueffi]"],
     dependencies = [Dependency(id = "luckperms")]
 )
-class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @DataDirectory dataFolder: Path) {
-    private lateinit var luckPerms: LuckPerms
-    private lateinit var config: ChattOREConfig
-    private lateinit var database: Storage
-    private lateinit var messenger: Messenger
-    private lateinit var emojis: Map<String, String>
-    private lateinit var emojisToNames: Map<String, String>
+class ChattORE @Inject constructor(val proxy: ProxyServer, private val logger: Logger, @DataDirectory dataFolder: Path) {
     private val dataFolder = dataFolder.toFile()
 
     @Subscribe
     fun onProxyInitialization(event: ProxyInitializeEvent) {
-        config = loadConfig()
-        luckPerms = LuckPermsProvider.get()
-        database = Storage(this.dataFolder.resolve(config.storage).toString())
+        val config = loadConfig()
+        val luckPerms = LuckPermsProvider.get()
+        val database = Storage(this.dataFolder.resolve(config.storage).toString())
         val pluginEvents = PluginEvents(this, proxy.eventManager)
         val userCache = UserCache.create(database.database, pluginEvents)
-        emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
+        val emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
             val parts = item.split(",")
             parts[0] to parts[1]
         }
-        emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
+        val emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
         logger.info("Loaded ${emojis.size} emojis")
 
-        messenger = Messenger(emojis, logger, proxy, database, luckPerms, config.format.global)
+        val messenger = Messenger(emojis, logger, proxy, database, luckPerms, config.format.global)
 
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
