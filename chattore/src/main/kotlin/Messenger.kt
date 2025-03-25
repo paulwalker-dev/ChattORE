@@ -70,38 +70,40 @@ class Messenger(
             builder.append(part.legacyDeserialize(canObfuscate))
             if (matches.hasNext()) {
                 val nextMatch = matches.next()
-                val link = URI(nextMatch.groupValues[1]).toURL()
-                var type = "link"
-                var name = link.host
-                if (link.file.isNotEmpty()) {
-                    val last = link.path.split("/").last()
-                    if (last.contains('.') && !last.endsWith('.') && !last.startsWith('.')) {
-                        type = last.split('.').last()
-                        name = if (last.length > 15) {
-                            last.substring(0, 15) + "…." + type
-                        } else {
-                            last
-                        }
-                    }
-                }
-                val contentType = fileTypeMap.entries.find { type in it.value }?.key
-                val symbol = when (contentType) {
-                    "IMAGE" -> "\uD83D\uDDBC"
-                    "AUDIO" -> "\uD83D\uDD0A"
-                    "VIDEO" -> "\uD83C\uDFA5"
-                    "TEXT" -> "\uD83D\uDCDD"
-                    else -> "\uD83D\uDCCE"
-                }
-                builder.append(
-                    ("<aqua><click:open_url:'$link'>" +
-                        "<hover:show_text:'<aqua>$link'>" +
-                        "[$symbol $name]" +
-                        "</hover>" +
-                        "</click><reset>").render()
-                )
+                builder.append(formatLink(nextMatch.groupValues[1]))
             }
         }
         return builder.build().performReplacements(chatReplacements)
+    }
+
+    private fun formatLink(str: String): Component {
+        val link = URI(str).toURL()
+        var type = "link"
+        var name = link.host
+        if (link.file.isNotEmpty()) {
+            val last = link.path.split("/").last()
+            if (last.contains('.') && !last.endsWith('.') && !last.startsWith('.')) {
+                type = last.split('.').last()
+                name = if (last.length > 15) {
+                    last.substring(0, 15) + "…." + type
+                } else {
+                    last
+                }
+            }
+        }
+        val contentType = fileTypeMap.entries.find { type in it.value }?.key
+        val symbol = when (contentType) {
+            "IMAGE" -> "\uD83D\uDDBC"
+            "AUDIO" -> "\uD83D\uDD0A"
+            "VIDEO" -> "\uD83C\uDFA5"
+            "TEXT" -> "\uD83D\uDCDD"
+            else -> "\uD83D\uDCCE"
+        }
+        return ("<aqua><click:open_url:'$link'>" +
+            "<hover:show_text:'<aqua>$link'>" +
+            "[$symbol $name]" +
+            "</hover>" +
+            "</click><reset>").render()
     }
 
     private fun Component.performReplacements(replacements: List<TextReplacementConfig>): Component =
