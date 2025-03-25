@@ -8,7 +8,6 @@ import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.audience.ForwardingAudience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
@@ -51,28 +50,6 @@ private fun fixHexFormatting(str: String): String =
     str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
 
 fun String.componentize(): Component = componentizeSerializer.deserialize(fixHexFormatting(this))
-
-fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
-    TextReplacementConfig.builder()
-        .match(""":([A-Za-z0-9_\-+]+):""")
-        .replacement { result, _ ->
-            val match = result.group(1)
-            val content = emojis[match] ?: ":$match:"
-            "<hover:show_text:'$match'>$content</hover>".render()
-        }
-        .build()
-
-fun formatReplacement(key: String, tag: String): TextReplacementConfig =
-    TextReplacementConfig.builder()
-        .match("""((\\?)(${Regex.escape(key)}(.*?)${Regex.escape(key)}))""")
-        .replacement { result, _ ->
-            if (result.group(2).contains("\\") || result.group(4).endsWith("\\")) {
-                result.group(3).toComponent()
-            } else {
-                "<$tag>${result.group(4)}</$tag>".render()
-            }
-        }
-        .build()
 
 fun String.render(vararg resolvers: TagResolver): Component =
     MiniMessage.miniMessage().deserialize(this, *resolvers)

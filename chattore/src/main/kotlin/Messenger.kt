@@ -16,7 +16,7 @@ import org.slf4j.Logger
 import java.net.URI
 
 class Messenger(
-    private val chatReplacements: List<TextReplacementConfig>,
+    emojis: Map<String, String>,
     private val logger: Logger,
     private val proxy: ProxyServer,
     private val database: Storage,
@@ -27,6 +27,36 @@ class Messenger(
         Json.parseToJsonElement(loadResource("/filetypes.json"))
             .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
             .onEach { (key, values) -> logger.info("Loaded ${values.size} of type $key") }
+
+    private val chatReplacements = listOf(
+        formatReplacement("**", "b"),
+        formatReplacement("*", "i"),
+        formatReplacement("__", "u"),
+        formatReplacement("~~", "st"),
+        buildEmojiReplacement(emojis),
+    )
+
+    private fun formatReplacement(key: String, tag: String): TextReplacementConfig =
+        TextReplacementConfig.builder()
+            .match("""((\\?)(${Regex.escape(key)}(.*?)${Regex.escape(key)}))""")
+            .replacement { result, _ ->
+                if (result.group(2).contains("\\") || result.group(4).endsWith("\\")) {
+                    result.group(3).toComponent()
+                } else {
+                    "<$tag>${result.group(4)}</$tag>".render()
+                }
+            }
+            .build()
+
+    private fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
+        TextReplacementConfig.builder()
+            .match(""":([A-Za-z0-9_\-+]+):""")
+            .replacement { result, _ ->
+                val match = result.group(1)
+                val content = emojis[match] ?: ":$match:"
+                "<hover:show_text:'$match'>$content</hover>".render()
+            }
+            .build()
 
     fun broadcastChatMessage(originServer: String, player: Player, message: String) {
         val userId = player.uniqueId

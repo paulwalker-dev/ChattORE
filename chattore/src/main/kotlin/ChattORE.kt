@@ -50,12 +50,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
     private lateinit var emojis: Map<String, String>
     private lateinit var emojisToNames: Map<String, String>
     private val dataFolder = dataFolder.toFile()
-    private val chatReplacements: MutableList<TextReplacementConfig> = mutableListOf(
-        formatReplacement("**", "b"),
-        formatReplacement("*", "i"),
-        formatReplacement("__", "u"),
-        formatReplacement("~~", "st")
-    )
 
     @Subscribe
     fun onProxyInitialization(event: ProxyInitializeEvent) {
@@ -69,10 +63,9 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, val logger: Logger, @
             parts[0] to parts[1]
         }
         emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
-        chatReplacements.add(buildEmojiReplacement(emojis))
         logger.info("Loaded ${emojis.size} emojis")
 
-        messenger = Messenger(chatReplacements, logger, proxy, database, luckPerms, config.format.global)
+        messenger = Messenger(emojis, logger, proxy, database, luckPerms, config.format.global)
 
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
