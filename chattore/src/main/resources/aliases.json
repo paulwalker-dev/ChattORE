@@ -1,8 +1,221 @@
 [
   {
-    "alias": "bancapo",
+    "alias": "killboats",
     "commands": [
-      "ban LordDecapo"
+      "minecraft:kill @e[type=boat]"
+    ]
+  },
+  {
+    "alias": "killcarts",
+    "commands": [
+      "minecraft:kill @e[type=minecart]"
+    ]
+  },
+  {
+    "alias": "killfireworks",
+    "commands": [
+      "minecraft:kill @e[type=fireworks_rocket]"
+    ]
+  },
+  {
+    "alias": "b",
+    "commands": [
+      "back"
+    ]
+  },
+  {
+    "alias": "nv",
+    "commands": [
+      "effect give $1  minecraft:night_vision infinite"
+    ]
+  },
+  {
+    "alias": "/1",
+    "commands": [
+      "/pos1"
+    ]
+  },
+  {
+    "alias": "/2",
+    "commands": [
+      "/pos2"
+    ]
+  },
+  {
+    "alias": "/h1",
+    "commands": [
+      "/hpos1"
+    ]
+  },
+  {
+    "alias": "/h2",
+    "commands": [
+      "/hpos2"
+    ]
+  },
+  {
+    "alias": "/p",
+    "commands": [
+      "/pos1",
+      "/pos2"
+    ]
+  },
+  {
+    "alias": "/h",
+    "commands": [
+      "/hpos1",
+      "/hpos2"
+    ]
+  },
+  {
+    "alias": "/c",
+    "commands": [
+      "/copy"
+    ]
+  },
+  {
+    "alias": "/x",
+    "commands": [
+      "/cut"
+    ]
+  },
+  {
+    "alias": "/hs",
+    "commands": [
+      "/hpos2",
+      "/rs $1 1"
+    ]
+  },
+  {
+    "alias": "/me",
+    "commands": [
+      "/hpos2",
+      "/replace $1 air"
+    ]
+  },
+  {
+    "alias": "/v",
+    "commands": [
+      "/paste"
+    ]
+  },
+  {
+    "alias": "/va",
+    "commands": [
+      "/paste -a"
+    ]
+  },
+  {
+    "alias": "/vas",
+    "commands": [
+      "/paste -a -s",
+      "/replace redstone_wire ^redstone_wire"
+    ]
+  },
+  {
+    "alias": "/f",
+    "commands": [
+      "/flip"
+    ]
+  },
+  {
+    "alias": "/fp",
+    "commands": [
+      "/flip -p"
+    ]
+  },
+  {
+    "alias": "/s",
+    "commands": [
+      "/stack $1"
+    ]
+  },
+  {
+    "alias": "/sa",
+    "commands": [
+      "/stack -a $1"
+    ]
+  },
+  {
+    "alias": "/su",
+    "commands": [
+      "/hpos2",
+      "/stack $1 u"
+    ]
+  },
+  {
+    "alias": "/sd",
+    "commands": [
+      "/hpos2",
+      "/stack $1 d"
+    ]
+  },
+  {
+    "alias": "/sl",
+    "commands": [
+      "/hpos2",
+      "/stack $1 l"
+    ]
+  },
+  {
+    "alias": "/sr",
+    "commands": [
+      "/hpos2",
+      "/stack $1 r"
+    ]
+  },
+  {
+    "alias": "u",
+    "commands": [
+      "up 0"
+    ]
+  },
+  {
+    "alias": "/r",
+    "commands": [
+      "/rotate $1"
+    ]
+  },
+  {
+    "alias": "/u",
+    "commands": [
+      "/undo $1"
+    ]
+  },
+  {
+    "alias": "/z",
+    "commands": [
+      "/undo"
+    ]
+  },
+  {
+    "alias": "/y",
+    "commands": [
+      "/redo"
+    ]
+  },
+  {
+    "alias": "/m",
+    "commands": [
+      "/move $1"
+    ]
+  },
+  {
+    "alias": "/md",
+    "commands": [
+      "/move $1 $2"
+    ]
+  },
+  {
+    "alias": "/ma",
+    "commands": [
+      "/move $1 -a"
+    ]
+  },
+  {
+    "alias": "/mas",
+    "commands": [
+      "/move $1 -a -s"
     ]
   },
   {
@@ -15,11 +228,24 @@
     ]
   },
   {
-    "alias": "gamemodeshuffle",
+    "alias": "/e",
     "commands": [
-      "gamemode creative",
-      "gamemode survival",
-      "gamemode creative"
+      "/expand $1"
+    ]
+  },
+  {
+    "alias": "/t",
+    "commands": [
+      "/hpos2",
+      "/cut"
+    ]
+  },
+  {
+    "alias": "/cfv",
+    "commands": [
+      "/copy",
+      "/flip",
+      "/paste -a"
     ]
   }
 ]
