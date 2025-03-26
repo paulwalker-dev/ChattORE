@@ -1,7 +1,5 @@
 package org.openredstone.chattore
 
-import org.openredstone.chattore.feature.DiscordBroadcastEvent
-import org.openredstone.chattore.feature.NickPreset
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.json.Json
@@ -12,6 +10,8 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.luckperms.api.LuckPerms
+import org.openredstone.chattore.feature.DiscordBroadcastEvent
+import org.openredstone.chattore.feature.NickPreset
 import org.slf4j.Logger
 import java.net.URI
 
@@ -70,15 +70,16 @@ class Messenger(
         val prefix = luckUser.cachedData.metaData.prefix
             ?: luckUser.primaryGroup.replaceFirstChar(Char::uppercaseChar)
 
+        val compoPrefix = prefix.legacyDeserialize()
         proxy.all.sendRichMessage(
             chatBroadcastFormat,
             "message" toC prepareChatMessage(message, player),
             "sender" toC sender,
             "username" toS player.username,
-            "prefix" toC prefix.legacyDeserialize(),
+            "prefix" toC compoPrefix,
         )
 
-        val plainPrefix = PlainTextComponentSerializer.plainText().serialize(prefix.componentize())
+        val plainPrefix = PlainTextComponentSerializer.plainText().serialize(compoPrefix)
         val discordBroadcast = DiscordBroadcastEvent(
             plainPrefix,
             player.username,

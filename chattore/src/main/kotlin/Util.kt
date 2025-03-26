@@ -39,18 +39,6 @@ fun String.legacyDeserialize(canObfuscate: Boolean = false): TextComponent {
     }
 }
 
-// TODO: this is used for sending prefixes to Discord only, wut
-private val componentizeSerializer = LegacyComponentSerializer.builder()
-    .character('&')
-    .hexCharacter('#')
-    .extractUrls()
-    .build()
-
-private fun fixHexFormatting(str: String): String =
-    str.replace(Regex("#([0-9a-f]{6})")) { "&${it.groupValues.first()}" }
-
-fun String.componentize(): Component = componentizeSerializer.deserialize(fixHexFormatting(this))
-
 fun String.render(vararg resolvers: TagResolver): Component =
     MiniMessage.miniMessage().deserialize(this, *resolvers)
 
