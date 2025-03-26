@@ -1,6 +1,6 @@
-package chattore.feature
+package org.openredstone.chattore.feature
 
-import chattore.*
+import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import co.aikar.commands.annotation.Optional

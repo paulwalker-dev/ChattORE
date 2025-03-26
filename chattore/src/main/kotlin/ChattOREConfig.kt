@@ -1,6 +1,5 @@
-package chattore.entity
+package org.openredstone.chattore
 
-import chattore.pridePresets
 import java.util.*
 
 data class ChattOREConfig(

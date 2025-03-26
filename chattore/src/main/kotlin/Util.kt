@@ -1,4 +1,4 @@
-package chattore
+package org.openredstone.chattore
 
 import com.velocitypowered.api.event.EventHandler
 import com.velocitypowered.api.event.EventManager

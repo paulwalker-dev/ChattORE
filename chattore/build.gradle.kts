@@ -8,7 +8,7 @@ plugins {
     id("com.gradleup.shadow")
 }
 
-group = ""
+group = "org.openredstone"
 version = "1.2"
 
 repositories {
@@ -42,7 +42,11 @@ dependencies {
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.6.0")
     implementation(group = "org.xerial", name = "sqlite-jdbc", version = "3.46.0.0")
     val jacksonVersion = "2.18.2"
-    implementation(group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version = jacksonVersion)
+    implementation(
+        group = "com.fasterxml.jackson.dataformat",
+        name = "jackson-dataformat-yaml",
+        version = jacksonVersion
+    )
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = jacksonVersion)
     compileOnly(group = "net.luckperms", name = "api", version = "5.1")
     compileOnly(group = "com.velocitypowered", name = "velocity-api", version = "3.3.0-SNAPSHOT")

@@ -1,6 +1,6 @@
-package chattore.feature
+package org.openredstone.chattore.feature
 
-import chattore.*
+import org.openredstone.chattore.*
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.proxy.ProxyServer
 import org.javacord.api.DiscordApi

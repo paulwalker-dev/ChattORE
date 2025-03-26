@@ -1,4 +1,4 @@
-package chattore
+package org.openredstone.chattore
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
@@ -27,8 +27,8 @@ inline fun <reified T> readConfig(logger: Logger, f: File): T {
     when {
         version > currentConfigVersion -> throw Exception("Config version is greater than supported")
         version < currentConfigVersion -> {
-            val backupName = "backup_config_ver$version.yml"
             logger.info("Migrating config from version $version to $currentConfigVersion")
+            val backupName = "backup_config_ver$version.yml"
             f.copyTo(f.resolveSibling(backupName))
             logger.info("Made config backup $backupName")
             runMigrations(node, version)
@@ -77,4 +77,3 @@ val migrations = arrayOf<Migration>(
 
 val currentConfigVersion: ConfigVersion = migrations.size
 const val CONFIG_VERSION_PROPERTY = "configVersion"
-

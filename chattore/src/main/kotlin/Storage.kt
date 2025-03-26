@@ -1,8 +1,7 @@
-package chattore
+package org.openredstone.chattore
 
-import chattore.feature.MailboxItem
-import chattore.feature.NickPreset
-import com.velocitypowered.api.event.EventManager
+import org.openredstone.chattore.feature.MailboxItem
+import org.openredstone.chattore.feature.NickPreset
 import com.velocitypowered.api.event.player.ServerPreConnectEvent
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -204,4 +203,3 @@ class UserCache private constructor(private val database: Database) {
 // idk what to call it
 class KnownUser(val uuid: UUID, val name: String)
 class User(val uuid: UUID)
-

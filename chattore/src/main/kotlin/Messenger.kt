@@ -1,7 +1,7 @@
-package chattore
+package org.openredstone.chattore
 
-import chattore.feature.DiscordBroadcastEvent
-import chattore.feature.NickPreset
+import org.openredstone.chattore.feature.DiscordBroadcastEvent
+import org.openredstone.chattore.feature.NickPreset
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.json.Json

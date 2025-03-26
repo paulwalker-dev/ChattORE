@@ -1,7 +1,6 @@
-package chattore
+package org.openredstone.chattore
 
-import chattore.entity.ChattOREConfig
-import chattore.feature.*
+import org.openredstone.chattore.feature.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.CommandIssuer
 import co.aikar.commands.InvalidCommandArgument
