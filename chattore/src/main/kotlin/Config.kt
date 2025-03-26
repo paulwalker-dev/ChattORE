@@ -10,6 +10,8 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.slf4j.Logger
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 typealias ConfigVersion = Int
 
@@ -20,6 +22,8 @@ val objectMapper: ObjectMapper = ObjectMapper(yaml)
     .registerKotlinModule()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
 
+val backupDateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd_HH-mm-ss")
+
 inline fun <reified T> readConfig(logger: Logger, f: File): T {
     val node = objectMapper.readTree(f) as? ObjectNode ?: throw Exception("Config root has to be an object")
     val version = parseVersion(node)
@@ -28,14 +32,17 @@ inline fun <reified T> readConfig(logger: Logger, f: File): T {
         version > currentConfigVersion -> throw Exception("Config version is greater than supported")
         version < currentConfigVersion -> {
             logger.info("Migrating config from version $version to $currentConfigVersion")
-            val backupName = "backup_config_ver$version.yml"
+            val backupName = "backup_config_ver$version-${backupDateFormatter.format(LocalDateTime.now())}.yml"
             f.copyTo(f.resolveSibling(backupName))
             logger.info("Made config backup $backupName")
             runMigrations(node, version)
             logger.info("Migrations complete")
         }
     }
-    return objectMapper.convertValue<T>(node)
+    return objectMapper.convertValue<T>(node).also {
+        // write migrated + defaulted config
+        writeConfig(it as Any, f)
+    }
 }
 
 fun writeConfig(config: Any, f: File) {
@@ -62,6 +69,7 @@ typealias Migration = ObjectNode.() -> Unit
 fun ObjectNode.removeMany(vararg properties: String) {
     remove(properties.toList())
 }
+
 fun ObjectNode.getObject(prop: String): ObjectNode =
     get(prop) as? ObjectNode ?: throw Exception("$prop was not an object")
 

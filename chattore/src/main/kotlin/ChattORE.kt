@@ -1,11 +1,6 @@
 package org.openredstone.chattore
 
-import org.openredstone.chattore.feature.*
-import co.aikar.commands.BaseCommand
-import co.aikar.commands.CommandIssuer
-import co.aikar.commands.InvalidCommandArgument
-import co.aikar.commands.RegisteredCommand
-import co.aikar.commands.VelocityCommandManager
+import co.aikar.commands.*
 import com.google.inject.Inject
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
@@ -15,6 +10,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.luckperms.api.LuckPermsProvider
+import org.openredstone.chattore.feature.*
 import org.slf4j.Logger
 import java.io.File
 import java.nio.file.Files
@@ -39,7 +35,11 @@ const val VERSION = "1.2"
     authors = ["Nickster258", "PaukkuPalikka", "StackDoubleFlow", "sodiboo", "Waffle [Wueffi]"],
     dependencies = [Dependency(id = "luckperms")]
 )
-class ChattORE @Inject constructor(val proxy: ProxyServer, private val logger: Logger, @DataDirectory dataFolder: Path) {
+class ChattORE @Inject constructor(
+    val proxy: ProxyServer,
+    private val logger: Logger,
+    @DataDirectory dataFolder: Path,
+) {
     private val dataFolder = dataFolder.toFile()
 
     @Subscribe
@@ -194,8 +194,6 @@ class ChattORE @Inject constructor(val proxy: ProxyServer, private val logger: L
             Files.writeString(configFile.toPath(), "{}")
         }
         val config = readConfig<ChattOREConfig>(logger, configFile)
-        // save migrated config
-        writeConfig(config, configFile)
         logger.info("Loaded config.yml")
         return config
     }
