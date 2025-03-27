@@ -26,7 +26,7 @@
   {
     "alias": "nv",
     "commands": [
-      "effect give $1  minecraft:night_vision infinite"
+      "effect give $1 minecraft:night_vision infinite"
     ]
   },
   {
