@@ -20,7 +20,7 @@ import org.slf4j.Logger
 
 private val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
 
-private val argumentsRegex = Regex("\\\$(args|[0-9])")
+private val argumentsRegex = Regex("\\\$(args|[0-9]+)")
 
 @Serializable
 data class AliasConfig(
@@ -54,7 +54,11 @@ class AliasCommand(
     private val commands: List<String>
 ) : SimpleCommand {
 
-    private val requiredArgs = commands.maxOfOrNull { argumentsRegex.findAll(it).toList().size } ?: 0
+    private val requiredArgs = commands.flatMap {
+        argumentsRegex.findAll(it).map { match ->
+            match.groupValues[1].toIntOrNull()?.plus(1) ?: 1
+        }
+    }.maxOrNull() ?: 0
 
     override fun execute(invocation: SimpleCommand.Invocation) {
         val source = invocation.source()
