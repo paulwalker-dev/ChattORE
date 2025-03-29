@@ -17,10 +17,6 @@ import java.io.FileNotFoundException
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
-val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
-val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
-val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
-
 fun String.toComponent() = Component.text(this)
 fun Component.miniMessageSerialize() = MiniMessage.miniMessage().serialize(this)
 
@@ -91,6 +87,7 @@ fun loadResource(filename: String) =
 
 object Dummy
 
+private val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
 fun parseUuid(input: String): UUID? = if (uuidRegex.matches(input)) UUID.fromString(input) else null
 
 /** Dynamic audience consisting of only those players on proxy who pass the test */

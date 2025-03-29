@@ -23,6 +23,7 @@ class Messenger(
     private val luckPerms: LuckPerms,
     private val chatBroadcastFormat: String,
 ) {
+    private val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
     private val fileTypeMap: Map<String, List<String>> =
         Json.parseToJsonElement(loadResource("/filetypes.json"))
             .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }

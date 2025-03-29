@@ -1,6 +1,5 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.proxy.ProxyServer
 import org.javacord.api.DiscordApi
@@ -9,6 +8,7 @@ import org.javacord.api.entity.channel.TextChannel
 import org.javacord.api.entity.message.MessageBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
+import org.openredstone.chattore.*
 import org.slf4j.Logger
 import kotlin.jvm.optionals.getOrNull
 
@@ -86,18 +86,14 @@ private class DiscordBroadcastListener(
             .replace("%prefix%", event.prefix)
             .replace("%sender%", event.sender.discordEscape())
             .replace("%message%", event.message)
-        MessageBuilder().setContent(content).apply {
-            send(channel)
-        }
+        MessageBuilder().setContent(content).send(channel)
     }
 
     @Subscribe
     fun onBroadcastEventRaw(event: DiscordBroadcastEventMain) {
         val message = event.format
             .replace("%player%", event.player.discordEscape())
-        MessageBuilder().setContent(message).apply {
-            send(mainBotChannel)
-        }
+        MessageBuilder().setContent(message).send(mainBotChannel)
     }
 }
 
@@ -111,13 +107,12 @@ class DiscordListener(
 
     private val emojiPattern = emojisToNames.keys.joinToString("|", "(", ")") { Regex.escape(it) }
     private val emojiRegex = Regex(emojiPattern)
+    private val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
 
-    private fun replaceEmojis(input: String): String {
-        return emojiRegex.replace(input) { matchResult ->
-            val emoji = matchResult.value
-            val emojiName = emojisToNames[emoji]
-            if (emojiName != null) ":$emojiName:" else emoji
-        }
+    private fun replaceEmojis(input: String) = emojiRegex.replace(input) { matchResult ->
+        val emoji = matchResult.value
+        val emojiName = emojisToNames[emoji]
+        if (emojiName != null) ":$emojiName:" else emoji
     }
 
     override fun onMessageCreate(event: MessageCreateEvent) {
