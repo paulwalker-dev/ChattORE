@@ -27,13 +27,8 @@ fun createFunCommandsFeature(
     config: FunCommandsConfig
 ): Feature {
     val resourcePath = "commands.json"
-    val resourceStream = plugin.javaClass.classLoader.getResourceAsStream(resourcePath)
-    if (resourceStream == null) {
-        plugin.logger.warn("$resourcePath not found. Skipping fun command loading")
-        throw ChattoreException("No $resourcePath found")
-    }
-    val commandsJson = resourceStream.bufferedReader().use { it.readText() }
-    resourceStream.close()
+    val resourceBytes = plugin.loadResource(resourcePath)
+    val commandsJson = resourceBytes.decodeToString()
     val commands = Json.decodeFromString<List<FunCommandConfig>>(commandsJson)
     FunCommands(plugin.logger, plugin.messenger, plugin.proxy.commandManager, commands).loadFunCommands()
     return Feature(
