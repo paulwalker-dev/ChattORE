@@ -13,6 +13,7 @@ import net.luckperms.api.LuckPermsProvider
 import org.openredstone.chattore.feature.*
 import org.slf4j.Logger
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -36,7 +37,7 @@ const val VERSION = "1.2"
     dependencies = [Dependency(id = "luckperms")]
 )
 class ChattORE @Inject constructor(
-    val proxy: ProxyServer,
+    private val proxy: ProxyServer,
     private val logger: Logger,
     @DataDirectory dataFolder: Path,
 ) {
@@ -109,12 +110,14 @@ class ChattORE @Inject constructor(
         }
         val features = listOf(
             createChatFeature(
-                logger, messenger, ChatConfirmationConfig(
+                logger, messenger,
+                ChatConfirmationConfig(
                     config.regexes,
                     config.format.chatConfirmPrompt,
                     config.format.chatConfirm,
                 )
             ),
+            createAliasFeature(this, proxy, logger),
             createChattoreFeature(this),
             createDiscordFeature(
                 logger, messenger, proxy, emojisToNames, DiscordConfig(
@@ -180,6 +183,30 @@ class ChattORE @Inject constructor(
             listeners.forEach { proxy.eventManager.register(this, it) }
         }
         logger.info("Loaded ${features.size} features")
+    }
+
+    fun loadResource2(name: String, saveToFolder: Boolean = true): ByteArray {
+        // This is goofy
+        fun getResourceAsStream(name: String): InputStream = javaClass.classLoader.getResourceAsStream(name)
+            ?: throw ChattoreException("Resource $name not found")
+
+        if (!saveToFolder) {
+            getResourceAsStream(name).use { return it.readBytes() }
+        }
+
+        val resource = File(dataFolder, name)
+        if (resource.exists()) {
+            resource.inputStream().use { return it.readBytes() }
+        } else {
+            logger.info("Resource $name not saved to folder, saving")
+            getResourceAsStream(name).use {
+                val data = it.readBytes()
+                resource.outputStream().use { out ->
+                    out.write(data)
+                }
+                return data
+            }
+        }
     }
 
     private fun loadConfig(): ChattOREConfig {

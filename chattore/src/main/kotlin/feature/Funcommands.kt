@@ -1,6 +1,5 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.command.CommandManager
@@ -11,12 +10,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
+import org.openredstone.chattore.*
 import org.slf4j.Logger
 
 fun createFunCommandsFeature(
     logger: Logger,
     proxy: ProxyServer,
 ): Feature {
+    // TODO make it save like ChattORE#loadResource
     val commands = Json.decodeFromString<List<FunCommand>>(loadResource("/commands.json"))
     loadFunCommands(logger, proxy, proxy.commandManager, commands)
     return Feature(
