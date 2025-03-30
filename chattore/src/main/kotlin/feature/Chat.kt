@@ -1,6 +1,5 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.CommandAlias
 import co.aikar.commands.annotation.CommandPermission
@@ -8,6 +7,10 @@ import co.aikar.commands.annotation.Default
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.player.PlayerChatEvent
 import com.velocitypowered.api.proxy.Player
+import org.openredstone.chattore.ChattoreException
+import org.openredstone.chattore.Messenger
+import org.openredstone.chattore.PluginScope
+import org.openredstone.chattore.sendSimpleMM
 import org.slf4j.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -17,22 +20,19 @@ data class ChatConfirmationConfig(
     val confirmationPrompt: String = "\"<red><bold>The following message was not sent because it contained " +
         "potentially inappropriate language:<newline><reset><message><newline><red>To send this message anyway, run " +
         "<gray>/confirmmessage<red>.\"",
-    val chatConfirm: String = "<red>Override recognized"
+    val chatConfirm: String = "<red>Override recognized",
 )
 
-fun createChatFeature(
-    logger: Logger,
+fun PluginScope.createChatFeature(
     messenger: Messenger,
     config: ChatConfirmationConfig,
-): Feature {
+) {
     val flaggedMessages = ConcurrentHashMap<UUID, String>()
-    return Feature(
-        commands = listOf(ConfirmMessage(config, flaggedMessages, logger, messenger)),
-        listeners = listOf(ChatListener(config, flaggedMessages, logger, messenger)),
-    )
+    registerCommands(ConfirmMessage(config, flaggedMessages, logger, messenger))
+    registerListeners(ChatListener(config, flaggedMessages, logger, messenger))
 }
 
-class ChatListener(
+private class ChatListener(
     private val config: ChatConfirmationConfig,
     private val flaggedMessages: ConcurrentHashMap<UUID, String>,
     private val logger: Logger,
@@ -68,7 +68,7 @@ class ChatListener(
 
 @CommandAlias("confirmmessage")
 @CommandPermission("chattore.confirmmessage")
-class ConfirmMessage(
+private class ConfirmMessage(
     private val config: ChatConfirmationConfig,
     private val flaggedMessages: ConcurrentHashMap<UUID, String>,
     private val logger: Logger,
@@ -76,8 +76,7 @@ class ConfirmMessage(
 ) : BaseCommand() {
     @Default
     fun default(player: Player) {
-        val message = flaggedMessages[player.uniqueId] ?:
-            throw ChattoreException("You have no message to confirm!")
+        val message = flaggedMessages[player.uniqueId] ?: throw ChattoreException("You have no message to confirm!")
         player.sendRichMessage(config.chatConfirm)
         flaggedMessages.remove(player.uniqueId)
         logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: $message")

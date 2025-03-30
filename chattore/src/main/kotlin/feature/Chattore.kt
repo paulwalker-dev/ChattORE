@@ -3,21 +3,17 @@ package org.openredstone.chattore.feature
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
-import org.openredstone.chattore.*
+import org.openredstone.chattore.PluginScope
+import org.openredstone.chattore.VERSION
+import org.openredstone.chattore.sendInfo
+import org.openredstone.chattore.sendInfoMM
 
-fun createChattoreFeature(
-    plugin: ChattORE,
-): Feature {
-    return Feature(
-        commands = listOf(Chattore(plugin))
-    )
+fun PluginScope.createChattoreFeature() {
+    registerCommands(Chattore())
 }
 
 @CommandAlias("chattore")
-class Chattore(
-    private val plugin: ChattORE,
-) : BaseCommand() {
-
+private class Chattore : BaseCommand() {
     @Default
     @CatchUnknown
     @Subcommand("version")
@@ -28,7 +24,6 @@ class Chattore(
     @Subcommand("reload")
     @CommandPermission("chattore.manage")
     fun reload(player: Player) {
-        plugin.reload()
-        player.sendInfo("Reloaded ChattORE")
+        player.sendInfo("Not implemented yet :(")
     }
 }

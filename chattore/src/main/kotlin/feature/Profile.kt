@@ -1,42 +1,42 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
-import co.aikar.commands.annotation.*
+import co.aikar.commands.annotation.CommandAlias
+import co.aikar.commands.annotation.CommandCompletion
+import co.aikar.commands.annotation.CommandPermission
+import co.aikar.commands.annotation.Subcommand
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.luckperms.api.LuckPerms
+import org.openredstone.chattore.*
 import net.luckperms.api.model.user.User as LPUser
 
 data class ProfileConfig(
-    val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>"
+    val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>",
 )
 
-fun createProfileFeature(
-    proxy: ProxyServer,
+fun PluginScope.createProfileFeature(
     database: Storage,
     luckPerm: LuckPerms,
     userCache: UserCache,
-    config: ProfileConfig
-): Feature {
-    return Feature(
-        commands = listOf(Profile(proxy, database, luckPerm, userCache, config))
-    )
+    config: ProfileConfig,
+) {
+    registerCommands(Profile(proxy, database, luckPerm, userCache, config))
 }
 
 @CommandAlias("profile|playerprofile")
 @CommandPermission("chattore.profile")
-class Profile(
+private class Profile(
     private val proxy: ProxyServer,
     private val database: Storage,
     private val luckPerms: LuckPerms,
     private val userCache: UserCache,
-    private val config: ProfileConfig
+    private val config: ProfileConfig,
 ) : BaseCommand() {
 
     @Subcommand("info")
-    @CommandCompletion("@uuidAndUsernameCache")
+    @CommandCompletion("@${UserCache.COMPLETION_USERNAMES_AND_UUIDS}")
     fun profile(player: Player, target: KnownUser) {
         // TODO this might fail
         luckPerms.userManager.loadUser(target.uuid).whenComplete { user, _ ->
@@ -54,7 +54,7 @@ class Profile(
     @Subcommand("setabout")
     @CommandPermission("chattore.profile.about.others")
     // TODO do we want to complete uuids too here?
-    @CommandCompletion("@uuidAndUsernameCache")
+    @CommandCompletion("@${UserCache.COMPLETION_USERNAMES_AND_UUIDS}")
     fun setAbout(player: Player, target: User, about: String) {
         database.setAbout(target.uuid, about)
         player.sendInfo("Set about for '${userCache.usernameOrUuid(target)}' to '$about'.")

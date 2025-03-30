@@ -39,15 +39,12 @@ data class DiscordBroadcastEventMain(
     val player: String,
 )
 
-fun createDiscordFeature(
-    logger: Logger,
+fun PluginScope.createDiscordFeature(
     messenger: Messenger,
-    proxy: ProxyServer,
-    emojisToNames: Map<String, String>,
+    emojis: Emojis,
     config: DiscordConfig,
-): Feature {
-    // HAX
-    if (!config.enable) return Feature()
+) {
+    if (!config.enable) return
     val discordNetwork = DiscordApiBuilder()
         .setToken(config.token)
         .setAllIntents()
@@ -58,11 +55,9 @@ fun createDiscordFeature(
     val textChannel = discordNetwork.getTextChannelById(config.channelId).getOrNull()
         ?: throw ChattoreException("Cannot find Discord channel")
     textChannel.addMessageCreateListener(
-        DiscordListener(logger, messenger, proxy, emojisToNames, config)
+        DiscordListener(logger, messenger, proxy, emojis, config)
     )
-    return Feature(
-        listeners = listOf(DiscordBroadcastListener(config, discordMap, discordNetwork))
-    )
+    registerListeners(DiscordBroadcastListener(config, discordMap, discordNetwork))
 }
 
 private class DiscordBroadcastListener(
@@ -70,7 +65,6 @@ private class DiscordBroadcastListener(
     discordMap: Map<String, DiscordApi>,
     discordApi: DiscordApi,
 ) {
-
     private val serverChannelMapping: Map<String, TextChannel> = discordMap.entries.associate { (server, api) ->
         server to (api.getTextChannelById(config.channelId).getOrNull()
             ?: throw IllegalArgumentException("Could not get specified channel"))
@@ -97,21 +91,21 @@ private class DiscordBroadcastListener(
     }
 }
 
-class DiscordListener(
+private class DiscordListener(
     private val logger: Logger,
     private val messenger: Messenger,
     private val proxy: ProxyServer,
-    private val emojisToNames: Map<String, String>,
+    private val emojis: Emojis,
     private val config: DiscordConfig,
 ) : MessageCreateListener {
 
-    private val emojiPattern = emojisToNames.keys.joinToString("|", "(", ")") { Regex.escape(it) }
+    private val emojiPattern = emojis.emojiToName.keys.joinToString("|", "(", ")") { Regex.escape(it) }
     private val emojiRegex = Regex(emojiPattern)
     private val urlMarkdownRegex = """\[([^]]*)]\(\s?(\S+)\s?\)""".toRegex()
 
     private fun replaceEmojis(input: String) = emojiRegex.replace(input) { matchResult ->
         val emoji = matchResult.value
-        val emojiName = emojisToNames[emoji]
+        val emojiName = emojis.emojiToName[emoji]
         if (emojiName != null) ":$emojiName:" else emoji
     }
 

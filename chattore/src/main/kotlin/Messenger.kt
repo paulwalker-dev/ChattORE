@@ -11,24 +11,31 @@ import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.luckperms.api.LuckPerms
 import org.openredstone.chattore.feature.DiscordBroadcastEvent
+import org.openredstone.chattore.feature.Emojis
 import org.openredstone.chattore.feature.NickPreset
-import org.slf4j.Logger
 import java.net.URI
 
+fun PluginScope.createMessenger(
+    emojis: Emojis,
+    database: Storage,
+    luckPerms: LuckPerms,
+    chatBroadcastFormat: String,
+): Messenger {
+    val fileTypeMap = Json.parseToJsonElement(loadResourceAsString("filetypes.json"))
+        .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
+        .onEach { (key, values) -> logger.info("Loaded ${values.size} of type $key") }
+    return Messenger(emojis, proxy, database, luckPerms, chatBroadcastFormat, fileTypeMap)
+}
+
 class Messenger(
-    plugin: ChattORE,
-    emojis: Map<String, String>,
-    private val logger: Logger,
+    emojis: Emojis,
     private val proxy: ProxyServer,
     private val database: Storage,
     private val luckPerms: LuckPerms,
     private val chatBroadcastFormat: String,
+    private val fileTypeMap: Map<String, List<String>>,
 ) {
     private val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
-    private val fileTypeMap: Map<String, List<String>> =
-        Json.parseToJsonElement(plugin.loadResourceAsString("filetypes.json"))
-            .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
-            .onEach { (key, values) -> logger.info("Loaded ${values.size} of type $key") }
 
     private val chatReplacements = listOf(
         formatReplacement("**", "b"),
@@ -50,12 +57,12 @@ class Messenger(
             }
             .build()
 
-    private fun buildEmojiReplacement(emojis: Map<String, String>): TextReplacementConfig =
+    private fun buildEmojiReplacement(emojis: Emojis): TextReplacementConfig =
         TextReplacementConfig.builder()
             .match(""":([A-Za-z0-9_\-+]+):""")
             .replacement { result, _ ->
                 val match = result.group(1)
-                val content = emojis[match] ?: ":$match:"
+                val content = emojis.nameToEmoji[match] ?: ":$match:"
                 "<hover:show_text:'$match'>$content</hover>".render()
             }
             .build()

@@ -13,21 +13,15 @@ import net.kyori.adventure.text.JoinConfiguration
 import org.openredstone.chattore.*
 import org.slf4j.Logger
 
-fun createFunCommandsFeature(
-    plugin: ChattORE,
-    logger: Logger,
-    proxy: ProxyServer,
-): Feature {
-    val commands = Json.decodeFromString<List<FunCommand>>(plugin.loadResourceAsString("commands.json"))
+fun PluginScope.createFunCommandsFeature() {
+    val commands = Json.decodeFromString<List<FunCommand>>(loadResourceAsString("commands.json"))
     createFunCommands(logger, proxy, proxy.commandManager, commands)
-    return Feature(
-        commands = listOf(FunCommandsCommand(commands))
-    )
+    registerCommands(FunCommandsCommand(commands))
 }
 
 @CommandAlias("funcommands|fc")
 @CommandPermission("chattore.funcommands")
-class FunCommandsCommand(
+private class FunCommandsCommand(
     private val commands: List<FunCommand>,
 ) : BaseCommand() {
 
@@ -75,7 +69,7 @@ class FunCommandsCommand(
 
 
 @Serializable
-data class FunCommand(
+private data class FunCommand(
     val command: String,
     val description: String,
     // message to sender only

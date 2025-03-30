@@ -1,6 +1,5 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.CommandAlias
 import co.aikar.commands.annotation.CommandPermission
@@ -10,25 +9,23 @@ import com.velocitypowered.api.event.command.CommandExecuteEvent
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
+import org.openredstone.chattore.*
 
-object SpyEnabled : Setting<Boolean>("spy")
+private object SpyEnabled : Setting<Boolean>("spy")
 
 data class SpyingConfig(
     val spying: String = "<gold><sender>: <message>",
 )
 
-fun createSpyingFeature(
+fun PluginScope.createSpyingFeature(
     database: Storage,
-    proxy: ProxyServer,
     config: SpyingConfig,
-): Feature {
-    return Feature(
-        commands = listOf(CommandSpy(database)),
-        listeners = listOf(CommandListener(database, proxy, config))
-    )
+) {
+    registerCommands(CommandSpy(database))
+    registerListeners(CommandListener(database, proxy, config))
 }
 
-class CommandListener(
+private class CommandListener(
     private val database: Storage,
     proxy: ProxyServer,
     private val config: SpyingConfig,
@@ -50,7 +47,7 @@ class CommandListener(
 
 @CommandAlias("commandspy")
 @CommandPermission("chattore.commandspy")
-class CommandSpy(
+private class CommandSpy(
     private val database: Storage,
 ) : BaseCommand() {
 

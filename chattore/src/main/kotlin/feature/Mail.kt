@@ -1,6 +1,5 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.event.Subscribe
@@ -8,6 +7,7 @@ import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
+import org.openredstone.chattore.*
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -22,20 +22,16 @@ data class MailConfig(
     val mailUnread: String = "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>.",
 )
 
-fun createMailFeature(
-    plugin: Any,
+fun PluginScope.createMailFeature(
     database: Storage,
-    proxy: ProxyServer,
     userCache: UserCache,
     config: MailConfig,
-): Feature {
-    return Feature(
-        commands = listOf(Mail(database, userCache, config)),
-        listeners = listOf(MailListener(plugin, database, proxy, config)),
-    )
+) {
+    registerCommands(Mail(database, userCache, config))
+    registerListeners(MailListener(plugin, database, proxy, config))
 }
 
-fun getRelativeTimestamp(unixTimestamp: Long): String {
+private fun getRelativeTimestamp(unixTimestamp: Long): String {
     val currentTime = LocalDateTime.now(ZoneOffset.UTC)
     val eventTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(unixTimestamp), ZoneOffset.UTC)
 
@@ -57,7 +53,7 @@ data class MailboxItem(
     val read: Boolean,
 )
 
-class MailContainer(private val userCache: UserCache, private val messages: List<MailboxItem>) {
+private class MailContainer(private val userCache: UserCache, private val messages: List<MailboxItem>) {
     private val pageSize = 6
     fun getPage(page: Int = 0): Component {
         val maxPage = messages.size / pageSize
@@ -105,7 +101,7 @@ class MailContainer(private val userCache: UserCache, private val messages: List
 @CommandAlias("mail")
 @Description("Send a message to an offline player")
 @CommandPermission("chattore.mail")
-class Mail(
+private class Mail(
     private val database: Storage,
     private val userCache: UserCache,
     private val config: MailConfig,
@@ -126,7 +122,7 @@ class Mail(
     }
 
     @Subcommand("send")
-    @CommandCompletion("@usernameCache")
+    @CommandCompletion("@${UserCache.COMPLETION_USERNAMES}")
     fun send(player: Player, @Single target: String, message: String) {
         val now = System.currentTimeMillis().floorDiv(1000)
         mailTimeouts[player.uniqueId]?.let {
@@ -156,7 +152,7 @@ class Mail(
     }
 }
 
-class MailListener(
+private class MailListener(
     private val plugin: Any,
     private val database: Storage,
     private val proxy: ProxyServer,

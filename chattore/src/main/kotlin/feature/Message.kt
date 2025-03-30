@@ -1,11 +1,11 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import co.aikar.commands.velocity.contexts.OnlinePlayer
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
+import org.openredstone.chattore.*
 import org.slf4j.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -15,18 +15,14 @@ data class MessageConfig(
     val messageSent: String = "<gold>[</gold><red>me</red> <gold>-></gold> <red><recipient></red><gold>]</gold> <message>",
 )
 
-fun createMessageFeature(
-    proxy : ProxyServer,
-    logger : Logger,
+fun PluginScope.createMessageFeature(
     messenger: Messenger,
-    config: MessageConfig
-): Feature {
+    config: MessageConfig,
+) {
     val replyMap = ConcurrentHashMap<UUID, UUID>()
-    return Feature(
-        commands = listOf(
-            Message(logger, messenger, config, replyMap),
-            Reply(proxy, logger, messenger, config, replyMap)
-        ),
+    registerCommands(
+        Message(logger, messenger, config, replyMap),
+        Reply(proxy, logger, messenger, config, replyMap),
     )
 }
 
@@ -36,7 +32,7 @@ private class Message(
     private val logger: Logger,
     private val messenger: Messenger,
     private val config: MessageConfig,
-    private val replyMap: ConcurrentHashMap<UUID, UUID>
+    private val replyMap: ConcurrentHashMap<UUID, UUID>,
 ) : BaseCommand() {
     @Default
     @Syntax("[target] <message>")
@@ -54,7 +50,7 @@ private class Reply(
     private val logger: Logger,
     private val messenger: Messenger,
     private val config: MessageConfig,
-    private val replyMap: ConcurrentHashMap<UUID, UUID>
+    private val replyMap: ConcurrentHashMap<UUID, UUID>,
 ) : BaseCommand() {
     @Default
     fun default(sender: Player, message: String) {
@@ -72,10 +68,12 @@ private fun sendMessage(
     config: MessageConfig,
     sender: Player,
     recipient: Player,
-    message: String
+    message: String,
 ) {
-    logger.info("${sender.username} (${sender.uniqueId}) -> " +
-        "${recipient.username} (${recipient.uniqueId}): $message")
+    logger.info(
+        "${sender.username} (${sender.uniqueId}) -> " +
+            "${recipient.username} (${recipient.uniqueId}): $message"
+    )
     sender.sendRichMessage(
         config.messageSent,
         "message" toC messenger.prepareChatMessage(message, sender),

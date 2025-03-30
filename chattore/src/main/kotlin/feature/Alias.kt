@@ -11,12 +11,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.json.Json
-import org.openredstone.chattore.ChattORE
-import org.openredstone.chattore.Feature
+import org.openredstone.chattore.*
 import org.openredstone.chattore.common.ALIAS_CHANNEL
 import org.openredstone.chattore.common.AliasMessage
-import org.openredstone.chattore.render
-import org.openredstone.chattore.toComponent
 import org.slf4j.Logger
 
 private val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
@@ -29,27 +26,23 @@ data class AliasConfig(
     val commands: List<String> = listOf("some", "commands"),
 )
 
-fun createAliasFeature(
-    plugin: ChattORE,
-    proxy: ProxyServer,
-    logger: Logger,
-): Feature {
+fun PluginScope.createAliasFeature() {
     proxy.channelRegistrar.register(IDENTIFIER)
     fun String.toCommandAliasMeta() = proxy.commandManager.metaBuilder(this)
         .plugin(plugin)
         .build()
 
-    val aliases = Json.decodeFromString<List<AliasConfig>>(plugin.loadResourceAsString("aliases.json"))
+    val aliases = Json.decodeFromString<List<AliasConfig>>(loadResourceAsString("aliases.json"))
     aliases.forEach { (alias, commands) ->
         val meta = alias.toCommandAliasMeta()
         val aliasCommand = AliasCommand(logger, proxy, alias, commands)
         proxy.commandManager.register(meta, aliasCommand)
     }
     logger.info("Loaded ${aliases.size} aliases")
-    return Feature(listeners = listOf(ClientAliasListener(logger)))
+    registerListeners(PluginMessageListener(logger))
 }
 
-class AliasCommand(
+private class AliasCommand(
     private val logger: Logger,
     private val proxy: ProxyServer,
     private val base: String,
@@ -117,9 +110,9 @@ class AliasCommand(
     }
 }
 
-class ClientAliasListener(private val logger: Logger) {
+private class PluginMessageListener(private val logger: Logger) {
     @Subscribe
-    fun onPluginMessageFromPlayer(message: PluginMessageEvent) {
+    fun onPluginMessage(message: PluginMessageEvent) {
         if (IDENTIFIER != message.identifier) {
             return
         }

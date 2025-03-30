@@ -1,7 +1,8 @@
 package org.openredstone.chattore
 
+import co.aikar.commands.BaseCommand
+import co.aikar.commands.VelocityCommandManager
 import com.velocitypowered.api.event.EventHandler
-import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
@@ -13,9 +14,13 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.legacy.CharacterAndFormat
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import org.slf4j.Logger
 import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.copyTo
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.io.path.toPath
 import kotlin.jvm.optionals.getOrNull
 
@@ -67,25 +72,42 @@ fun Audience.sendRichMessage(message: String, vararg resolvers: TagResolver) = s
 
 fun ProxyServer.playerOrNull(uuid: UUID): Player? = getPlayer(uuid).getOrNull()
 
-/*** Convenience ***/
-class PluginEvents(private val plugin: Any, private val eventManager: EventManager) {
-    fun <E> register(eventClass: Class<E>, postOrder: Short, handler: EventHandler<E>) =
-        eventManager.register(plugin, eventClass, postOrder, handler)
+class PluginScope(
+    val plugin: Any,
+    val pluginClass: Class<*>,
+    val proxy: ProxyServer,
+    val dataFolder: Path,
+    val logger: Logger,
+    val commandManager: VelocityCommandManager,
+) {
+    fun registerListeners(vararg listeners: Any) =
+        listeners.forEach { proxy.eventManager.register(plugin, it) }
 
-    fun registerAll(listener: Any) = eventManager.register(plugin, listener)
+    fun registerCommands(vararg commands: BaseCommand) = commands.forEach(commandManager::registerCommand)
+
+    /***
+     * Convert a relative [filename] of a resource to a Path.
+     * Throws FileNotFoundException if not found.
+     */
+    fun getResource(filename: String): Path = pluginClass.getResource("/$filename")?.toURI()?.toPath()
+        ?: throw FileNotFoundException("Cannot load resource file /$filename. This is probably a bug.")
+
+    fun loadResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
+
+    fun getResourceOrCopyDefault(name: String): Path {
+        // NOTE/TODO: we may want to merge with existing files in data folder in the future
+        val resource = dataFolder.resolve(name)
+        if (!resource.exists()) {
+            logger.info("Resource $name not saved to data folder, saving")
+            getResource(name).copyTo(resource)
+        }
+        return resource
+    }
 }
 
-inline fun <reified T> PluginEvents.register(postOrder: Short = 0, noinline handler: (T) -> Unit): EventHandler<T> =
-    EventHandler(handler).also { register(T::class.java, postOrder, it) }
+inline fun <reified T> PluginScope.onEvent(postOrder: Short = 0, noinline handler: (T) -> Unit): EventHandler<T> =
+    EventHandler(handler).also { proxy.eventManager.register<T>(plugin, T::class.java, postOrder, it) }
 
-/***
- * Convert a relative [filename] of a resource to a Path.
- * Throws FileNotFoundException if not found.
- */
-fun getResource(filename: String): Path = Dummy::class.java.getResource("/$filename")?.toURI()?.toPath()
-    ?: throw FileNotFoundException("Cannot load resource file /$filename. This is probably a bug.")
-
-object Dummy
 
 private val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
 fun parseUuid(input: String): UUID? = if (uuidRegex.matches(input)) UUID.fromString(input) else null

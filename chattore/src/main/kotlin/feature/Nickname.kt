@@ -1,7 +1,7 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
+import co.aikar.commands.InvalidCommandArgument
 import co.aikar.commands.annotation.*
 import co.aikar.commands.annotation.Optional
 import com.velocitypowered.api.command.CommandSource
@@ -11,6 +11,7 @@ import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
+import org.openredstone.chattore.*
 import java.util.*
 
 data class NicknameConfig(
@@ -18,18 +19,50 @@ data class NicknameConfig(
     val presets: SortedMap<String, NickPreset>,
 )
 
-fun createNicknameFeature(
-    proxy: ProxyServer,
+fun PluginScope.createNicknameFeature(
     database: Storage,
     userCache: UserCache,
-    config: NicknameConfig
-): Feature {
-    userCache.updateLocalUsernameCache()
-    return Feature(
-        commands = listOf(Nickname(database, proxy, userCache, config)),
-        listeners = listOf(NicknameListener(database, userCache, config)),
-    )
+    config: NicknameConfig,
+) {
+    commandManager.apply {
+        @Suppress("LocalVariableName")
+        val COMPLETION_NICK_PRESETS = "nickPresets"
+        commandCompletions.registerCompletion(COMPLETION_NICK_PRESETS) { config.presets.keys }
+        commandContexts.registerContext(NickPreset::class.java) {
+            config.presets[it.popFirstArg()]
+                ?: throw InvalidCommandArgument("Unknown nickname preset! Use /nick presets to see available presets.")
+        }
+        commandCompletions.setDefaultCompletion(COMPLETION_NICK_PRESETS, NickPreset::class.java)
+        commandCompletions.registerCompletion(COMPLETION_COLORS) { ctx ->
+            (hexColorMap.values.map { it.second }
+                + if (ctx.input.isEmpty()) {
+                listOf("#", "&")
+            } else if (ctx.input.startsWith("#")) {
+                (hexColorMap.values.map { it.first }
+                    + ctx.input.padEnd(7, '0').let {
+                    // do not duplicate if it's already in the list
+                    // do not suggest if it's not a valid hex color
+                    if (it.matches(Regex("^#[0-9A-Fa-f]{6}$"))
+                        && ctx.input.uppercase() !in hexColorMap.values.map
+                        { (hex, _) -> hex.substring(0, ctx.input.length) }
+                    ) {
+                        listOf(it.uppercase())
+                    } else {
+                        listOf()
+                    }
+                })
+            } else if (ctx.input.startsWith("&")) {
+                hexColorMap.keys.map { "&$it" }
+            } else {
+                listOf()
+            })
+        }
+    }
+    registerCommands(Nickname(database, proxy, userCache, config))
+    registerListeners(NicknameListener(database, userCache, config))
 }
+
+private const val COMPLETION_COLORS = "colors"
 
 val hexColorMap = mapOf(
     "0" to Pair("#000000", "black"),
@@ -50,7 +83,7 @@ val hexColorMap = mapOf(
     "f" to Pair("#FFFFFF", "white")
 )
 
-val hexPattern = """#[0-9a-fA-F]{6}""".toRegex()
+private val hexPattern = """#[0-9a-fA-F]{6}""".toRegex()
 
 private fun String.validateColor() = if (this.startsWith("&")) {
     if (this.length != 2) {
@@ -87,15 +120,15 @@ data class NickPreset(val miniMessageFormat: String) {
 @CommandAlias("nick|nickname")
 @Description("Manage nicknames")
 @CommandPermission("chattore.nick")
-class Nickname(
+private class Nickname(
     private val database: Storage,
     private val proxy: ProxyServer,
     private val userCache: UserCache,
-    private val config: NicknameConfig
+    private val config: NicknameConfig,
 ) : BaseCommand() {
 
     @Subcommand("color")
-    @CommandCompletion("@colors")
+    @CommandCompletion("@${COMPLETION_COLORS}")
     fun set(player: Player, vararg colors: String) {
         if (colors.isEmpty()) throw ChattoreException("No colors provided! Please provide 1 to 3 colors!")
         if (colors.size > 3) throw ChattoreException("Too many colors! Please provide 1 to 3 colors!")
@@ -106,12 +139,9 @@ class Nickname(
 
     @Subcommand("preset")
     @CommandPermission("chattore.nick.preset")
-    @CommandCompletion("@nickPresets")
-    fun preset(player: Player, preset: String) {
-        val nickname = config.presets[preset]
-            ?: throw ChattoreException("Unknown preset! Use /nick presets to see available presets.")
-        database.setNickname(player.uniqueId, nickname)
-        player.notifyOfNickChange(nickname)
+    fun preset(player: Player, preset: NickPreset) {
+        database.setNickname(player.uniqueId, preset)
+        player.notifyOfNickChange(preset)
     }
 
     @Subcommand("presets")
@@ -188,10 +218,10 @@ class Nickname(
     )
 }
 
-class NicknameListener(
+private class NicknameListener(
     private val database: Storage,
     private val userCache: UserCache,
-    private val config: NicknameConfig
+    private val config: NicknameConfig,
 ) {
     @Subscribe
     fun joinEvent(event: LoginEvent) {

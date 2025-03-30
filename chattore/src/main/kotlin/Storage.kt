@@ -1,13 +1,12 @@
 package org.openredstone.chattore
 
-import org.openredstone.chattore.feature.MailboxItem
-import org.openredstone.chattore.feature.NickPreset
-import com.velocitypowered.api.event.player.ServerPreConnectEvent
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.openredstone.chattore.feature.MailboxItem
+import org.openredstone.chattore.feature.NickPreset
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -49,11 +48,12 @@ object StringSetting : Table("setting") {
 open class Setting<T>(val key: String)
 
 class Storage(
-    dbFile: String
+    dbFile: Path,
 ) {
     private val cacheLength = 86400 // One day
     private val nicknameCache = ConcurrentHashMap<UUID, Pair<NickPreset, Long>>()
-    val database = Database.connect("jdbc:sqlite:${dbFile}", "org.sqlite.JDBC")
+
+    val database = Database.connect("jdbc:sqlite:${dbFile.toAbsolutePath()}", "org.sqlite.JDBC")
 
     init {
         initTables()
@@ -154,52 +154,3 @@ class Storage(
         Json.decodeFromString<T>(jsonString)
     }
 }
-
-class UserCache private constructor(private val database: Database) {
-    // TODO fix thread safety?
-    private var uuidToName = mapOf<UUID, String>()
-    private var nameToUuid = mapOf<String, UUID>()
-
-    // TODO call this from an onJoin listener
-    fun ensureCachedUsername(user: UUID, username: String) = transaction(database) {
-        UsernameCache.upsert {
-            it[this.uuid] = user.toString()
-            it[this.username] = username
-        }
-        updateLocalUsernameCache()
-    }
-
-    fun updateLocalUsernameCache() = transaction(database) {
-        uuidToName = UsernameCache.selectAll().associate {
-            UUID.fromString(it[UsernameCache.uuid]) to it[UsernameCache.username]
-        }
-        nameToUuid = uuidToName.entries.associate { (k, v) -> v to k }
-
-    }
-
-    fun fetchUuid(input: String): UUID? = parseUuid(input) ?: nameToUuid[input]
-
-    fun usernameOrNull(uuid: UUID): String? = uuidToName[uuid]
-    fun uuidOrNull(username: String): UUID? = nameToUuid[username]
-
-    fun usernameOrUuid(uuid: UUID) = usernameOrNull(uuid) ?: uuid.toString()
-
-    // TODO: inline?
-    fun usernameOrUuid(u: User) = usernameOrUuid(u.uuid)
-
-    val usernames get() = uuidToName.values
-    val uuids get() = nameToUuid.values
-
-    companion object {
-        fun create(database: Database, events: PluginEvents): UserCache = UserCache(database).also { cache ->
-            events.register<ServerPreConnectEvent> { event ->
-                cache.ensureCachedUsername(event.player.uniqueId, event.player.username)
-            }
-        }
-    }
-}
-
-
-// idk what to call it
-class KnownUser(val uuid: UUID, val name: String)
-class User(val uuid: UUID)

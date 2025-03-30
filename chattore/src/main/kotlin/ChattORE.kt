@@ -1,6 +1,9 @@
 package org.openredstone.chattore
 
-import co.aikar.commands.*
+import co.aikar.commands.BaseCommand
+import co.aikar.commands.CommandIssuer
+import co.aikar.commands.RegisteredCommand
+import co.aikar.commands.VelocityCommandManager
 import com.google.inject.Inject
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
@@ -13,15 +16,9 @@ import net.luckperms.api.LuckPermsProvider
 import org.openredstone.chattore.feature.*
 import org.slf4j.Logger
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
-
-data class Feature(
-    val commands: List<BaseCommand> = emptyList(),
-    val listeners: List<Any> = emptyList(),
-    val completions: List<Any> = emptyList(), // Could be useful, but currently not used
-    val unload: () -> Unit = {},
-)
+import kotlin.io.path.createDirectory
+import kotlin.io.path.exists
+import kotlin.io.path.writeText
 
 const val VERSION = "1.2"
 
@@ -43,80 +40,29 @@ class ChattORE @Inject constructor(
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         val config = loadConfig()
         val luckPerms = LuckPermsProvider.get()
-        val database = Storage(this.dataFolder.resolve(config.storage).toString())
-        val pluginEvents = PluginEvents(this, proxy.eventManager)
-        val userCache = UserCache.create(database.database, pluginEvents)
-        val emojis = loadResourceAsString("emojis.csv").lineSequence().associate { item ->
-            val parts = item.split(",")
-            parts[0] to parts[1]
-        }
-        val emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
-        logger.info("Loaded ${emojis.size} emojis")
-
-        val messenger = Messenger(this, emojis, logger, proxy, database, luckPerms, config.format.global)
-
-        // command manager lol
-        val commandManager = VelocityCommandManager(proxy, this).apply {
+        val database = Storage(dataFolder.resolve(config.storage))
+        val commandManager = VelocityCommandManager(proxy, this)
+        val pluginScope = PluginScope(this, ChattORE::class.java, proxy, dataFolder, logger, commandManager)
+        commandManager.apply {
             setDefaultExceptionHandler(::handleCommandException, false)
-            // TODO move to the place
-            commandContexts.registerContext(User::class.java) {
-                userCache.fetchUuid(it.popFirstArg())?.let(::User)
-                    ?: throw InvalidCommandArgument("Don't know that user")
-            }
-            commandContexts.registerContext(KnownUser::class.java) {
-                val uuid = userCache.fetchUuid(it.popFirstArg()) ?: throw InvalidCommandArgument("Don't know that user")
-                val ign = userCache.usernameOrNull(uuid) ?: throw InvalidCommandArgument("Don't know that user")
-                KnownUser(uuid, ign)
-            }
-            commandCompletions.registerCompletion("usernameCache") { userCache.usernames }
-            commandCompletions.registerCompletion("uuidAndUsernameCache") {
-                userCache.usernames + userCache.uuids.map(UUID::toString)
-            }
-            // TODO check this
-            commandCompletions.setDefaultCompletion("usernameCache", User::class.java, KnownUser::class.java)
-
-            commandCompletions.registerCompletion("bool") { listOf("true", "false") }
-            commandCompletions.registerCompletion("colors") { ctx ->
-                (hexColorMap.values.map { it.second }
-                    + if (ctx.input.isEmpty()) {
-                    listOf("#", "&")
-                } else if (ctx.input.startsWith("#")) {
-                    (hexColorMap.values.map { it.first }
-                        + ctx.input.padEnd(7, '0').let {
-                        // do not duplicate if it's already in the list
-                        // do not suggest if it's not a valid hex color
-                        if (it.matches(Regex("^#[0-9A-Fa-f]{6}$"))
-                            && ctx.input.uppercase() !in hexColorMap.values.map
-                            { (hex, _) -> hex.substring(0, ctx.input.length) }
-                        ) {
-                            listOf(it.uppercase())
-                        } else {
-                            listOf()
-                        }
-                    })
-                } else if (ctx.input.startsWith("&")) {
-                    hexColorMap.keys.map { "&$it" }
-                } else {
-                    listOf()
-                })
-            }
-            commandCompletions.registerCompletion("emojis") { emojis.keys }
             commandCompletions.registerCompletion("username") { listOf(it.player.username) }
-            commandCompletions.registerCompletion("nickPresets") { config.nicknamePresets.keys }
         }
-        val features = listOf(
+        pluginScope.apply {
+            val emojis = createEmojiFeature()
+            val messenger = createMessenger(emojis, database, luckPerms, config.format.global)
+            val userCache = createUserCache(database.database)
+            createAliasFeature()
             createChatFeature(
-                logger, messenger,
+                messenger,
                 ChatConfirmationConfig(
                     config.regexes,
                     config.format.chatConfirmPrompt,
                     config.format.chatConfirm,
                 )
-            ),
-            createAliasFeature(this, proxy, logger),
-            createChattoreFeature(this),
+            )
+            createChattoreFeature()
             createDiscordFeature(
-                logger, messenger, proxy, emojisToNames, DiscordConfig(
+                messenger, emojis, DiscordConfig(
                     config.discord.enable,
                     config.discord.networkToken,
                     config.discord.channelId,
@@ -126,71 +72,44 @@ class ChattORE @Inject constructor(
                     config.discord.serverTokens,
                     config.format.discord,
                 )
-            ),
-            createEmojiFeature(emojis),
-            createFunCommandsFeature(this, logger, proxy),
-            createHelpOpFeature(
-                logger, proxy, HelpOpConfig(
-                    config.format.help,
-                )
-            ),
+            )
+            createFunCommandsFeature()
+            createHelpOpFeature(HelpOpConfig(config.format.help))
             createJoinLeaveFeature(
-                proxy, proxy.eventManager, JoinLeaveConfig(
+                JoinLeaveConfig(
                     config.format.join,
                     config.format.leave,
                     config.format.joinDiscord,
                     config.format.leaveDiscord,
                 )
-            ),
+            )
             createMailFeature(
-                this, database, proxy, userCache, MailConfig(
+                database, userCache, MailConfig(
                     config.format.mailReceived,
                     config.format.mailSent,
                     config.format.mailUnread,
                 )
-            ),
+            )
             createMessageFeature(
-                proxy, logger, messenger, MessageConfig(
+                messenger, MessageConfig(
                     config.format.messageReceived,
                     config.format.messageSent,
                 )
-            ),
+            )
             createNicknameFeature(
-                proxy, database, userCache, NicknameConfig(
+                database, userCache, NicknameConfig(
                     config.clearNicknameOnChange,
                     // IDK, this when config
                     config.nicknamePresets.mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
                 )
-            ),
+            )
             createProfileFeature(
-                proxy, database, luckPerms, userCache, ProfileConfig(
+                database, luckPerms, userCache, ProfileConfig(
                     config.format.playerProfile,
                 )
-            ),
-            createSpyingFeature(
-                database, proxy, SpyingConfig(
-                    config.format.commandSpy,
-                )
             )
-        )
-        features.forEach { (commands, listeners, completions) ->
-            commands.forEach(commandManager::registerCommand)
-            //completions.forEach { (it, handler) -> commandManager.commandCompletions.registerCompletion(it) { handler } }
-            listeners.forEach { proxy.eventManager.register(this, it) }
+            createSpyingFeature(database, SpyingConfig(config.format.commandSpy))
         }
-        logger.info("Loaded ${features.size} features")
-    }
-
-    fun loadResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
-
-    fun getResourceOrCopyDefault(name: String): Path {
-        // NOTE/TODO: we may want to merge with existing files in data folder in the future
-        val resource = dataFolder.resolve(name)
-        if (!resource.exists()) {
-            logger.info("Resource $name not saved to data folder, saving")
-            getResource(name).copyTo(resource)
-        }
-        return resource
     }
 
     private fun loadConfig(): ChattOREConfig {
@@ -225,10 +144,7 @@ class ChattORE @Inject constructor(
         }
         return true
     }
-
-    fun reload() {
-        // TODO
-    }
+    // TODO reloading functionality
 }
 
 class ChattoreException : Exception {

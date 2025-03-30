@@ -1,11 +1,14 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.ServerPostConnectEvent
 import com.velocitypowered.api.proxy.ProxyServer
+import org.openredstone.chattore.PluginScope
+import org.openredstone.chattore.all
+import org.openredstone.chattore.sendRichMessage
+import org.openredstone.chattore.toS
 
 data class JoinLeaveConfig(
     val join: String = "<yellow><player> has joined the network",
@@ -14,17 +17,11 @@ data class JoinLeaveConfig(
     val leaveDiscord: String = "**%player% has left the network**",
 )
 
-fun createJoinLeaveFeature(
-    proxy: ProxyServer,
-    eventManager: EventManager,
-    config: JoinLeaveConfig,
-): Feature {
-    return Feature(
-        listeners = listOf(JoinLeaveListener(proxy, eventManager, config))
-    )
+fun PluginScope.createJoinLeaveFeature(config: JoinLeaveConfig) {
+    registerListeners(JoinLeaveListener(proxy, proxy.eventManager, config))
 }
 
-class JoinLeaveListener(
+private class JoinLeaveListener(
     private val proxy: ProxyServer,
     private val eventManager: EventManager,
     private val config: JoinLeaveConfig,
