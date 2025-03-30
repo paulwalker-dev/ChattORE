@@ -16,12 +16,12 @@ import net.kyori.adventure.text.serializer.legacy.CharacterAndFormat
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.slf4j.Logger
 import java.io.FileNotFoundException
+import java.net.URL
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 import kotlin.io.path.readText
-import kotlin.io.path.toPath
+import kotlin.io.path.writeBytes
 import kotlin.jvm.optionals.getOrNull
 
 fun String.toComponent() = Component.text(this)
@@ -86,10 +86,10 @@ class PluginScope(
     fun registerCommands(vararg commands: BaseCommand) = commands.forEach(commandManager::registerCommand)
 
     /***
-     * Convert a relative [filename] of a resource to a Path.
+     * Convert a relative [filename] of a resource to a URL.
      * Throws FileNotFoundException if not found.
      */
-    fun getResource(filename: String): Path = pluginClass.getResource("/$filename")?.toURI()?.toPath()
+    fun getResource(filename: String): URL = pluginClass.getResource("/$filename")
         ?: throw FileNotFoundException("Cannot load resource file /$filename. This is probably a bug.")
 
     fun loadResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
@@ -99,7 +99,7 @@ class PluginScope(
         val resource = dataFolder.resolve(name)
         if (!resource.exists()) {
             logger.info("Resource $name not saved to data folder, saving")
-            getResource(name).copyTo(resource)
+            resource.writeBytes(getResource(name).readBytes())
         }
         return resource
     }
