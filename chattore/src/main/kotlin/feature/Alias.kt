@@ -39,10 +39,7 @@ fun createAliasFeature(
         .plugin(plugin)
         .build()
 
-    val resourcePath = "aliases.json"
-    val resourceBytes = plugin.loadResource2(resourcePath)
-    val aliasesJson = resourceBytes.decodeToString()
-    val aliases = Json.decodeFromString<List<AliasConfig>>(aliasesJson)
+    val aliases = Json.decodeFromString<List<AliasConfig>>(plugin.loadResourceAsString("aliases.json"))
     aliases.forEach { (alias, commands) ->
         val meta = alias.toCommandAliasMeta()
         val aliasCommand = AliasCommand(logger, proxy, alias, commands)

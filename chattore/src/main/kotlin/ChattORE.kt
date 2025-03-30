@@ -12,11 +12,9 @@ import com.velocitypowered.api.proxy.ProxyServer
 import net.luckperms.api.LuckPermsProvider
 import org.openredstone.chattore.feature.*
 import org.slf4j.Logger
-import java.io.File
-import java.io.InputStream
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.*
 
 data class Feature(
     val commands: List<BaseCommand> = emptyList(),
@@ -39,10 +37,8 @@ const val VERSION = "1.2"
 class ChattORE @Inject constructor(
     private val proxy: ProxyServer,
     private val logger: Logger,
-    @DataDirectory dataFolder: Path,
+    @DataDirectory private val dataFolder: Path,
 ) {
-    private val dataFolder = dataFolder.toFile()
-
     @Subscribe
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         val config = loadConfig()
@@ -50,14 +46,14 @@ class ChattORE @Inject constructor(
         val database = Storage(this.dataFolder.resolve(config.storage).toString())
         val pluginEvents = PluginEvents(this, proxy.eventManager)
         val userCache = UserCache.create(database.database, pluginEvents)
-        val emojis = loadResource("/emojis.csv").lineSequence().associate { item ->
+        val emojis = loadResourceAsString("emojis.csv").lineSequence().associate { item ->
             val parts = item.split(",")
             parts[0] to parts[1]
         }
         val emojisToNames = emojis.entries.associateBy({ it.value }) { it.key }
         logger.info("Loaded ${emojis.size} emojis")
 
-        val messenger = Messenger(emojis, logger, proxy, database, luckPerms, config.format.global)
+        val messenger = Messenger(this, emojis, logger, proxy, database, luckPerms, config.format.global)
 
         // command manager lol
         val commandManager = VelocityCommandManager(proxy, this).apply {
@@ -132,7 +128,7 @@ class ChattORE @Inject constructor(
                 )
             ),
             createEmojiFeature(emojis),
-            createFunCommandsFeature(logger, proxy),
+            createFunCommandsFeature(this, logger, proxy),
             createHelpOpFeature(
                 logger, proxy, HelpOpConfig(
                     config.format.help,
@@ -185,40 +181,28 @@ class ChattORE @Inject constructor(
         logger.info("Loaded ${features.size} features")
     }
 
-    fun loadResource2(name: String, saveToFolder: Boolean = true): ByteArray {
-        // This is goofy
-        fun getResourceAsStream(name: String): InputStream = javaClass.classLoader.getResourceAsStream(name)
-            ?: throw ChattoreException("Resource $name not found")
+    fun loadResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
 
-        if (!saveToFolder) {
-            getResourceAsStream(name).use { return it.readBytes() }
+    fun getResourceOrCopyDefault(name: String): Path {
+        // NOTE/TODO: we may want to merge with existing files in data folder in the future
+        val resource = dataFolder.resolve(name)
+        if (!resource.exists()) {
+            logger.info("Resource $name not saved to data folder, saving")
+            getResource(name).copyTo(resource)
         }
-
-        val resource = File(dataFolder, name)
-        if (resource.exists()) {
-            resource.inputStream().use { return it.readBytes() }
-        } else {
-            logger.info("Resource $name not saved to folder, saving")
-            getResourceAsStream(name).use {
-                val data = it.readBytes()
-                resource.outputStream().use { out ->
-                    out.write(data)
-                }
-                return data
-            }
-        }
+        return resource
     }
 
     private fun loadConfig(): ChattOREConfig {
         if (!dataFolder.exists()) {
             logger.info("No resource directory found, creating")
-            dataFolder.mkdir()
+            dataFolder.createDirectory()
         }
-        val configFile = File(dataFolder, "config.yml")
+        val configFile = dataFolder.resolve("config.yml")
         if (!configFile.exists()) {
             logger.info("No config file found, creating")
             // NOTE this is an empty YAML dictionary, it will get populated from default config
-            Files.writeString(configFile.toPath(), "{}")
+            configFile.writeText("{}")
         }
         val config = readConfig<ChattOREConfig>(logger, configFile)
         logger.info("Loaded config.yml")
@@ -240,10 +224,6 @@ class ChattORE @Inject constructor(
             sender.sendMessage("Error: $message")
         }
         return true
-    }
-
-    fun getVersion(): String {
-        return VERSION
     }
 
     fun reload() {

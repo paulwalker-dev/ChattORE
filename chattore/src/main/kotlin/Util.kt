@@ -14,7 +14,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.legacy.CharacterAndFormat
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.io.FileNotFoundException
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.toPath
 import kotlin.jvm.optionals.getOrNull
 
 fun String.toComponent() = Component.text(this)
@@ -77,13 +79,11 @@ inline fun <reified T> PluginEvents.register(postOrder: Short = 0, noinline hand
     EventHandler(handler).also { register(T::class.java, postOrder, it) }
 
 /***
- * Loads a resource file [filename] as a String.
- * Absolute paths recommended.
+ * Convert a relative [filename] of a resource to a Path.
  * Throws FileNotFoundException if not found.
  */
-fun loadResource(filename: String) =
-    Dummy::class.java.getResource(filename)?.readText()
-        ?: throw FileNotFoundException("Cannot load resource file $filename. This is probably a bug.")
+fun getResource(filename: String): Path = Dummy::class.java.getResource("/$filename")?.toURI()?.toPath()
+    ?: throw FileNotFoundException("Cannot load resource file /$filename. This is probably a bug.")
 
 object Dummy
 

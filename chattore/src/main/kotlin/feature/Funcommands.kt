@@ -14,12 +14,12 @@ import org.openredstone.chattore.*
 import org.slf4j.Logger
 
 fun createFunCommandsFeature(
+    plugin: ChattORE,
     logger: Logger,
     proxy: ProxyServer,
 ): Feature {
-    // TODO make it save like ChattORE#loadResource
-    val commands = Json.decodeFromString<List<FunCommand>>(loadResource("/commands.json"))
-    loadFunCommands(logger, proxy, proxy.commandManager, commands)
+    val commands = Json.decodeFromString<List<FunCommand>>(plugin.loadResourceAsString("commands.json"))
+    createFunCommands(logger, proxy, proxy.commandManager, commands)
     return Feature(
         commands = listOf(FunCommandsCommand(commands))
     )
@@ -88,7 +88,7 @@ data class FunCommand(
     val run: String? = null,
 )
 
-private fun loadFunCommands(
+private fun createFunCommands(
     logger: Logger,
     proxy: ProxyServer,
     commandManager: CommandManager,

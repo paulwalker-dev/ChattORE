@@ -1,9 +1,9 @@
 package org.openredstone.chattore.feature
 
-import org.openredstone.chattore.*
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import com.velocitypowered.api.proxy.Player
+import org.openredstone.chattore.*
 
 fun createChattoreFeature(
     plugin: ChattORE,
@@ -22,7 +22,7 @@ class Chattore(
     @CatchUnknown
     @Subcommand("version")
     fun version(player: Player) {
-        player.sendInfoMM("Version <gray>${plugin.getVersion()}")
+        player.sendInfoMM("Version <gray>$VERSION")
     }
 
     @Subcommand("reload")

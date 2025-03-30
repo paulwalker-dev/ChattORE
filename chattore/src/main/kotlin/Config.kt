@@ -9,9 +9,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.slf4j.Logger
-import java.io.File
+import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.copyTo
 
 typealias ConfigVersion = Int
 
@@ -24,8 +25,8 @@ val objectMapper: ObjectMapper = ObjectMapper(yaml)
 
 val backupDateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd_HH-mm-ss")
 
-inline fun <reified T> readConfig(logger: Logger, f: File): T {
-    val node = objectMapper.readTree(f) as? ObjectNode ?: throw Exception("Config root has to be an object")
+inline fun <reified T> readConfig(logger: Logger, f: Path): T {
+    val node = objectMapper.readTree(f.toFile()) as? ObjectNode ?: throw Exception("Config root has to be an object")
     val version = parseVersion(node)
     node.remove(CONFIG_VERSION_PROPERTY)
     when {
@@ -45,10 +46,10 @@ inline fun <reified T> readConfig(logger: Logger, f: File): T {
     }
 }
 
-fun writeConfig(config: Any, f: File) {
+fun writeConfig(config: Any, f: Path) {
     val node = objectMapper.convertValue<ObjectNode>(config)
     node.replace(CONFIG_VERSION_PROPERTY, objectMapper.nodeFactory.numberNode(currentConfigVersion))
-    objectMapper.writeValue(f, node)
+    objectMapper.writeValue(f.toFile(), node)
 }
 
 fun runMigrations(config: ObjectNode, version: ConfigVersion) {

@@ -32,7 +32,6 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(kotlin("stdlib-jdk8"))
     implementation(group = "com.uchuhimo", name = "konf", version = "1.1.2")
     implementation(group = "com.google.code.gson", name = "gson", version = "2.10.1")
     implementation(group = "co.aikar", name = "acf-velocity", version = "0.5.1-SNAPSHOT")

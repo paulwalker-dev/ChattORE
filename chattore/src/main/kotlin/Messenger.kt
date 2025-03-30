@@ -16,6 +16,7 @@ import org.slf4j.Logger
 import java.net.URI
 
 class Messenger(
+    plugin: ChattORE,
     emojis: Map<String, String>,
     private val logger: Logger,
     private val proxy: ProxyServer,
@@ -25,7 +26,7 @@ class Messenger(
 ) {
     private val urlRegex = """<?((http|https)://([\w_-]+(?:\.[\w_-]+)+)([^\s'<>]+)?)>?""".toRegex()
     private val fileTypeMap: Map<String, List<String>> =
-        Json.parseToJsonElement(loadResource("/filetypes.json"))
+        Json.parseToJsonElement(plugin.loadResourceAsString("filetypes.json"))
             .jsonObject.mapValues { (_, value) -> value.jsonArray.map { it.jsonPrimitive.content } }
             .onEach { (key, values) -> logger.info("Loaded ${values.size} of type $key") }
 
