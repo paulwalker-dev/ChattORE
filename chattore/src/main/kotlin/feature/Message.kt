@@ -10,19 +10,13 @@ import org.slf4j.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-data class MessageConfig(
-    val messageReceived: String = "<gold>[</gold><red><sender></red> <gold>-></gold> <red>me</red><gold>]</gold> <message>",
-    val messageSent: String = "<gold>[</gold><red>me</red> <gold>-></gold> <red><recipient></red><gold>]</gold> <message>",
-)
-
 fun PluginScope.createMessageFeature(
     messenger: Messenger,
-    config: MessageConfig,
 ) {
     val replyMap = ConcurrentHashMap<UUID, UUID>()
     registerCommands(
-        Message(logger, messenger, config, replyMap),
-        Reply(proxy, logger, messenger, config, replyMap),
+        Message(logger, messenger, replyMap),
+        Reply(proxy, logger, messenger, replyMap),
     )
 }
 
@@ -31,7 +25,6 @@ fun PluginScope.createMessageFeature(
 private class Message(
     private val logger: Logger,
     private val messenger: Messenger,
-    private val config: MessageConfig,
     private val replyMap: ConcurrentHashMap<UUID, UUID>,
 ) : BaseCommand() {
     @Default
@@ -39,7 +32,7 @@ private class Message(
     // unsure if this is needed
     @CommandCompletion("@players")
     fun default(sender: Player, recipient: OnlinePlayer, message: String) {
-        sendMessage(logger, messenger, replyMap, config, sender, recipient.player, message)
+        sendMessage(logger, messenger, replyMap, sender, recipient.player, message)
     }
 }
 
@@ -49,7 +42,6 @@ private class Reply(
     private val proxy: ProxyServer,
     private val logger: Logger,
     private val messenger: Messenger,
-    private val config: MessageConfig,
     private val replyMap: ConcurrentHashMap<UUID, UUID>,
 ) : BaseCommand() {
     @Default
@@ -57,7 +49,7 @@ private class Reply(
         val recipientUuid = replyMap[sender.uniqueId] ?: throw ChattoreException("You have no one to reply to!")
         val recipient = proxy.playerOrNull(recipientUuid)
             ?: throw ChattoreException("The person you are trying to reply to is no longer online!")
-        sendMessage(logger, messenger, replyMap, config, sender, recipient, message)
+        sendMessage(logger, messenger, replyMap, sender, recipient, message)
     }
 }
 
@@ -65,7 +57,6 @@ private fun sendMessage(
     logger: Logger,
     messenger: Messenger,
     replyMap: MutableMap<UUID, UUID>,
-    config: MessageConfig,
     sender: Player,
     recipient: Player,
     message: String,
@@ -75,12 +66,12 @@ private fun sendMessage(
             "${recipient.username} (${recipient.uniqueId}): $message"
     )
     sender.sendRichMessage(
-        config.messageSent,
+        "<gold>[</gold><red>me</red> <gold>-></gold> <red><recipient></red><gold>]</gold> <message>",
         "message" toC messenger.prepareChatMessage(message, sender),
         "recipient" toS recipient.username,
     )
     recipient.sendRichMessage(
-        config.messageReceived,
+        "<gold>[</gold><red><sender></red> <gold>-></gold> <red>me</red><gold>]</gold> <message>",
         "message" toC messenger.prepareChatMessage(message, sender),
         "sender" toS sender.username,
     )

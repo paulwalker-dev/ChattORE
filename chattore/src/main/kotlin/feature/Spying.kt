@@ -13,31 +13,24 @@ import org.openredstone.chattore.*
 
 private object SpyEnabled : Setting<Boolean>("spy")
 
-data class SpyingConfig(
-    val spying: String = "<gold><sender>: <message>",
-)
-
 fun PluginScope.createSpyingFeature(
     database: Storage,
-    config: SpyingConfig,
 ) {
     registerCommands(CommandSpy(database))
-    registerListeners(CommandListener(database, proxy, config))
+    registerListeners(CommandListener(database, proxy))
 }
 
 private class CommandListener(
     private val database: Storage,
     proxy: ProxyServer,
-    private val config: SpyingConfig,
 ) {
-
     private val Player.isSpying: Boolean get() = database.getSetting(SpyEnabled, uniqueId) ?: false
     private val spies: Audience = proxy.all { it.hasChattorePrivilege && it.isSpying }
 
     @Subscribe
     fun onCommandEvent(event: CommandExecuteEvent) {
         spies.sendMessage(
-            config.spying.render(
+            "<gold><sender>: <message>".render(
                 "message" toS event.command,
                 "sender" toS ((event.commandSource as? Player)?.username ?: "Console"),
             )
@@ -50,7 +43,6 @@ private class CommandListener(
 private class CommandSpy(
     private val database: Storage,
 ) : BaseCommand() {
-
     @Default
     fun default(player: Player) {
         val setting = database.getSetting(SpyEnabled, player.uniqueId)

@@ -17,10 +17,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class ChatConfirmationConfig(
     val regexes: List<String> = listOf(),
-    val confirmationPrompt: String = "\"<red><bold>The following message was not sent because it contained " +
-        "potentially inappropriate language:<newline><reset><message><newline><red>To send this message anyway, run " +
-        "<gray>/confirmmessage<red>.\"",
-    val chatConfirm: String = "<red>Override recognized",
 )
 
 fun PluginScope.createChatFeature(
@@ -28,7 +24,7 @@ fun PluginScope.createChatFeature(
     config: ChatConfirmationConfig,
 ) {
     val flaggedMessages = ConcurrentHashMap<UUID, String>()
-    registerCommands(ConfirmMessage(config, flaggedMessages, logger, messenger))
+    registerCommands(ConfirmMessage(flaggedMessages, logger, messenger))
     registerListeners(ChatListener(config, flaggedMessages, logger, messenger))
 }
 
@@ -60,7 +56,12 @@ private class ChatListener(
         fun String.highlight(r: Regex) = r.replace(this) { match -> "<red>${match.value}</red>" }
         val highlighted = matches.fold(message, String::highlight)
         logger.info("${player.username} (${player.uniqueId}) Attempting to send flagged message: $message")
-        player.sendSimpleMM(config.confirmationPrompt, highlighted)
+        player.sendSimpleMM(
+            "<red><bold>The following message was not sent because it contained " +
+                "potentially inappropriate language:<newline><reset><message><newline><red>To send this message anyway, run " +
+                "<gray>/confirmmessage<red>.",
+            highlighted,
+        )
         flaggedMessages[player.uniqueId] = message
         return true
     }
@@ -69,7 +70,6 @@ private class ChatListener(
 @CommandAlias("confirmmessage")
 @CommandPermission("chattore.confirmmessage")
 private class ConfirmMessage(
-    private val config: ChatConfirmationConfig,
     private val flaggedMessages: ConcurrentHashMap<UUID, String>,
     private val logger: Logger,
     private val messenger: Messenger,
@@ -77,7 +77,7 @@ private class ConfirmMessage(
     @Default
     fun default(player: Player) {
         val message = flaggedMessages[player.uniqueId] ?: throw ChattoreException("You have no message to confirm!")
-        player.sendRichMessage(config.chatConfirm)
+        player.sendRichMessage("<red>Override recognized")
         flaggedMessages.remove(player.uniqueId)
         logger.info("${player.username} (${player.uniqueId}) FLAGGED MESSAGE OVERRIDE: $message")
         player.currentServer.ifPresent { server ->

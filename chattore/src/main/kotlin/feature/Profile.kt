@@ -12,17 +12,12 @@ import net.luckperms.api.LuckPerms
 import org.openredstone.chattore.*
 import net.luckperms.api.model.user.User as LPUser
 
-data class ProfileConfig(
-    val profile: String = "<gold><st>  </st> Player Profile <st>  </st></gold><newline>IGN: <ign><newline>Nickname: <nickname><newline>Rank: <rank><newline><gold><st>                        </st></gold><newline>About me: <yellow><about><reset><newline><gold><st>                        </st></gold>",
-)
-
 fun PluginScope.createProfileFeature(
     database: Storage,
     luckPerm: LuckPerms,
     userCache: UserCache,
-    config: ProfileConfig,
 ) {
-    registerCommands(Profile(proxy, database, luckPerm, userCache, config))
+    registerCommands(Profile(proxy, database, luckPerm, userCache))
 }
 
 @CommandAlias("profile|playerprofile")
@@ -32,7 +27,6 @@ private class Profile(
     private val database: Storage,
     private val luckPerms: LuckPerms,
     private val userCache: UserCache,
-    private val config: ProfileConfig,
 ) : BaseCommand() {
 
     @Subcommand("info")
@@ -66,11 +60,20 @@ private class Profile(
         luckPerms.groupManager.getGroup(user.primaryGroup)?.let {
             it.cachedData.metaData.prefix?.let { prefix -> group = prefix }
         }
-        return config.profile.render(
-            "about" toS (database.getAbout(user.uniqueId) ?: "no about yet :("),
-            "ign" toS ign,
-            "nickname" toC (database.getNickname(user.uniqueId)?.render(ign) ?: "No nickname set".toComponent()),
-            "rank" toC group.legacyDeserialize(),
-        )
+        return """
+            <gold><st>  </st> Player Profile <st>  </st></gold>
+            IGN: <ign>
+            Nickname: <nickname>
+            Rank: <rank>
+            <gold><st>                        </st></gold>
+            About me: <yellow><about><reset>
+            <gold><st>                        </st></gold>"""
+            .trimIndent()
+            .render(
+                "about" toS (database.getAbout(user.uniqueId) ?: "no about yet :("),
+                "ign" toS ign,
+                "nickname" toC (database.getNickname(user.uniqueId)?.render(ign) ?: "No nickname set".toComponent()),
+                "rank" toC group.legacyDeserialize(),
+            )
     }
 }

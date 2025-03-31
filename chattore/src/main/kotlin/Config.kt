@@ -77,7 +77,9 @@ fun ObjectNode.getObject(prop: String): ObjectNode =
 val removeUnnecessaryStuff: Migration = {
     getObject("format").removeMany(
         "chattore", "error", "funcommandsDefault", "funcommandsNoCommands",
-        "funcommandsHeader", "funcommandsCommandInfo", "funcommandsMissingCommand", "funcommandsCommandNotFound"
+        "funcommandsHeader", "funcommandsCommandInfo", "funcommandsMissingCommand", "funcommandsCommandNotFound",
+        "mailSent", "mailReceived", "mailUnread", "playerProfile", "socialSpy", "commandSpy",
+        "chatConfirmPrompt", "chatConfirm", "messageReceived", "messageSent", "help",
     )
 }
 val migrations = arrayOf<Migration>(

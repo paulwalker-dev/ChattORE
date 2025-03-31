@@ -10,12 +10,8 @@ import com.velocitypowered.api.proxy.ProxyServer
 import org.openredstone.chattore.*
 import org.slf4j.Logger
 
-data class HelpOpConfig(
-    val format: String = "<gold>[</gold><red>Help</red><gold>]</gold> <red><sender></red><gold>:</gold> <message>",
-)
-
-fun PluginScope.createHelpOpFeature(config: HelpOpConfig) {
-    registerCommands(HelpOp(logger, proxy, config))
+fun PluginScope.createHelpOpFeature() {
+    registerCommands(HelpOp(logger, proxy))
 }
 
 @CommandAlias("helpop|ac")
@@ -23,18 +19,17 @@ fun PluginScope.createHelpOpFeature(config: HelpOpConfig) {
 private class HelpOp(
     private val logger: Logger,
     private val proxy: ProxyServer,
-    private val config: HelpOpConfig,
 ) : BaseCommand() {
     @Default
     @Syntax("[message]")
     fun default(player: Player, statement: String) {
         if (statement.isEmpty()) throw ChattoreException("You have to have a problem first!") // : )
         logger.info("[HelpOp] ${player.username}: $statement")
-        val message = config.format.render(
-            "message" toS statement,
-            "sender" toS player.username,
-        )
         proxy.all { it.hasChattorePrivilege || it.uniqueId == player.uniqueId }
-            .sendMessage(message)
+            .sendRichMessage(
+                "<gold>[</gold><red>Help</red><gold>]</gold> <red><sender></red><gold>:</gold> <message>",
+                "message" toS statement,
+                "sender" toS player.username,
+            )
     }
 }

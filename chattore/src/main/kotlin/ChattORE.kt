@@ -54,11 +54,7 @@ class ChattORE @Inject constructor(
             createAliasFeature()
             createChatFeature(
                 messenger,
-                ChatConfirmationConfig(
-                    config.regexes,
-                    config.format.chatConfirmPrompt,
-                    config.format.chatConfirm,
-                )
+                ChatConfirmationConfig(config.regexes),
             )
             createChattoreFeature()
             createDiscordFeature(
@@ -74,7 +70,7 @@ class ChattORE @Inject constructor(
                 )
             )
             createFunCommandsFeature()
-            createHelpOpFeature(HelpOpConfig(config.format.help))
+            createHelpOpFeature()
             createJoinLeaveFeature(
                 JoinLeaveConfig(
                     config.format.join,
@@ -83,19 +79,8 @@ class ChattORE @Inject constructor(
                     config.format.leaveDiscord,
                 )
             )
-            createMailFeature(
-                database, userCache, MailConfig(
-                    config.format.mailReceived,
-                    config.format.mailSent,
-                    config.format.mailUnread,
-                )
-            )
-            createMessageFeature(
-                messenger, MessageConfig(
-                    config.format.messageReceived,
-                    config.format.messageSent,
-                )
-            )
+            createMailFeature(database, userCache)
+            createMessageFeature(messenger)
             createNicknameFeature(
                 database, userCache, NicknameConfig(
                     config.clearNicknameOnChange,
@@ -103,12 +88,8 @@ class ChattORE @Inject constructor(
                     config.nicknamePresets.mapValues { (_, v) -> NickPreset(v) }.toSortedMap(),
                 )
             )
-            createProfileFeature(
-                database, luckPerms, userCache, ProfileConfig(
-                    config.format.playerProfile,
-                )
-            )
-            createSpyingFeature(database, SpyingConfig(config.format.commandSpy))
+            createProfileFeature(database, luckPerms, userCache)
+            createSpyingFeature(database)
         }
     }
 

@@ -16,19 +16,12 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-data class MailConfig(
-    val mailReceived: String = "<gold>[</gold><red>From <sender></red><gold>]</gold> <message>",
-    val mailSent: String = "<gold>[</gold><red>To <recipient></red><gold>]</gold> <message>",
-    val mailUnread: String = "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>.",
-)
-
 fun PluginScope.createMailFeature(
     database: Storage,
     userCache: UserCache,
-    config: MailConfig,
 ) {
-    registerCommands(Mail(database, userCache, config))
-    registerListeners(MailListener(plugin, database, proxy, config))
+    registerCommands(Mail(database, userCache))
+    registerListeners(MailListener(plugin, database, proxy))
 }
 
 private fun getRelativeTimestamp(unixTimestamp: Long): String {
@@ -104,9 +97,7 @@ private class MailContainer(private val userCache: UserCache, private val messag
 private class Mail(
     private val database: Storage,
     private val userCache: UserCache,
-    private val config: MailConfig,
 ) : BaseCommand() {
-
     private val mailTimeouts = mutableMapOf<UUID, Long>()
 
     @Default
@@ -134,7 +125,7 @@ private class Mail(
         mailTimeouts[player.uniqueId] = now
         database.insertMessage(player.uniqueId, targetUuid, message)
         player.sendRichMessage(
-            config.mailSent,
+            "<gold>[</gold><red>To <recipient></red><gold>]</gold> <message>",
             "message" toS message,
             "recipient" toS target,
         )
@@ -145,7 +136,7 @@ private class Mail(
         val (senderUUID, message) = database.readMessage(player.uniqueId, id)
             ?: throw ChattoreException("Invalid message ID!")
         player.sendRichMessage(
-            config.mailReceived,
+            "<gold>[</gold><red>From <sender></red><gold>]</gold> <message>",
             "message" toS message,
             "sender" toS userCache.usernameOrUuid(senderUUID),
         )
@@ -156,7 +147,6 @@ private class MailListener(
     private val plugin: Any,
     private val database: Storage,
     private val proxy: ProxyServer,
-    private val config: MailConfig,
 ) {
     @Subscribe
     fun joinEvent(event: LoginEvent) {
@@ -164,7 +154,7 @@ private class MailListener(
         if (unreadCount > 0)
             proxy.scheduler.buildTask(plugin, Runnable {
                 event.player.sendRichMessage(
-                    config.mailUnread,
+                    "<yellow>You have <red><count></red> unread message(s)! <gold><b><hover:show_text:'View your mailbox'><click:run_command:'/mail mailbox'>Click here to view</click></hover></b></gold>.",
                     "count" toS unreadCount.toString(),
                 )
             }).delay(2L, TimeUnit.SECONDS).schedule()

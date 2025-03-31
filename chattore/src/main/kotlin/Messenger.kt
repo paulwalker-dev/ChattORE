@@ -72,9 +72,9 @@ class Messenger(
         val userManager = luckPerms.userManager
         val luckUser = userManager.getUser(userId) ?: return
         val name = database.getNickname(userId) ?: NickPreset(player.username)
-        val sender = name.render(player.username).let {
-            "<click:run_command:'/playerprofile info ${player.username}'><message></click>".renderSimpleC(it)
-        }
+        val sender =
+            "<hover:show_text:'${player.username} | <i>Click for more</i>'><click:run_command:'/playerprofile info ${player.username}'><message></click></hover>"
+                .renderSimpleC(name.render(player.username))
 
         val prefix = luckUser.cachedData.metaData.prefix
             ?: luckUser.primaryGroup.replaceFirstChar(Char::uppercaseChar)
@@ -84,7 +84,6 @@ class Messenger(
             chatBroadcastFormat,
             "message" toC prepareChatMessage(message, player),
             "sender" toC sender,
-            "username" toS player.username,
             "prefix" toC compoPrefix,
         )
 
