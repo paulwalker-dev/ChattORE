@@ -5,6 +5,7 @@ import com.velocitypowered.api.proxy.ProxyServer
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.entity.channel.TextChannel
+import org.javacord.api.entity.intent.Intent
 import org.javacord.api.entity.message.MessageBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
@@ -47,7 +48,7 @@ fun PluginScope.createDiscordFeature(
     if (!config.enable) return
     val discordNetwork = DiscordApiBuilder()
         .setToken(config.token)
-        .setAllIntents()
+        .addIntents(Intent.MESSAGE_CONTENT)
         .login()
         .join()
     val discordMap = loadDiscordTokens(proxy, logger, config.serverTokens)
@@ -146,7 +147,6 @@ private fun loadDiscordTokens(
     return serverTokens.mapValues { (_, token) ->
         DiscordApiBuilder()
             .setToken(token)
-            .setAllIntents()
             .login()
             .join()
     }
