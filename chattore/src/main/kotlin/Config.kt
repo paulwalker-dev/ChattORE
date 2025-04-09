@@ -14,16 +14,19 @@ import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
-typealias ConfigVersion = Int
+private typealias ConfigVersion = Int
 
 private val yaml = YAMLFactory()
     .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, false)
     .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
-val objectMapper: ObjectMapper = ObjectMapper(yaml)
+private val objectMapper: ObjectMapper = ObjectMapper(yaml)
     .registerKotlinModule()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
 
-inline fun <reified T : Any> readConfig(logger: Logger, configFile: Path): T {
+inline fun <reified T : Any> readConfig(logger: Logger, configFile: Path): T =
+    doReadConfig(T::class.java, logger, configFile)
+
+fun <T : Any> doReadConfig(clazz: Class<T>, logger: Logger, configFile: Path): T {
     if (!configFile.exists()) {
         logger.info("No config file found, creating")
         // NOTE this is an empty YAML dictionary, it will get populated from default config
@@ -46,7 +49,7 @@ inline fun <reified T : Any> readConfig(logger: Logger, configFile: Path): T {
             logger.info("Migrations complete")
         }
     }
-    return objectMapper.convertValue<T>(node).also {
+    return objectMapper.convertValue(node, clazz).also {
         // write migrated + defaulted config
         writeConfig(it, configFile)
     }
@@ -58,29 +61,29 @@ fun writeConfig(config: Any, f: Path) {
     objectMapper.writeValue(f.toFile(), node)
 }
 
-fun runMigrations(config: ObjectNode, version: ConfigVersion) {
+private fun runMigrations(config: ObjectNode, version: ConfigVersion) {
     for (ver in version..<currentConfigVersion) {
         migrations[ver](config)
     }
 }
 
-fun parseVersion(config: JsonNode): ConfigVersion {
+private fun parseVersion(config: JsonNode): ConfigVersion {
     // missing version -> assume 0 (before config refactor)
     val versionNode = config.get(CONFIG_VERSION_PROPERTY) ?: return 0
     if (!versionNode.isInt) throw Exception("'configVersion' should be an integer")
     return versionNode.intValue()
 }
 
-typealias Migration = ObjectNode.() -> Unit
+private typealias Migration = ObjectNode.() -> Unit
 
-fun ObjectNode.removeMany(vararg properties: String) {
+private fun ObjectNode.removeMany(vararg properties: String) {
     remove(properties.toList())
 }
 
-fun ObjectNode.getObject(prop: String): ObjectNode =
+private fun ObjectNode.getObject(prop: String): ObjectNode =
     get(prop) as? ObjectNode ?: throw Exception("$prop was not an object")
 
-val removeUnnecessaryStuff: Migration = {
+private val removeUnnecessaryStuff: Migration = {
     getObject("format").removeMany(
         "chattore", "error", "funcommandsDefault", "funcommandsNoCommands",
         "funcommandsHeader", "funcommandsCommandInfo", "funcommandsMissingCommand", "funcommandsCommandNotFound",
@@ -88,9 +91,10 @@ val removeUnnecessaryStuff: Migration = {
         "chatConfirmPrompt", "chatConfirm", "messageReceived", "messageSent", "help",
     )
 }
-val migrations = arrayOf<Migration>(
+
+private val migrations = arrayOf<Migration>(
     removeUnnecessaryStuff,
 )
 
-val currentConfigVersion: ConfigVersion = migrations.size
-const val CONFIG_VERSION_PROPERTY = "configVersion"
+private val currentConfigVersion: ConfigVersion = migrations.size
+private const val CONFIG_VERSION_PROPERTY = "configVersion"
