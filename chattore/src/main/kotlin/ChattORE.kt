@@ -18,7 +18,6 @@ import org.slf4j.Logger
 import java.nio.file.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.exists
-import kotlin.io.path.writeText
 
 const val VERSION = "1.2"
 
@@ -98,13 +97,7 @@ class ChattORE @Inject constructor(
             logger.info("No resource directory found, creating")
             dataFolder.createDirectory()
         }
-        val configFile = dataFolder.resolve("config.yml")
-        if (!configFile.exists()) {
-            logger.info("No config file found, creating")
-            // NOTE this is an empty YAML dictionary, it will get populated from default config
-            configFile.writeText("{}")
-        }
-        val config = readConfig<ChattOREConfig>(logger, configFile)
+        val config = readConfig<ChattOREConfig>(logger, dataFolder.resolve("config.yml"))
         logger.info("Loaded config.yml")
         return config
     }

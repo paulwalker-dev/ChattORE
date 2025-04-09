@@ -10,9 +10,9 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.slf4j.Logger
 import java.nio.file.Path
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.copyTo
+import kotlin.io.path.exists
+import kotlin.io.path.writeText
 
 typealias ConfigVersion = Int
 
@@ -23,18 +23,24 @@ val objectMapper: ObjectMapper = ObjectMapper(yaml)
     .registerKotlinModule()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
 
-val backupDateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd_HH-mm-ss")
-
-inline fun <reified T> readConfig(logger: Logger, f: Path): T {
-    val node = objectMapper.readTree(f.toFile()) as? ObjectNode ?: throw Exception("Config root has to be an object")
+inline fun <reified T : Any> readConfig(logger: Logger, configFile: Path): T {
+    if (!configFile.exists()) {
+        logger.info("No config file found, creating")
+        // NOTE this is an empty YAML dictionary, it will get populated from default config
+        // also, hack
+        configFile.writeText("{}")
+    }
+    val node = objectMapper.readTree(configFile.toFile()) as? ObjectNode
+        ?: throw Exception("Config root has to be an object")
     val version = parseVersion(node)
     node.remove(CONFIG_VERSION_PROPERTY)
     when {
         version > currentConfigVersion -> throw Exception("Config version is greater than supported")
         version < currentConfigVersion -> {
             logger.info("Migrating config from version $version to $currentConfigVersion")
-            val backupName = "backup_config_ver$version-${backupDateFormatter.format(LocalDateTime.now())}.yml"
-            f.copyTo(f.resolveSibling(backupName))
+            val backupName = "backup_config_ver$version.yml"
+            // throws if file exists
+            configFile.copyTo(configFile.resolveSibling(backupName), overwrite = false)
             logger.info("Made config backup $backupName")
             runMigrations(node, version)
             logger.info("Migrations complete")
@@ -42,7 +48,7 @@ inline fun <reified T> readConfig(logger: Logger, f: Path): T {
     }
     return objectMapper.convertValue<T>(node).also {
         // write migrated + defaulted config
-        writeConfig(it as Any, f)
+        writeConfig(it, configFile)
     }
 }
 
