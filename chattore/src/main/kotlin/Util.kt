@@ -74,9 +74,9 @@ fun ProxyServer.playerOrNull(uuid: UUID): Player? = getPlayer(uuid).getOrNull()
 
 class PluginScope(
     val plugin: Any,
-    val pluginClass: Class<*>,
+    private val pluginClass: Class<*>,
     val proxy: ProxyServer,
-    val dataFolder: Path,
+    private val dataFolder: Path,
     val logger: Logger,
     val commandManager: VelocityCommandManager,
 ) {
@@ -106,7 +106,7 @@ class PluginScope(
 }
 
 inline fun <reified T> PluginScope.onEvent(postOrder: Short = 0, noinline handler: (T) -> Unit): EventHandler<T> =
-    EventHandler(handler).also { proxy.eventManager.register<T>(plugin, T::class.java, postOrder, it) }
+    EventHandler(handler).also { proxy.eventManager.register(plugin, T::class.java, postOrder, it) }
 
 
 private val uuidRegex = """[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}""".toRegex()
