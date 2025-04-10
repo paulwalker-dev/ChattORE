@@ -92,7 +92,8 @@ class PluginScope(
     fun getResource(filename: String): URL = pluginClass.getResource("/$filename")
         ?: throw FileNotFoundException("Cannot load resource file /$filename. This is probably a bug.")
 
-    fun loadResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
+    fun loadResourceAsString(name: String): String = getResource(name).readText()
+    fun loadDataResourceAsString(name: String): String = getResourceOrCopyDefault(name).readText()
 
     fun getResourceOrCopyDefault(name: String): Path {
         // NOTE/TODO: we may want to merge with existing files in data folder in the future

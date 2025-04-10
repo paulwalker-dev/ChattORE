@@ -11,9 +11,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.json.Json
-import org.openredstone.chattore.*
+import org.openredstone.chattore.PluginScope
 import org.openredstone.chattore.common.ALIAS_CHANNEL
 import org.openredstone.chattore.common.AliasMessage
+import org.openredstone.chattore.render
+import org.openredstone.chattore.toComponent
 import org.slf4j.Logger
 
 private val IDENTIFIER: MinecraftChannelIdentifier = MinecraftChannelIdentifier.from(ALIAS_CHANNEL)
@@ -32,7 +34,7 @@ fun PluginScope.createAliasFeature() {
         .plugin(plugin)
         .build()
 
-    val aliases = Json.decodeFromString<List<AliasConfig>>(loadResourceAsString("aliases.json"))
+    val aliases = Json.decodeFromString<List<AliasConfig>>(loadDataResourceAsString("aliases.json"))
     aliases.forEach { (alias, commands) ->
         val meta = alias.toCommandAliasMeta()
         val aliasCommand = AliasCommand(logger, proxy, alias, commands)

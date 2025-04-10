@@ -14,7 +14,7 @@ import org.openredstone.chattore.*
 import org.slf4j.Logger
 
 fun PluginScope.createFunCommandsFeature() {
-    val commands = Json.decodeFromString<List<FunCommand>>(loadResourceAsString("commands.json"))
+    val commands = Json.decodeFromString<List<FunCommand>>(loadDataResourceAsString("commands.json"))
     createFunCommands(logger, proxy, proxy.commandManager, commands)
     registerCommands(FunCommandsCommand(commands))
 }
