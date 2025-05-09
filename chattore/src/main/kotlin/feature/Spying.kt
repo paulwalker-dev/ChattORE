@@ -11,7 +11,7 @@ import com.velocitypowered.api.proxy.ProxyServer
 import net.kyori.adventure.audience.Audience
 import org.openredstone.chattore.*
 
-private object SpyEnabled : Setting<Boolean>("spy")
+private val SpyEnabled = Setting<Boolean>("spy")
 
 fun PluginScope.createSpyingFeature(
     database: Storage,

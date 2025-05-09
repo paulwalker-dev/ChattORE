@@ -38,14 +38,14 @@ object UsernameCache : Table("username_cache") {
     override val primaryKey = PrimaryKey(uuid)
 }
 
-object StringSetting : Table("setting") {
+object JsonSetting : Table("setting") {
     val uuid = varchar("setting_uuid", 36).index()
     val key = varchar("setting_key", 32).index()
     val value = text("setting_value")
     val uuidKeyIndex = index("setting_uuid_key_index", true, uuid, key)
 }
 
-open class Setting<T>(val key: String)
+class Setting<T>(val key: String)
 
 class Storage(
     dbFile: Path,
@@ -61,7 +61,7 @@ class Storage(
 
     private fun initTables() = transaction(database) {
         SchemaUtils.create(
-            About, Mail, Nick, UsernameCache, StringSetting
+            About, Mail, Nick, UsernameCache, JsonSetting
         )
     }
 
@@ -139,18 +139,18 @@ class Storage(
     }
 
     inline fun <reified T> setSetting(setting: Setting<T>, uuid: UUID, value: T) = transaction(database) {
-        StringSetting.upsert {
-            it[StringSetting.uuid] = uuid.toString()
+        JsonSetting.upsert {
+            it[JsonSetting.uuid] = uuid.toString()
             it[key] = setting.key
-            it[StringSetting.value] = Json.encodeToString(value)
+            it[JsonSetting.value] = Json.encodeToString(value)
         }
     }
 
     inline fun <reified T> getSetting(setting: Setting<T>, uuid: UUID): T? = transaction {
-        val result = StringSetting.selectAll().where {
-            (StringSetting.uuid eq uuid.toString()) and (StringSetting.key eq setting.key)
+        val result = JsonSetting.selectAll().where {
+            (JsonSetting.uuid eq uuid.toString()) and (JsonSetting.key eq setting.key)
         }.singleOrNull() ?: return@transaction null
-        val jsonString = result[StringSetting.value]
+        val jsonString = result[JsonSetting.value]
         Json.decodeFromString<T>(jsonString)
     }
 }
