@@ -56,28 +56,10 @@ class ChattORE @Inject constructor(
                 ChatConfirmationConfig(config.regexes),
             )
             createChattoreFeature()
-            createDiscordFeature(
-                messenger, emojis, DiscordConfig(
-                    config.discord.enable,
-                    config.discord.networkToken,
-                    config.discord.channelId,
-                    config.discord.chadId,
-                    config.discord.playingMessage,
-                    config.discord.format,
-                    config.discord.serverTokens,
-                    config.format.discord,
-                )
-            )
+            createDiscordFeature(messenger, emojis, config.discord)
             createFunCommandsFeature()
             createHelpOpFeature()
-            createJoinLeaveFeature(
-                JoinLeaveConfig(
-                    config.format.join,
-                    config.format.leave,
-                    config.format.joinDiscord,
-                    config.format.leaveDiscord,
-                )
-            )
+            createJoinLeaveFeature(config.format)
             createMailFeature(database, userCache)
             createMessageFeature(messenger)
             createNicknameFeature(

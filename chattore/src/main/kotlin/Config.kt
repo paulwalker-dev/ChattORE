@@ -29,9 +29,8 @@ inline fun <reified T : Any> readConfig(logger: Logger, configFile: Path): T =
 fun <T : Any> doReadConfig(clazz: Class<T>, logger: Logger, configFile: Path): T {
     if (!configFile.exists()) {
         logger.info("No config file found, creating")
-        // NOTE this is an empty YAML dictionary, it will get populated from default config
-        // also, hack
-        configFile.writeText("{}")
+        // HACK, this gets populated from default config
+        configFile.writeText("${CONFIG_VERSION_PROPERTY}: $currentConfigVersion")
     }
     val node = objectMapper.readTree(configFile.toFile()) as? ObjectNode
         ?: throw Exception("Config root has to be an object")
@@ -83,17 +82,25 @@ private fun ObjectNode.removeMany(vararg properties: String) {
 private fun ObjectNode.getObject(prop: String): ObjectNode =
     get(prop) as? ObjectNode ?: throw Exception("$prop was not an object")
 
-private val removeUnnecessaryStuff: Migration = {
+private val removeUnnecessaryStuffAndReorganize: Migration = {
     getObject("format").removeMany(
         "chattore", "error", "funcommandsDefault", "funcommandsNoCommands",
         "funcommandsHeader", "funcommandsCommandInfo", "funcommandsMissingCommand", "funcommandsCommandNotFound",
         "mailSent", "mailReceived", "mailUnread", "playerProfile", "socialSpy", "commandSpy",
         "chatConfirmPrompt", "chatConfirm", "messageReceived", "messageSent", "help",
     )
+    // format.discord -> discord.ingameFormat
+    getObject("discord").replace("ingameFormat", getObject("format")["discord"])
+    getObject("format").remove("discord")
+    // discord.format -> discord.discordFormat
+    getObject("discord").apply {
+        replace("discordFormat", get("format"))
+        remove("format")
+    }
 }
 
 private val migrations = arrayOf<Migration>(
-    removeUnnecessaryStuff,
+    removeUnnecessaryStuffAndReorganize,
 )
 
 private val currentConfigVersion: ConfigVersion = migrations.size

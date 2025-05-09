@@ -17,13 +17,17 @@ fun String.discordEscape() = this.replace("""_""", "\\_")
 
 data class DiscordConfig(
     val enable: Boolean = false,
-    val token: String = "",
+    val networkToken: String = "nouNetwork",
     val channelId: Long = 1234L,
     val chadId: Long = 1234L,
     val playingMessage: String = "on the ORE Network",
-    val format: String = "`%prefix%` **%sender%**: %message%",
-    val serverTokens: Map<String, String>,
-    val discord: String = "<dark_aqua>Discord</dark_aqua> <gray>|</gray> <dark_purple><sender></dark_purple><gray>:</gray> <message>",
+    val discordFormat: String = "`%prefix%` **%sender%**: %message%",
+    val serverTokens: Map<String, String> = mapOf(
+        "serverOne" to "token1",
+        "serverTwo" to "token2",
+        "serverThree" to "token3"
+    ),
+    val ingameFormat: String = "<dark_aqua>Discord</dark_aqua> <gray>|</gray> <dark_purple><sender></dark_purple><gray>:</gray> <message>",
 )
 
 // TO Discord
@@ -47,7 +51,7 @@ fun PluginScope.createDiscordFeature(
 ) {
     if (!config.enable) return
     val discordNetwork = DiscordApiBuilder()
-        .setToken(config.token)
+        .setToken(config.networkToken)
         .addIntents(Intent.MESSAGE_CONTENT)
         .login()
         .join()
@@ -77,7 +81,7 @@ private class DiscordBroadcastListener(
     @Subscribe
     fun onBroadcastEvent(event: DiscordBroadcastEvent) {
         val channel = serverChannelMapping[event.server] ?: return
-        val content = config.format
+        val content = config.discordFormat
             .replace("%prefix%", event.prefix)
             .replace("%sender%", event.sender.discordEscape())
             .replace("%message%", event.message)
@@ -121,7 +125,7 @@ private class DiscordListener(
             "$text: $url"
         }.replace("""\s+""".toRegex(), " ")
         proxy.all.sendRichMessage(
-            config.discord,
+            config.ingameFormat,
             "sender" toS event.messageAuthor.displayName,
             "message" toC messenger.prepareChatMessage(transformedMessage, null),
         )
