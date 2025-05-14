@@ -2,5 +2,4 @@ name: ChattoreAgent
 version: 1.0
 main: ChattoreAgent
 api-version: 1.17
-depend: []
-softdepend: [PlaceholderAPI]
+depend: [PlaceholderAPI]
