@@ -2,4 +2,4 @@ name: ChattoreAgent
 version: 1.0
 main: org.openredstone.chattore.agent.ChattoreAgent
 api-version: 1.17
-depend: [ ]
+depend: [ PlaceholderAPI ]
