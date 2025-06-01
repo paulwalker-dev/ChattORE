@@ -7,7 +7,8 @@ import com.velocitypowered.api.event.player.ServerPostConnectEvent
 import com.velocitypowered.api.proxy.ProxyServer
 import org.openredstone.chattore.*
 
-// format config is "too big" for this, but fix this later
+// TODO: format config is "too big" for this, it has things that this doesn't require.
+//  Look at this during/after bubble implementation since that may change things here too.
 fun PluginScope.createJoinLeaveFeature(config: FormatConfig) {
     registerListeners(JoinLeaveListener(proxy, proxy.eventManager, config))
 }
