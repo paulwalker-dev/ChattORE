@@ -35,18 +35,19 @@ private class FunCommandsCommand(
     @Description("Lists all available fun commands in alphabetical order")
     fun onList(player: Player) {
         if (commands.isEmpty()) {
-            player.sendRichMessage("<red>No fun commands found.</red>")
+            player.sendRichMessage("<red>No Fun Commands found.</red>")
             return
         }
 
         player.sendRichMessage("<yellow>Available Fun Commands:</yellow>")
 
-        // NOTE: interpolating like this is generally unsafe. We trust the commands.json file contents so this is fine.
-        // same applies to the info subcommand
         commands
             .sortedBy { it.command }
             .map {
-                "<hover:show_text:'${it.description}'><click:suggest_command:'/${it.command}'>/${it.command}".render()
+                "<hover:show_text:'<description>'><click:suggest_command:'/<command>'>/<command>".render(
+                    "description" toS it.description,
+                    "command" toS it.command,
+                )
             }
             .let { Component.join(JoinConfiguration.spaces(), it) }
             .let(player::sendMessage)
@@ -63,7 +64,11 @@ private class FunCommandsCommand(
         val cmd = commands.find { it.command.equals(commandName, ignoreCase = true) }
             ?: throw ChattoreException("Command '$commandName' not found.")
 
-        player.sendRichMessage("<gold>Description for <yellow>/${cmd.command}</yellow>: ${cmd.description}></gold>")
+        player.sendRichMessage(
+            "<gold>Description for <yellow>/<command></yellow>: <description></gold>",
+            "command" toS cmd.command,
+            "description" toS cmd.description,
+        )
     }
 }
 
