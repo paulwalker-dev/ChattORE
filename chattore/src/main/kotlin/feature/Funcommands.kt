@@ -9,7 +9,10 @@ import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.Component.text
 import net.kyori.adventure.text.JoinConfiguration
+import net.kyori.adventure.text.event.ClickEvent.suggestCommand
+import net.kyori.adventure.text.event.HoverEvent.showText
 import org.openredstone.chattore.*
 import org.slf4j.Logger
 
@@ -44,10 +47,9 @@ private class FunCommandsCommand(
         commands
             .sortedBy { it.command }
             .map {
-                "<hover:show_text:'<description>'><click:suggest_command:'/<command>'>/<command>".render(
-                    "description" toS it.description,
-                    "command" toS it.command,
-                )
+                text("/${it.command}")
+                    .clickEvent(suggestCommand("/${it.command}"))
+                    .hoverEvent(showText(text(it.description)))
             }
             .let { Component.join(JoinConfiguration.spaces(), it) }
             .let(player::sendMessage)
@@ -97,7 +99,7 @@ private fun createFunCommands(
         when {
             action.startsWith("kick") -> {
                 val reason = action.removePrefix("kick").trim()
-                player.disconnect(Component.text(reason))
+                player.disconnect(text(reason))
             }
 
             action.startsWith("kill") -> {
@@ -111,7 +113,7 @@ private fun createFunCommands(
         val args = invocation.arguments()
 
         if (source !is Player) {
-            source.sendMessage(Component.text("This command can only be used by players!"))
+            source.sendMessage(text("This command can only be used by players!"))
             return@SimpleCommand
         }
 
